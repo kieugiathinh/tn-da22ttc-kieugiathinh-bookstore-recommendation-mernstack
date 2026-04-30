@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../redux/apiCalls.js";
+import { login, loginWithGoogleAction } from "../redux/apiCalls.js";
 import { toast } from "sonner"; // Sử dụng sonner thay cho react-toastify
+import { GoogleLogin } from "@react-oauth/google";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 import {
@@ -36,6 +37,22 @@ const Login = () => {
         "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
       toast.error(errorMsg);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      await loginWithGoogleAction(dispatch, credentialResponse.credential);
+      toast.success("Đăng nhập bằng Google thành công!");
+      navigate("/");
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.message || "Đăng nhập Google thất bại.";
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error("Lỗi hệ thống khi tải Google Login.");
   };
 
   return (
@@ -148,7 +165,26 @@ const Login = () => {
               )}
             </button>
 
-            <div className="text-center pt-6 border-t border-gray-50">
+            {/* DIVIDER */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500 font-medium">Hoặc</span>
+              </div>
+            </div>
+
+            {/* GOOGLE LOGIN BUTTON */}
+            <div className="flex justify-center w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap
+              />
+            </div>
+
+            <div className="text-center pt-6 border-t border-gray-50 mt-6">
               <p className="text-sm text-gray-500 font-medium">
                 Bạn chưa có tài khoản?{" "}
                 <Link

@@ -49,4 +49,29 @@ const LogOut = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Đăng xuất thành công" });
 });
 
-export { LogOut, loginUser, registerUser };
+// Login with Google
+// route POST /api/v1/auth/google
+// @access public
+const loginWithGoogle = asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) {
+    res.status(400);
+    throw new Error("Thiếu Google ID Token");
+  }
+
+  const user = await authService.loginWithGoogle(idToken);
+  
+  generateToken(res, user._id);
+  res.status(200).json({
+    _id: user._id,
+    fullname: user.fullname,
+    username: user.username,
+    email: user.email,
+    phone: user.phone,
+    address: user.address,
+    role: user.role,
+    avatar: user.avatar,
+  });
+});
+
+export { LogOut, loginUser, registerUser, loginWithGoogle };

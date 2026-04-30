@@ -1,4 +1,7 @@
 import User from "../models/userModel.js";
+import { OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const registerUser = async (userData) => {
   const { fullname, username, email, password, phone, role } = userData;
@@ -39,4 +42,44 @@ const loginUser = async (username, password) => {
   }
 };
 
-export { registerUser, loginUser };
+const loginWithGoogle = async (idToken) => {
+  // 1. Verify idToken từ Google
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  const { email, name, picture, sub: googleId } = payload;
+
+  // 2. Kiểm tra xem user đã tồn tại chưa (check theo email)
+  let user = await User.findOne({ email });
+
+  if (user) {
+    // Nếu user tồn tại nhưng chưa có googleId, cập nhật thêm googleId
+    if (!user.googleId) {
+      user.googleId = googleId;
+      // Cập nhật avatar nếu user chưa có
+      if (!user.avatar) user.avatar = picture;
+      await user.save();
+    }
+  } else {
+    // 3. Nếu user chưa tồn tại -> Tạo user mới
+    // Sinh username ngẫu nhiên từ email để tránh trùng lặp
+    const baseUsername = email.split('@')[0];
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const username = `${baseUsername}${randomSuffix}`;
+
+    user = await User.create({
+      fullname: name,
+      username: username,
+      email: email,
+      googleId: googleId,
+      avatar: picture,
+      // Không truyền password vì login bằng Google
+    });
+  }
+
+  return user;
+};
+
+export { registerUser, loginUser, loginWithGoogle };

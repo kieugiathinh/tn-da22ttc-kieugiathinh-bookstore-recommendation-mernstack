@@ -21,3 +21,16 @@ export const login = async (dispatch, user) => {
     throw error;
   }
 };
+
+export const loginWithGoogleAction = async (dispatch, idToken) => {
+  dispatch(loginStart());
+
+  try {
+    const res = await userRequest.post("/auth/google", { idToken });
+    dispatch(loginSuccess(res.data));
+    return res.data;
+  } catch (error) {
+    dispatch(loginFailure());
+    throw error;
+  }
+};
