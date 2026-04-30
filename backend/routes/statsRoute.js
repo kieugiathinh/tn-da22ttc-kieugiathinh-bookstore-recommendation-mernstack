@@ -1,5 +1,5 @@
 import express from "express";
-import { protect, admin } from "../middleware/auth.middleware.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 import {
   getDashboardStats,
   getRevenueChart, // Route mới cho chart đơn
@@ -9,7 +9,7 @@ import {
   getProductAnalytics,
   getTopCustomers,
   getLatestOrders,
-} from "../controllers/stats.controller.js";
+} from "../controllers/statsController.js";
 
 const router = express.Router();
 

@@ -6,8 +6,8 @@ import {
   replyReview,
   toggleHideReview,
   deleteReview,
-} from "../controllers/review.controller.js";
-import { protect, admin } from "../middleware/auth.middleware.js";
+} from "../controllers/reviewController.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 

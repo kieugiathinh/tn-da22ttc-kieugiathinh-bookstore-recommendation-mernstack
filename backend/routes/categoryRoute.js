@@ -5,9 +5,9 @@ import {
   updateCategory,
   deleteCategory,
   getCategoryById,
-} from "../controllers/category.controller.js";
+} from "../controllers/categoryController.js";
 
-import { protect, admin } from "../middleware/auth.middleware.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 

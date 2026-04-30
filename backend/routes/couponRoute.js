@@ -7,9 +7,9 @@ import {
   getAllCouponsAdmin,
   updateCoupon,
   deleteCoupon,
-} from "../controllers/coupon.controller.js";
+} from "../controllers/couponController.js";
 
-import { protect, admin } from "../middleware/auth.middleware.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 

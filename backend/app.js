@@ -1,15 +1,15 @@
 // import express from "express";
 // import cors from "cors";
 // import cookieParser from "cookie-parser";
-// import { errorHandler, notFound } from "./middleware/error.middleware.js";
-// import authRoute from "./routes/auth.route.js";
-// import productRoute from "./routes/product.route.js";
-// import bannerRoute from "./routes/banner.route.js";
-// import userRoute from "./routes/user.route.js";
-// import orderRoute from "./routes/order.route.js";
+// import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
+// import authRoute from "./routes/authRoute.js";
+// import productRoute from "./routes/productRoute.js";
+// import bannerRoute from "./routes/bannerRoute.js";
+// import userRoute from "./routes/userRoute.js";
+// import orderRoute from "./routes/orderRoute.js";
 // import stripeRoute from "./routes/stripe.js";
-// import categoryRoutes from "./routes/category.routes.js";
-// import flashSaleRoutes from "./routes/flashsale.route.js";
+// import categoryRoutes from "./routes/categoryRoute.js";
+// import flashSaleRoutes from "./routes/flashsaleRoute.js";
 
 // const app = express();
 
@@ -41,18 +41,18 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { errorHandler, notFound } from "./middleware/error.middleware.js";
-import authRoute from "./routes/auth.route.js";
-import productRoute from "./routes/product.route.js";
-import bannerRoute from "./routes/banner.route.js";
-import userRoute from "./routes/user.route.js";
-import orderRoute from "./routes/order.route.js";
+import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
+import authRoute from "./routes/authRoute.js";
+import productRoute from "./routes/productRoute.js";
+import bannerRoute from "./routes/bannerRoute.js";
+import userRoute from "./routes/userRoute.js";
+import orderRoute from "./routes/orderRoute.js";
 import stripeRoute from "./routes/stripe.js";
-import categoryRoutes from "./routes/category.routes.js";
-import flashSaleRoutes from "./routes/flashsale.route.js";
-import reviewRoute from "./routes/review.route.js";
-import couponRoute from "./routes/coupon.routes.js";
-import statsRoute from "./routes/stats.route.js";
+import categoryRoutes from "./routes/categoryRoute.js";
+import flashSaleRoutes from "./routes/flashsaleRoute.js";
+import reviewRoute from "./routes/reviewRoute.js";
+import couponRoute from "./routes/couponRoute.js";
+import statsRoute from "./routes/statsRoute.js";
 
 const app = express();
 

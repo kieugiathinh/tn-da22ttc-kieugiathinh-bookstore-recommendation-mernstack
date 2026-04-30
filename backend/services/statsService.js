@@ -1,10 +1,7 @@
-import Order from "../models/order.model.js";
-import Product from "../models/product.model.js";
-import User from "../models/user.model.js";
-import Category from "../models/category.model.js";
-import asyncHandler from "express-async-handler";
+import Order from "../models/orderModel.js";
+import Product from "../models/productModel.js";
+import User from "../models/userModel.js";
 
-// Helper: Lấy khoảng thời gian
 const getTimeRange = (type) => {
   const now = new Date();
   const start = new Date(now);
@@ -29,28 +26,22 @@ const getTimeRange = (type) => {
     end.setMonth(11, 31);
     end.setHours(23, 59, 59, 999);
   } else if (type === "all") {
-    // Thêm trường hợp lấy tất cả thời gian
     return { start: new Date(0), end: new Date() };
   }
   return { start, end };
 };
 
-// 1. KPI TỔNG QUAN (Đã Fix)
-export const getDashboardStats = asyncHandler(async (req, res) => {
-  const { type } = req.query;
+const getDashboardStats = async (type) => {
   const { start, end } = getTimeRange(type || "month");
 
-  // Đếm tổng số lượng (Toàn thời gian)
   const totalUsers = await User.countDocuments();
   const totalProducts = await Product.countDocuments();
 
-  // Tính toán doanh thu và đơn hàng trong khoảng thời gian chọn
-  // LƯU Ý: Giả sử status: 3 là Đã hủy. Chỉ tính tiền các đơn CHƯA HỦY.
   const stats = await Order.aggregate([
     {
       $match: {
         createdAt: { $gte: start, $lte: end },
-        status: { $ne: 3 }, // Không tính đơn đã hủy vào doanh thu
+        status: { $ne: 3 },
       },
     },
     {
@@ -63,30 +54,28 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     },
   ]);
 
-  // Đếm riêng số đơn đã hủy để hiển thị cảnh báo
   const canceled = await Order.countDocuments({
     createdAt: { $gte: start, $lte: end },
     status: 3,
   });
 
-  res.status(200).json({
+  return {
     users: totalUsers,
     products: totalProducts,
     revenue: stats[0]?.revenue || 0,
     orders: stats[0]?.orders || 0,
     avgOrder: Math.round(stats[0]?.avgOrder || 0),
     canceled,
-  });
-});
+  };
+};
 
-// 2. DATA BIỂU ĐỒ DOANH THU (Giữ nguyên)
-export const getRevenueChart = asyncHandler(async (req, res) => {
+const getRevenueChart = async () => {
   const year = new Date().getFullYear();
   const start = new Date(year, 0, 1);
   const end = new Date(year, 11, 31, 23, 59, 59);
 
   const data = await Order.aggregate([
-    { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 3 } } }, // Fix: Không vẽ biểu đồ đơn hủy
+    { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 3 } } },
     {
       $group: {
         _id: { $month: "$createdAt" },
@@ -97,7 +86,7 @@ export const getRevenueChart = asyncHandler(async (req, res) => {
     { $sort: { _id: 1 } },
   ]);
 
-  const result = Array.from({ length: 12 }, (_, i) => {
+  return Array.from({ length: 12 }, (_, i) => {
     const found = data.find((d) => d._id === i + 1);
     return {
       month: `T${i + 1}`,
@@ -105,15 +94,9 @@ export const getRevenueChart = asyncHandler(async (req, res) => {
       orders: found ? found.count : 0,
     };
   });
+};
 
-  res.status(200).json(result);
-});
-
-// 3. SO SÁNH DOANH THU (Giữ nguyên)
-export const getRevenueComparison = asyncHandler(async (req, res) => {
-  const year1 = parseInt(req.query.year1);
-  const year2 = parseInt(req.query.year2);
-
+const getRevenueComparison = async (year1, year2) => {
   const getDataByYear = async (y) => {
     const start = new Date(y, 0, 1);
     const end = new Date(y, 11, 31, 23, 59, 59);
@@ -130,12 +113,11 @@ export const getRevenueComparison = asyncHandler(async (req, res) => {
     getDataByYear(year1),
     getDataByYear(year2),
   ]);
-  res.status(200).json({ year1: d1, year2: d2 });
-});
+  return { year1: d1, year2: d2 };
+};
 
-// 4. DANH MỤC (Giữ nguyên logic Lookup)
-export const getCategoryStats = asyncHandler(async (req, res) => {
-  const stats = await Product.aggregate([
+const getCategoryStats = async () => {
+  return await Product.aggregate([
     {
       $group: {
         _id: "$category",
@@ -159,53 +141,58 @@ export const getCategoryStats = asyncHandler(async (req, res) => {
       },
     },
     { $sort: { value: -1 } },
-    // { $limit: 6 }, // Tạm thời bỏ limit để xem hết danh mục nếu muốn test
   ]);
-  res.status(200).json(stats);
-});
+};
 
-// 5. TRẠNG THÁI ĐƠN HÀNG (Giữ nguyên)
-export const getOrderStatusStats = asyncHandler(async (req, res) => {
-  const stats = await Order.aggregate([
+const getOrderStatusStats = async () => {
+  return await Order.aggregate([
     { $group: { _id: "$status", value: { $sum: 1 } } },
     { $sort: { _id: 1 } },
   ]);
-  res.status(200).json(stats);
-});
+};
 
-// 6. TOP SẢN PHẨM & TỒN KHO (FIX LỖI NaN)
-export const getProductAnalytics = asyncHandler(async (req, res) => {
+const getProductAnalytics = async () => {
   const lowStock = await Product.find({ countInStock: { $lt: 10 } })
     .sort({ countInStock: 1 })
     .limit(5)
-    .select("title countInStock img originalPrice discountedPrice"); // FIX: Lấy đúng trường giá
+    .select("title countInStock img originalPrice discountedPrice")
+    .lean();
 
   const topSelling = await Product.find()
     .sort({ sold: -1 })
     .limit(5)
-    .select("title sold img originalPrice discountedPrice"); // FIX: Lấy đúng trường giá
+    .select("title sold img originalPrice discountedPrice")
+    .lean();
 
-  res.status(200).json({ lowStock, topSelling });
-});
+  return { lowStock, topSelling };
+};
 
-// ... Các hàm khác giữ nguyên
-export const getTopCustomers = asyncHandler(async (req, res) => {
-  const stats = await Order.aggregate([
+const getTopCustomers = async () => {
+  return await Order.aggregate([
     {
       $group: {
         _id: "$userId",
         total: { $sum: "$total" },
         count: { $sum: 1 },
-        name: { $first: "$name" }, // Lưu ý: Order phải có trường name, nếu không sẽ null
+        name: { $first: "$name" },
       },
     },
     { $sort: { total: -1 } },
     { $limit: 5 },
   ]);
-  res.status(200).json(stats);
-});
+};
 
-export const getLatestOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find().sort({ createdAt: -1 }).limit(6);
-  res.status(200).json(orders);
-});
+const getLatestOrders = async () => {
+  return await Order.find().sort({ createdAt: -1 }).limit(6).lean();
+};
+
+export {
+  getDashboardStats,
+  getRevenueChart,
+  getRevenueComparison,
+  getCategoryStats,
+  getOrderStatusStats,
+  getProductAnalytics,
+  getTopCustomers,
+  getLatestOrders,
+};
