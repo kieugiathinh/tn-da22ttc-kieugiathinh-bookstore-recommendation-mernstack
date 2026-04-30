@@ -1,5 +1,5 @@
 import asyncHandler from "express-async-handler";
-import generateToken from "../util/generateToken.js";
+import generateToken from "../utils/generateToken.js";
 import * as authService from "../services/authService.js";
 
 // Register User

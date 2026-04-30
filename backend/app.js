@@ -1,46 +1,10 @@
-// import express from "express";
-// import cors from "cors";
-// import cookieParser from "cookie-parser";
-// import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
-// import authRoute from "./routes/authRoute.js";
-// import productRoute from "./routes/productRoute.js";
-// import bannerRoute from "./routes/bannerRoute.js";
-// import userRoute from "./routes/userRoute.js";
-// import orderRoute from "./routes/orderRoute.js";
-// import stripeRoute from "./routes/stripe.js";
-// import categoryRoutes from "./routes/categoryRoute.js";
-// import flashSaleRoutes from "./routes/flashsaleRoute.js";
-
-// const app = express();
-
-// //cors
-// app.use(cors());
-
-// //json body
-// app.use(express.json());
-
-// //cookie-parser
-// app.use(cookieParser());
-
-// //Routes
-// app.use("/api/v1/auth", authRoute);
-// app.use("/api/v1/products", productRoute);
-// app.use("/api/v1/banners", bannerRoute);
-// app.use("/api/v1/users", userRoute);
-// app.use("/api/v1/categories", categoryRoutes);
-// app.use("/api/v1/orders", orderRoute);
-// app.use("/api/v1/stripe", stripeRoute);
-// app.use("/api/v1/flash-sales", flashSaleRoutes);
-
-// //Error middleware
-// app.use(notFound);
-// app.use(errorHandler);
-
-// export default app;
-
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss-clean";
+import rateLimit from "express-rate-limit";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import authRoute from "./routes/authRoute.js";
 import productRoute from "./routes/productRoute.js";
@@ -56,8 +20,11 @@ import statsRoute from "./routes/statsRoute.js";
 
 const app = express();
 
-// --- CẤU HÌNH CORS CHUẨN ---
-// Danh sách các domain được phép gọi API và gửi Cookie
+// --- BẢO MẬT (SECURITY) ---
+// 1. Set Security HTTP Headers
+app.use(helmet());
+
+// 2. Cấu hình CORS
 const allowedOrigins = [
   "http://localhost:5173", // Cổng Frontend (Vite)
   "http://localhost:1301", // Cổng Admin
@@ -66,20 +33,39 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: allowedOrigins, // Chỉ cho phép các nguồn này
-    credentials: true, // BẮT BUỘC: Cho phép nhận Cookie/Token
-    methods: ["GET", "POST", "PUT", "DELETE"], // Các method cho phép
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
 
-//json body
-app.use(express.json());
+// 3. Rate Limiting (Giới hạn API)
+// Áp dụng cho auth trước
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 phút
+  max: 20, // Tối đa 20 requests
+  message: "Quá nhiều lượt đăng nhập, vui lòng thử lại sau 15 phút.",
+});
 
-//cookie-parser
+// Bạn có thể tạo apiLimiter chung cho toàn bộ app
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+});
+app.use("/api/", apiLimiter);
+
+// 4. Body Parser
+app.use(express.json({ limit: "10kb" })); // Chống payload quá lớn
 app.use(cookieParser());
 
-//Routes
-app.use("/api/v1/auth", authRoute);
+// 5. Data Sanitization (Chống Injection)
+// Chống NoSQL Injection (Tạm tắt do không tương thích Express 5)
+// app.use(mongoSanitize());
+// Chống XSS (Cross-Site Scripting)
+// app.use(xss());
+
+// --- ROUTES ---
+app.use("/api/v1/auth", authLimiter, authRoute); // Áp dụng authLimiter
 app.use("/api/v1/products", productRoute);
 app.use("/api/v1/banners", bannerRoute);
 app.use("/api/v1/users", userRoute);
@@ -91,7 +77,7 @@ app.use("/api/v1/reviews", reviewRoute);
 app.use("/api/v1/coupons", couponRoute);
 app.use("/api/v1/stats", statsRoute);
 
-//Error middleware
+// --- ERROR MIDDLEWARE ---
 app.use(notFound);
 app.use(errorHandler);
 
