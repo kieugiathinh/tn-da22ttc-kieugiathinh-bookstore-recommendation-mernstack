@@ -1,10 +1,11 @@
 import { Outlet, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useAuth } from "../context/AuthContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import AppSidebar from "../components/admin/AppSidebar";
 import AppHeader from "../components/admin/AppHeader";
 import Backdrop from "../components/admin/Backdrop";
 import ScrollToTop from "../components/common/ScrollToTop";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 // Inner component: nằm BÊN TRONG SidebarProvider nên có thể dùng useSidebar()
 const AdminLayoutContent = () => {
@@ -37,10 +38,15 @@ const AdminLayoutContent = () => {
 
 // Outer component: kiểm tra quyền Admin rồi cung cấp SidebarProvider
 const AdminLayout = () => {
-  const currentUser = useSelector((state) => state.user.currentUser);
+  const { isAuthenticated, isAdmin, isInitializing } = useAuth();
+
+  // Đang verify token → hiển thị loading
+  if (isInitializing) {
+    return <LoadingSpinner text="Đang xác thực quyền quản trị..." />;
+  }
 
   // Bảo vệ route Admin: chỉ cho phép role === 1 (Admin) truy cập
-  if (!currentUser || currentUser.role !== 1) {
+  if (!isAuthenticated || !isAdmin) {
     return <Navigate to="/" replace />;
   }
 

@@ -1,26 +1,30 @@
 import { useState, useEffect } from "react";
-import { FaClock, FaShippingFast, FaCheckDouble, FaTimesCircle, FaCheckCircle, FaSync } from "react-icons/fa";
+import { FaClock, FaShippingFast, FaCheckDouble, FaTimesCircle, FaCheckCircle } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
 import PageHeader from "../../components/admin/PageHeader";
 import Pagination from "../../components/admin/Pagination";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import Badge from "../../components/common/Badge";
+import Button from "../../components/common/Button";
 
 const ROWS_PER_PAGE = 10;
 
 const STATUS_CONFIG = {
-  0: { label: "Chờ xác nhận", icon: FaClock, cls: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-  1: { label: "Đang vận chuyển", icon: FaShippingFast, cls: "bg-blue-50 text-blue-700 border-blue-200" },
-  2: { label: "Đã giao hàng", icon: FaCheckDouble, cls: "bg-green-50 text-green-700 border-green-200" },
-  3: { label: "Đã hủy", icon: FaTimesCircle, cls: "bg-red-50 text-red-700 border-red-200" },
+  0: { label: "Chờ xác nhận", icon: FaClock, variant: "warning" },
+  1: { label: "Đang vận chuyển", icon: FaShippingFast, variant: "info" },
+  2: { label: "Đã giao hàng", icon: FaCheckDouble, variant: "success" },
+  3: { label: "Đã hủy", icon: FaTimesCircle, variant: "danger" },
 };
 
 const StatusBadge = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] || { label: "Không xác định", icon: FaClock, cls: "bg-gray-100 text-gray-600 border-gray-200" };
+  const cfg = STATUS_CONFIG[status] || { label: "Không xác định", icon: FaClock, variant: "neutral" };
   const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${cfg.cls}`}>
+    <Badge variant={cfg.variant} className="gap-1.5 py-1">
       <Icon size={11} /> {cfg.label}
-    </span>
+    </Badge>
   );
 };
 
@@ -114,11 +118,9 @@ const Orders = () => {
       </div>
 
       {/* Bảng đơn hàng */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <Card>
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
-            <FaSync className="animate-spin text-brand-500" /> Đang tải...
-          </div>
+          <LoadingSpinner />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -152,13 +154,10 @@ const Orders = () => {
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         {order.status < 2 ? (
-                          <button
-                            onClick={() => handleUpdateOrder(order._id, order.status)}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 transition-colors shadow-sm"
-                          >
-                            <FaCheckCircle size={11} />
+                          <Button size="sm" onClick={() => handleUpdateOrder(order._id, order.status)}
+                            icon={<FaCheckCircle size={11} />}>
                             {order.status === 0 ? "Xử lý đơn" : "Đã giao"}
-                          </button>
+                          </Button>
                         ) : (
                           <span className="text-xs text-gray-400">Hoàn tất</span>
                         )}
@@ -180,7 +179,7 @@ const Orders = () => {
               unit="đơn hàng" />
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

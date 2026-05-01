@@ -10,19 +10,17 @@ import {
 } from "react-icons/fa";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { logOut } from "../../redux/userRedux.js";
+import { useSelector } from "react-redux";
+import { useAuth } from "../../context/AuthContext";
 
 const Navbar = () => {
   const [search, setSearch] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const cart = useSelector((state) => state.cart);
-  const user = useSelector((state) => state.user);
-  const currentUser = user.currentUser;
+  const { currentUser, logout } = useAuth();
 
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const location = useLocation();
 
   useEffect(() => {
@@ -40,7 +38,7 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logOut());
+    logout();
     navigate("/login");
   };
 

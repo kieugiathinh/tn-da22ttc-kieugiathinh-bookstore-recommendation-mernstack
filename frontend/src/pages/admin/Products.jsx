@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaTrash, FaEdit, FaPlus, FaSync } from "react-icons/fa";
+import { FaTrash, FaEdit, FaPlus } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
 import PageHeader from "../../components/admin/PageHeader";
 import Pagination from "../../components/admin/Pagination";
+import Button from "../../components/common/Button";
+import IconButton from "../../components/common/IconButton";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import Badge from "../../components/common/Badge";
 
 const ROWS_PER_PAGE = 10;
 
@@ -54,6 +59,9 @@ const Products = () => {
   const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
   const pageData = filtered.slice(startIdx, startIdx + ROWS_PER_PAGE);
 
+  const stockVariant = (count) =>
+    count > 10 ? "success" : count > 0 ? "warning" : "danger";
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -61,9 +69,7 @@ const Products = () => {
         subtitle={`${products.length} đầu sách trong hệ thống`}
         action={
           <Link to="/admin/newproduct">
-            <button className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors">
-              <FaPlus size={12} /> Thêm sách mới
-            </button>
+            <Button icon={<FaPlus size={12} />}>Thêm sách mới</Button>
           </Link>
         }
       />
@@ -80,11 +86,9 @@ const Products = () => {
       </div>
 
       {/* Bảng sản phẩm */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <Card>
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
-            <FaSync className="animate-spin text-brand-500" /> Đang tải...
-          </div>
+          <LoadingSpinner />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -123,25 +127,17 @@ const Products = () => {
                         {(p.discountedPrice || p.originalPrice || 0).toLocaleString("vi-VN")} ₫
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
-                          p.countInStock > 10 ? "bg-green-50 text-green-700 border-green-200"
-                          : p.countInStock > 0 ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                          : "bg-red-50 text-red-700 border-red-200"}`}>
+                        <Badge variant={stockVariant(p.countInStock)}>
                           {p.countInStock > 0 ? `${p.countInStock} cuốn` : "Hết hàng"}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="px-5 py-3.5 font-semibold text-brand-600">{p.sold || 0}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-3">
                           <Link to={`/admin/product/${p._id}`}>
-                            <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
-                              <FaEdit size={13} />
-                            </button>
+                            <IconButton variant="edit" icon={<FaEdit size={13} />} title="Sửa" />
                           </Link>
-                          <button onClick={() => handleDelete(p._id)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
-                            <FaTrash size={13} />
-                          </button>
+                          <IconButton variant="delete" icon={<FaTrash size={13} />} onClick={() => handleDelete(p._id)} title="Xóa" />
                         </div>
                       </td>
                     </tr>
@@ -161,7 +157,7 @@ const Products = () => {
               unit="đầu sách" />
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

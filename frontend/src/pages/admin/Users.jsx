@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
-import { FaTrash, FaEdit, FaUserPlus, FaTimes, FaUsers, FaSync } from "react-icons/fa";
+import { FaUserPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
 import PageHeader from "../../components/admin/PageHeader";
 import Pagination from "../../components/admin/Pagination";
+import Button from "../../components/common/Button";
+import InputField from "../../components/common/InputField";
+import Modal from "../../components/common/Modal";
+import IconButton from "../../components/common/IconButton";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import Badge from "../../components/common/Badge";
 
 const ROWS_PER_PAGE = 10;
-
-// ── Shared input style ─────────────────────────────────────────────────────
-const inputCls =
-  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-200/30";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -98,27 +101,25 @@ const Users = () => {
   const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
   const pageData = users.slice(startIdx, startIdx + ROWS_PER_PAGE);
 
+  const handleField = (field) => (e) =>
+    setFormData({ ...formData, [field]: field === "role" ? Number(e.target.value) : e.target.value });
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Quản lý Người dùng"
         subtitle={`${users.length} tài khoản trong hệ thống`}
         action={
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
-          >
-            <FaUserPlus size={14} /> Tạo tài khoản
-          </button>
+          <Button onClick={openAdd} icon={<FaUserPlus size={14} />}>
+            Tạo tài khoản
+          </Button>
         }
       />
 
       {/* Table card */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <Card>
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
-            <FaSync className="animate-spin text-brand-500" /> Đang tải...
-          </div>
+          <LoadingSpinner />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -136,7 +137,6 @@ const Users = () => {
                 <tbody className="divide-y divide-gray-50">
                   {pageData.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50/60 transition-colors">
-                      {/* Họ tên + avatar */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
@@ -152,28 +152,14 @@ const Users = () => {
                       <td className="px-5 py-3.5 text-gray-600 truncate max-w-[160px]">{user.email}</td>
                       <td className="px-5 py-3.5 text-gray-500">{user.phone || "—"}</td>
                       <td className="px-5 py-3.5">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          user.role === 1
-                            ? "bg-brand-50 text-brand-700 border border-brand-200"
-                            : "bg-gray-100 text-gray-600 border border-gray-200"
-                        }`}>
+                        <Badge variant={user.role === 1 ? "brand" : "neutral"}>
                           {user.role === 1 ? "Admin" : "Khách hàng"}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-3">
-                          <button
-                            onClick={() => openEdit(user)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                          >
-                            <FaEdit size={13} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user._id)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                          >
-                            <FaTrash size={13} />
-                          </button>
+                          <IconButton variant="edit" icon={<FaEdit size={13} />} onClick={() => openEdit(user)} title="Sửa" />
+                          <IconButton variant="delete" icon={<FaTrash size={13} />} onClick={() => handleDelete(user._id)} title="Xóa" />
                         </div>
                       </td>
                     </tr>
@@ -190,83 +176,38 @@ const Users = () => {
             />
           </>
         )}
-      </div>
+      </Card>
 
       {/* ── MODAL ── */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <h2 className="text-base font-bold text-gray-900">
-                {editingUserId ? "Cập nhật thông tin" : "Thêm người dùng mới"}
-              </h2>
-              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <FaTimes size={18} />
-              </button>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSave} className="space-y-4 p-6">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-600">Họ và Tên</label>
-                <input type="text" name="fullname" required placeholder="Nguyễn Văn A"
-                  value={formData.fullname} onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
-                  className={inputCls} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">Username</label>
-                  <input type="text" name="username" required placeholder="user123"
-                    value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className={inputCls} />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">Số điện thoại</label>
-                  <input type="text" name="phone" placeholder="09xx..."
-                    value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className={inputCls} />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-600">Email</label>
-                <input type="email" name="email" required placeholder="email@example.com"
-                  value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={inputCls} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-600">
-                  {editingUserId ? "Mật khẩu mới (để trống = không đổi)" : "Mật khẩu"}
-                </label>
-                <input type="password" name="password" required={!editingUserId}
-                  placeholder={editingUserId ? "Giữ nguyên nếu để trống..." : "********"}
-                  value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className={inputCls} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-600">Vai trò</label>
-                <select name="role" value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: Number(e.target.value) })}
-                  className={inputCls}>
-                  <option value={0}>Khách hàng (User)</option>
-                  <option value={1}>Quản trị viên (Admin)</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-                <button type="button" onClick={closeModal}
-                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                  Hủy
-                </button>
-                <button type="submit"
-                  className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors">
-                  {editingUserId ? "Cập nhật" : "Tạo mới"}
-                </button>
-              </div>
-            </form>
+      <Modal isOpen={showModal} onClose={closeModal} title={editingUserId ? "Cập nhật thông tin" : "Thêm người dùng mới"}>
+        <form onSubmit={handleSave} className="space-y-4 p-6">
+          <InputField label="Họ và Tên" required placeholder="Nguyễn Văn A"
+            value={formData.fullname} onChange={handleField("fullname")} />
+          <div className="grid grid-cols-2 gap-4">
+            <InputField label="Username" required placeholder="user123"
+              value={formData.username} onChange={handleField("username")} />
+            <InputField label="Số điện thoại" placeholder="09xx..."
+              value={formData.phone} onChange={handleField("phone")} />
           </div>
-        </div>
-      )}
+          <InputField label="Email" type="email" required placeholder="email@example.com"
+            value={formData.email} onChange={handleField("email")} />
+          <InputField
+            label={editingUserId ? "Mật khẩu mới (để trống = không đổi)" : "Mật khẩu"}
+            type="password" required={!editingUserId}
+            placeholder={editingUserId ? "Giữ nguyên nếu để trống..." : "********"}
+            value={formData.password} onChange={handleField("password")}
+          />
+          <InputField label="Vai trò" as="select" value={formData.role} onChange={handleField("role")}>
+            <option value={0}>Khách hàng (User)</option>
+            <option value={1}>Quản trị viên (Admin)</option>
+          </InputField>
+
+          <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+            <Button variant="secondary" onClick={closeModal}>Hủy</Button>
+            <Button type="submit">{editingUserId ? "Cập nhật" : "Tạo mới"}</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

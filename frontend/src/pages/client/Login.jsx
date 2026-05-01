@@ -1,8 +1,7 @@
-﻿import { Link, useNavigate } from "react-router-dom";
-import { login, loginWithGoogleAction } from "../../redux/apiCalls.js";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner"; // Sử dụng sonner thay cho react-toastify
 import { GoogleLogin } from "@react-oauth/google";
-import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "../../context/AuthContext";
 import { useState } from "react";
 import {
   FaUser,
@@ -15,8 +14,7 @@ import {
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { isFetching } = useSelector((state) => state.user);
-  const dispatch = useDispatch();
+  const { login, loginWithGoogle, isFetching } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -28,7 +26,7 @@ const Login = () => {
     }
 
     try {
-      await login(dispatch, { username, password });
+      await login({ username, password });
       toast.success("Chào mừng bạn quay trở lại!");
       navigate("/");
     } catch (error) {
@@ -41,7 +39,7 @@ const Login = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      await loginWithGoogleAction(dispatch, credentialResponse.credential);
+      await loginWithGoogle(credentialResponse.credential);
       toast.success("Đăng nhập bằng Google thành công!");
       navigate("/");
     } catch (error) {

@@ -1,9 +1,12 @@
-import { RouterProvider, createBrowserRouter, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 // ── Layouts ───────────────────────────────────────────────────────────────────
 import AdminLayout from "./layouts/AdminLayout";
 import ClientLayout from "./layouts/ClientLayout";
+
+// ── Route Guards ──────────────────────────────────────────────────────────────
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import GuestRoute from "./components/common/GuestRoute";
 
 // ── Client Pages ──────────────────────────────────────────────────────────────
 import Home from "./pages/client/Home";
@@ -35,57 +38,60 @@ import AdminCategories from "./pages/admin/Categories";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminCoupon from "./pages/admin/CouponList";
 
+// ── Router Configuration ─────────────────────────────────────────────────────
+const router = createBrowserRouter([
+  // ── CLIENT ROUTES (bọc bởi ClientLayout) ─────────────────────────────────
+  {
+    path: "/",
+    element: <ClientLayout />,
+    children: [
+      { path: "/", element: <Home /> },
+      { path: "/cart", element: <Cart /> },
+      { path: "/product/:id", element: <ProductDetail /> },
+      { path: "/products", element: <ProductList /> },
+      { path: "/products/:category", element: <ProductList /> },
+      { path: "/checkout", element: <Checkout /> },
+      { path: "/success", element: <Success /> },
+      { path: "/flash-sale", element: <FlashSale /> },
+      { path: "/about", element: <About /> },
+      { path: "/contact", element: <Contact /> },
+      { path: "/faq", element: <FAQ /> },
+      { path: "/shipping", element: <ShippingPolicy /> },
+      { path: "/privacy", element: <PrivacyPolicy /> },
+      { path: "/terms", element: <Terms /> },
+
+      // ── Guest-only routes (đã đăng nhập → redirect về /) ──────────────
+      { path: "/login", element: <GuestRoute><Login /></GuestRoute> },
+      { path: "/register", element: <GuestRoute><Register /></GuestRoute> },
+
+      // ── Protected routes (chưa đăng nhập → redirect về /login) ────────
+      { path: "/myaccount", element: <ProtectedRoute><MyAccount /></ProtectedRoute> },
+      { path: "/myorders", element: <ProtectedRoute><Order /></ProtectedRoute> },
+      { path: "/my-vouchers", element: <ProtectedRoute><MyVouchers /></ProtectedRoute> },
+    ],
+  },
+
+  // ── ADMIN ROUTES (AdminLayout tự kiểm tra quyền role=1) ────────────────
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      { path: "", element: <AdminHome /> },
+      { path: "users", element: <AdminUsers /> },
+      { path: "products", element: <AdminProducts /> },
+      { path: "product/:id", element: <AdminProductEdit /> },
+      { path: "newproduct", element: <AdminNewProduct /> },
+      { path: "orders", element: <AdminOrders /> },
+      { path: "categories", element: <AdminCategories /> },
+      { path: "banners", element: <AdminBanners /> },
+      { path: "flash-sales", element: <AdminFlashSales /> },
+      { path: "reviews", element: <AdminReviews /> },
+      { path: "coupons", element: <AdminCoupon /> },
+    ],
+  },
+]);
+
 function App() {
-  const currentUser = useSelector((state) => state.user.currentUser);
-
-  const router = createBrowserRouter([
-    // ── CLIENT ROUTES (bọc bởi ClientLayout) ─────────────────────────────────
-    {
-      path: "/",
-      element: <ClientLayout />,
-      children: [
-        { path: "/", element: <Home /> },
-        { path: "/login", element: currentUser ? <Navigate to="/" /> : <Login /> },
-        { path: "/register", element: currentUser ? <Navigate to="/" /> : <Register /> },
-        { path: "/cart", element: <Cart /> },
-        { path: "/product/:id", element: <ProductDetail /> },
-        { path: "/products", element: <ProductList /> },
-        { path: "/products/:category", element: <ProductList /> },
-        { path: "/myaccount", element: currentUser ? <MyAccount /> : <Login /> },
-        { path: "/myorders", element: currentUser ? <Order /> : <Login /> },
-        { path: "/checkout", element: <Checkout /> },
-        { path: "/success", element: <Success /> },
-        { path: "/flash-sale", element: <FlashSale /> },
-        { path: "/my-vouchers", element: currentUser ? <MyVouchers /> : <Login /> },
-        { path: "/about", element: <About /> },
-        { path: "/contact", element: <Contact /> },
-        { path: "/faq", element: <FAQ /> },
-        { path: "/shipping", element: <ShippingPolicy /> },
-        { path: "/privacy", element: <PrivacyPolicy /> },
-        { path: "/terms", element: <Terms /> },
-      ],
-    },
-
-    // ── ADMIN ROUTES (bọc bởi AdminLayout — tự kiểm tra quyền role=1) ────────
-    {
-      path: "/admin",
-      element: <AdminLayout />,
-      children: [
-        { path: "", element: <AdminHome /> },
-        { path: "users", element: <AdminUsers /> },
-        { path: "products", element: <AdminProducts /> },
-        { path: "product/:id", element: <AdminProductEdit /> },
-        { path: "newproduct", element: <AdminNewProduct /> },
-        { path: "orders", element: <AdminOrders /> },
-        { path: "categories", element: <AdminCategories /> },
-        { path: "banners", element: <AdminBanners /> },
-        { path: "flash-sales", element: <AdminFlashSales /> },
-        { path: "reviews", element: <AdminReviews /> },
-        { path: "coupons", element: <AdminCoupon /> },
-      ],
-    },
-  ]);
-
   return <RouterProvider router={router} />;
 }
 

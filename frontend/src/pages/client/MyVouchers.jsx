@@ -1,5 +1,5 @@
-﻿import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   FaTicketAlt,
   FaFire,
@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 
 const MyVouchers = () => {
-  const user = useSelector((state) => state.user.currentUser);
+  const { currentUser: user } = useAuth();
   const wallet = user?.wallet || [];
 
   return (

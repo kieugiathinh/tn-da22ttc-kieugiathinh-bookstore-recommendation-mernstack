@@ -1,15 +1,16 @@
-﻿import { useEffect, useState, useRef } from "react"; // 1. Import useRef
+import { useEffect, useState, useRef } from "react"; // 1. Import useRef
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { userRequest } from "../../requestMethods";
 import { clearCart } from "../../redux/cartRedux";
+import { useAuth } from "../../context/AuthContext";
 import { FaCheckCircle, FaSpinner } from "react-icons/fa";
 
 const Success = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart);
-  const currentUser = useSelector((state) => state.user.currentUser);
+  const { currentUser } = useAuth();
 
   const [orderId, setOrderId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(true);

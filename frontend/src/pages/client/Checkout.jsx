@@ -1,5 +1,6 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useAuth } from "../../context/AuthContext";
 import { userRequest } from "../../requestMethods";
 import { useNavigate, useLocation } from "react-router-dom";
 import { clearCart } from "../../redux/cartRedux";
@@ -34,7 +35,7 @@ const Checkout = () => {
 
   const initialProductsTotal = calculateProductsTotal(); // Đây là Tạm tính chuẩn (405.000đ)
 
-  const user = useSelector((state) => state.user.currentUser);
+  const { currentUser: user } = useAuth();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 

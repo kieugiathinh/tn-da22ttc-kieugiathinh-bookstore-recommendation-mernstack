@@ -1,6 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { userRequest } from "../../requestMethods";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { updateWallet } from "../../redux/userRedux";
 import Slider from "react-slick";
@@ -36,7 +37,7 @@ const PrevArrow = ({ onClick }) => (
 
 const CouponList = () => {
   const [coupons, setCoupons] = useState([]);
-  const user = useSelector((state) => state.user.currentUser);
+  const { currentUser: user } = useAuth();
   const dispatch = useDispatch();
 
   useEffect(() => {

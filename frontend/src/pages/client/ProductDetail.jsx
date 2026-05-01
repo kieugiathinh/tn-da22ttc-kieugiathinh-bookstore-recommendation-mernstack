@@ -1,4 +1,4 @@
-﻿import {
+import {
   FaMinus,
   FaPlus,
   FaShoppingCart,
@@ -12,8 +12,9 @@
 import { useLocation, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { userRequest } from "../../requestMethods";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { addProduct } from "../../redux/cartRedux";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import moment from "moment";
 import RelatedProducts from "../../components/client/RelatedProducts";
@@ -39,7 +40,7 @@ const StarRating = ({ rating, size = "text-sm" }) => {
 const Product = () => {
   const location = useLocation();
   const id = location.pathname.split("/")[2];
-  const user = useSelector((state) => state.user.currentUser);
+  const { currentUser: user } = useAuth();
   const [product, setProduct] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);

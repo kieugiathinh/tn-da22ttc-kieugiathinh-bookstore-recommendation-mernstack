@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
 import { useSidebar } from "../../context/SidebarContext";
-import { logOut } from "../../redux/userRedux";
-import { userRequest } from "../../requestMethods";
+import { useAuth } from "../../context/AuthContext";
 import { FaBell, FaSignOutAlt, FaUser, FaExternalLinkAlt } from "react-icons/fa";
 
 const AppHeader = () => {
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
-  const dispatch = useDispatch();
-  const currentUser = useSelector((state) => state.user.currentUser);
+  const { currentUser, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -32,13 +29,8 @@ const AppHeader = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await userRequest.get("/auth/logout");
-    } catch (e) {
-      // bỏ qua lỗi logout phía server
-    }
-    dispatch(logOut());
+  const handleLogout = () => {
+    logout();
   };
 
   return (

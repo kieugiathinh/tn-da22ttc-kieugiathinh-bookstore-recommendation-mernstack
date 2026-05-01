@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
-import { FaTrash, FaEdit, FaPlus, FaTimes, FaCloudUploadAlt, FaSync } from "react-icons/fa";
+import { FaTrash, FaEdit, FaPlus, FaCloudUploadAlt } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { CLOUDINARY_CONFIG } from "../../utils/constants";
 import PageHeader from "../../components/admin/PageHeader";
 import Pagination from "../../components/admin/Pagination";
+import Button from "../../components/common/Button";
+import InputField from "../../components/common/InputField";
+import Modal from "../../components/common/Modal";
+import IconButton from "../../components/common/IconButton";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const ROWS_PER_PAGE = 10;
-
-// ── Shared input style ─────────────────────────────────────────────────────
-const inputCls =
-  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-200/30";
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -22,11 +24,7 @@ const Categories = () => {
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [editingCatId, setEditingCatId] = useState(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    img: "", // Link ảnh (cũ hoặc mới sau khi upload)
-  });
+  const [formData, setFormData] = useState({ name: "", description: "", img: "" });
 
   // State lưu file ảnh mới chọn
   const [newSelectedImage, setNewSelectedImage] = useState(null);
@@ -46,39 +44,31 @@ const Categories = () => {
     }
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   const resetForm = () => {
     setFormData({ name: "", description: "", img: "" });
-    setNewSelectedImage(null); // Reset file
+    setNewSelectedImage(null);
     setEditingCatId(null);
     setUploadStatus("");
   };
 
-  const handleOpenAddModal = () => {
-    resetForm();
-    setShowModal(true);
-  };
+  const handleOpenAddModal = () => { resetForm(); setShowModal(true); };
 
   const handleOpenEditModal = (category) => {
     setEditingCatId(category._id);
-    setFormData({
-      name: category.name,
-      description: category.description || "",
-      img: category.img || "",
-    });
-    setNewSelectedImage(null); // Reset file mới
+    setFormData({ name: category.name, description: category.description || "", img: category.img || "" });
+    setNewSelectedImage(null);
     setShowModal(true);
   };
+
+  const closeModal = () => { setShowModal(false); resetForm(); };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // --- XỬ LÝ CHỌN ẢNH ---
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setNewSelectedImage(e.target.files[0]);
@@ -86,35 +76,27 @@ const Categories = () => {
     }
   };
 
-  // --- XỬ LÝ LƯU (Có Upload ảnh) ---
   const handleSave = async (e) => {
     e.preventDefault();
-
     if (!formData.name.trim()) {
       Swal.fire("Lỗi", "Tên thể loại không được để trống", "warning");
       return;
     }
 
     setUploadStatus("Đang xử lý...");
-    let imgUrl = formData.img; // Mặc định dùng ảnh cũ
+    let imgUrl = formData.img;
 
     try {
-      // 1. Nếu có chọn ảnh mới -> Upload lên Cloudinary trước
       if (newSelectedImage) {
         setUploadStatus("Đang tải ảnh...");
         const data = new FormData();
         data.append("file", newSelectedImage);
         data.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
-
         const uploadRes = await axios.post(CLOUDINARY_CONFIG.uploadUrl, data);
-        imgUrl = uploadRes.data.url; // Lấy link ảnh mới
+        imgUrl = uploadRes.data.url;
       }
 
-      // 2. Gom dữ liệu để gửi về Backend
-      const categoryData = {
-        ...formData,
-        img: imgUrl,
-      };
+      const categoryData = { ...formData, img: imgUrl };
 
       if (editingCatId) {
         await userRequest.put(`/categories/${editingCatId}`, categoryData);
@@ -124,8 +106,7 @@ const Categories = () => {
         Swal.fire("Thành công", "Đã thêm thể loại mới", "success");
       }
 
-      setShowModal(false);
-      resetForm();
+      closeModal();
       fetchCategories();
     } catch (err) {
       console.error(err);
@@ -136,22 +117,17 @@ const Categories = () => {
 
   const handleDelete = async (id) => {
     const { isConfirmed } = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Hành động này không thể hoàn tác!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Xóa ngay",
-      cancelButtonText: "Hủy",
+      title: "Xác nhận xóa?", text: "Hành động này không thể hoàn tác!",
+      icon: "warning", showCancelButton: true,
+      confirmButtonColor: "#d33", cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa ngay", cancelButtonText: "Hủy",
     });
-
     if (isConfirmed) {
       try {
         await userRequest.delete(`/categories/${id}`);
         Swal.fire("Đã xóa!", "Thể loại đã bị xóa.", "success");
         fetchCategories();
-      } catch (error) {
+      } catch {
         Swal.fire("Lỗi!", "Xóa thất bại.", "error");
       }
     }
@@ -160,10 +136,7 @@ const Categories = () => {
   // Pagination Logic
   const totalPages = Math.ceil(categories.length / ROWS_PER_PAGE);
   const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-  const currentCategories = categories.slice(
-    startIndex,
-    startIndex + ROWS_PER_PAGE
-  );
+  const currentCategories = categories.slice(startIndex, startIndex + ROWS_PER_PAGE);
 
   return (
     <div className="space-y-6">
@@ -171,12 +144,9 @@ const Categories = () => {
         title="Quản lý Thể Loại"
         subtitle={`${categories.length} thể loại trong hệ thống`}
         action={
-          <button
-            onClick={handleOpenAddModal}
-            className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
-          >
-            <FaPlus size={14} /> Thêm Thể Loại
-          </button>
+          <Button onClick={handleOpenAddModal} icon={<FaPlus size={14} />}>
+            Thêm Thể Loại
+          </Button>
         }
       />
 
@@ -187,11 +157,9 @@ const Categories = () => {
       )}
 
       {/* Table card */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <Card>
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
-            <FaSync className="animate-spin text-brand-500" /> Đang tải...
-          </div>
+          <LoadingSpinner />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -209,182 +177,76 @@ const Categories = () => {
                     <tr key={cat._id} className="hover:bg-gray-50/60 transition-colors">
                       <td className="px-5 py-3.5">
                         {cat.img ? (
-                          <img
-                            src={cat.img}
-                            alt={cat.name}
-                            className="h-10 w-10 rounded-full object-cover border border-gray-200 shadow-sm"
-                          />
+                          <img src={cat.img} alt={cat.name} className="h-10 w-10 rounded-full object-cover border border-gray-200 shadow-sm" />
                         ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-400">
-                            N/A
-                          </div>
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-400">N/A</div>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 font-semibold text-gray-800">
-                        {cat.name}
-                      </td>
-                      <td className="px-5 py-3.5 text-gray-600 truncate max-w-xs">
-                        {cat.description || "—"}
-                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-gray-800">{cat.name}</td>
+                      <td className="px-5 py-3.5 text-gray-600 truncate max-w-xs">{cat.description || "—"}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-3">
-                          <button
-                            onClick={() => handleOpenEditModal(cat)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                          >
-                            <FaEdit size={13} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(cat._id)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                          >
-                            <FaTrash size={13} />
-                          </button>
+                          <IconButton variant="edit" icon={<FaEdit size={13} />} onClick={() => handleOpenEditModal(cat)} title="Sửa" />
+                          <IconButton variant="delete" icon={<FaTrash size={13} />} onClick={() => handleDelete(cat._id)} title="Xóa" />
                         </div>
                       </td>
                     </tr>
                   ))}
                   {currentCategories.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="py-12 text-center text-sm text-gray-400">
-                        Chưa có thể loại nào
-                      </td>
-                    </tr>
+                    <tr><td colSpan={4} className="py-12 text-center text-sm text-gray-400">Chưa có thể loại nào</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              total={categories.length}
-              rowsPerPage={ROWS_PER_PAGE}
+            <Pagination currentPage={currentPage} totalPages={totalPages}
+              total={categories.length} rowsPerPage={ROWS_PER_PAGE}
               onPrev={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              unit="thể loại"
-            />
+              unit="thể loại" />
           </>
         )}
-      </div>
+      </Card>
 
       {/* ── MODAL ── */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <h2 className="text-base font-bold text-gray-900">
-                {editingCatId ? "Cập Nhật Thể Loại" : "Thêm Thể Loại Mới"}
-              </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <FaTimes size={18} />
-              </button>
+      <Modal isOpen={showModal} onClose={closeModal} title={editingCatId ? "Cập Nhật Thể Loại" : "Thêm Thể Loại Mới"}>
+        <form onSubmit={handleSave} className="space-y-4 p-6">
+          <InputField label="Tên Thể Loại" required name="name"
+            value={formData.name} onChange={handleInputChange} placeholder="Ví dụ: Tiểu thuyết" />
+
+          {/* Upload Ảnh */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Ảnh Thể Loại</label>
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
+              <div className="relative mb-3 h-20 w-20 overflow-hidden rounded-xl border bg-white shadow-sm">
+                <img
+                  src={newSelectedImage ? URL.createObjectURL(newSelectedImage) : formData.img || "https://placehold.co/150x150?text=No+Img"}
+                  alt="Preview" className="h-full w-full object-cover"
+                />
+              </div>
+              <label className="flex cursor-pointer items-center rounded-lg bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100">
+                <FaCloudUploadAlt className="mr-2" />
+                {newSelectedImage ? "Đổi ảnh khác" : "Chọn ảnh"}
+                <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
+              </label>
+              {uploadStatus && (
+                <p className={`mt-2 text-xs font-medium ${uploadStatus.includes("Lỗi") ? "text-red-500" : "text-brand-600"}`}>
+                  {uploadStatus}
+                </p>
+              )}
             </div>
-
-            {/* Form */}
-            <form onSubmit={handleSave} className="space-y-4 p-6">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-600">
-                  Tên Thể Loại <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={inputCls}
-                  placeholder="Ví dụ: Tiểu thuyết"
-                />
-              </div>
-
-              {/* Upload Ảnh */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-600">
-                  Ảnh Thể Loại
-                </label>
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
-                  <div className="relative mb-3 h-20 w-20 overflow-hidden rounded-xl border bg-white shadow-sm">
-                    <img
-                      src={
-                        newSelectedImage
-                          ? URL.createObjectURL(newSelectedImage)
-                          : formData.img ||
-                            "https://placehold.co/150x150?text=No+Img"
-                      }
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-
-                  <label className="flex cursor-pointer items-center rounded-lg bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100">
-                    <FaCloudUploadAlt className="mr-2" />
-                    {newSelectedImage ? "Đổi ảnh khác" : "Chọn ảnh"}
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={handleImageChange}
-                      accept="image/*"
-                    />
-                  </label>
-
-                  {uploadStatus && (
-                    <p
-                      className={`mt-2 text-xs font-medium ${
-                        uploadStatus.includes("Lỗi")
-                          ? "text-red-500"
-                          : "text-brand-600"
-                      }`}
-                    >
-                      {uploadStatus}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Mô tả */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-600">
-                  Mô tả
-                </label>
-                <textarea
-                  name="description"
-                  rows="3"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  className={`${inputCls} resize-none`}
-                  placeholder="Mô tả ngắn..."
-                />
-              </div>
-
-              {/* Footer */}
-              <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploadStatus.includes("Đang")} // Disable khi đang upload
-                  className={`rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors ${
-                    uploadStatus.includes("Đang")
-                      ? "cursor-not-allowed bg-brand-400 text-white opacity-70"
-                      : "bg-brand-600 text-white hover:bg-brand-700"
-                  }`}
-                >
-                  {editingCatId ? "Cập Nhật" : "Thêm Mới"}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+
+          <InputField label="Mô tả" as="textarea" name="description" rows={3}
+            value={formData.description} onChange={handleInputChange} placeholder="Mô tả ngắn..." />
+
+          <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+            <Button variant="secondary" onClick={closeModal}>Hủy</Button>
+            <Button type="submit" isLoading={uploadStatus.includes("Đang")}>
+              {editingCatId ? "Cập Nhật" : "Thêm Mới"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
