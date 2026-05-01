@@ -96,7 +96,7 @@ const ProductList = () => {
       <div className="max-w-7xl mx-auto px-4">
         {/* Breadcrumb (Đường dẫn) */}
         <div className="flex items-center text-sm text-gray-500 mb-6">
-          <Link to="/" className="hover:text-purple-600">
+          <Link to="/" className="hover:text-primary">
             Trang chủ
           </Link>
           <FaChevronRight className="mx-2 text-xs" />
@@ -108,7 +108,7 @@ const ProductList = () => {
           <div className="lg:w-1/4">
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 sticky top-24">
               <h3 className="font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
-                <FaListUl className="mr-2 text-purple-600" /> Danh Mục
+                <FaListUl className="mr-2 text-primary" /> Danh Mục
               </h3>
               <ul className="space-y-2">
                 {/* Link về trang Tất cả */}
@@ -117,8 +117,8 @@ const ProductList = () => {
                     to="/products"
                     className={`block px-3 py-2 rounded-lg transition-colors ${
                       !catId
-                        ? "bg-purple-50 text-purple-700 font-bold"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                        ? "bg-primary-light text-primary-hover font-bold"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-primary"
                     }`}
                   >
                     Tất cả sách
@@ -131,8 +131,8 @@ const ProductList = () => {
                       to={`/products/${cat._id}`}
                       className={`block px-3 py-2 rounded-lg transition-colors ${
                         catId === cat._id
-                          ? "bg-purple-50 text-purple-700 font-bold"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                          ? "bg-primary-light text-primary-hover font-bold"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-primary"
                       }`}
                     >
                       {cat.name}
@@ -160,7 +160,7 @@ const ProductList = () => {
                 </span>
                 <select
                   onChange={(e) => setSort(e.target.value)}
-                  className="border border-gray-300 rounded-md p-1.5 text-sm focus:ring-2 focus:ring-purple-500 outline-none bg-white"
+                  className="border border-gray-300 rounded-md p-1.5 text-sm focus:ring-2 focus:ring-primary outline-none bg-white"
                 >
                   <option value="newest">Mới nhất</option>
                   <option value="asc">Giá: Thấp đến Cao</option>
@@ -186,7 +186,7 @@ const ProductList = () => {
                 </p>
                 <Link
                   to="/products"
-                  className="text-purple-600 font-semibold mt-2 inline-block"
+                  className="text-primary font-semibold mt-2 inline-block"
                 >
                   Xem tất cả sách
                 </Link>

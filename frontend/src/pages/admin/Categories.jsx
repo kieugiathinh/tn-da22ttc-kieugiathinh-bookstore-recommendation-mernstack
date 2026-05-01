@@ -223,13 +223,13 @@ const Categories = () => {
                   alt="Preview" className="h-full w-full object-cover"
                 />
               </div>
-              <label className="flex cursor-pointer items-center rounded-lg bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100">
+              <label className="flex cursor-pointer items-center rounded-lg bg-primary-light px-3 py-2 text-sm font-semibold text-primary-hover transition hover:bg-primary-light">
                 <FaCloudUploadAlt className="mr-2" />
                 {newSelectedImage ? "Đổi ảnh khác" : "Chọn ảnh"}
                 <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
               </label>
               {uploadStatus && (
-                <p className={`mt-2 text-xs font-medium ${uploadStatus.includes("Lỗi") ? "text-red-500" : "text-brand-600"}`}>
+                <p className={`mt-2 text-xs font-medium ${uploadStatus.includes("Lỗi") ? "text-red-500" : "text-primary"}`}>
                   {uploadStatus}
                 </p>
               )}

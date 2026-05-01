@@ -63,7 +63,7 @@ const EditableInput = ({
         value={value || ""}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-800"
+        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white text-gray-800"
       />
     </div>
   </div>
@@ -188,7 +188,7 @@ const MyAccount = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-4xl text-purple-600 font-bold">
+                <span className="text-4xl text-primary font-bold">
                   {currentUser?.fullname
                     ? currentUser.fullname.charAt(0).toUpperCase()
                     : "U"}
@@ -197,7 +197,7 @@ const MyAccount = () => {
             </div>
             <label
               htmlFor="avatar-upload"
-              className="absolute bottom-1 right-1 bg-purple-600 p-2.5 rounded-full shadow-md cursor-pointer hover:bg-purple-700 transition text-white border-2 border-white"
+              className="absolute bottom-1 right-1 bg-primary p-2.5 rounded-full shadow-md cursor-pointer hover:bg-primary-hover transition text-white border-2 border-white"
             >
               <FaCamera size={16} />
               <input
@@ -220,7 +220,7 @@ const MyAccount = () => {
             <span
               className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                 currentUser?.role === 1
-                  ? "bg-purple-100 text-purple-700"
+                  ? "bg-primary-light text-primary-hover"
                   : "bg-gray-100 text-gray-700"
               }`}
             >
@@ -287,8 +287,8 @@ const MyAccount = () => {
                   disabled={isUpdating}
                   className={`px-6 py-2.5 rounded-lg font-semibold shadow-sm transition-all flex items-center cursor-pointer ${
                     isUpdating
-                      ? "bg-purple-400 cursor-not-allowed text-white"
-                      : "bg-purple-600 hover:bg-purple-700 text-white hover:shadow-md hover:-translate-y-0.5"
+                      ? "bg-primary cursor-not-allowed text-white"
+                      : "bg-primary hover:bg-primary-hover text-white hover:shadow-md hover:-translate-y-0.5"
                   }`}
                 >
                   {isUpdating ? (
@@ -344,7 +344,7 @@ const MyAccount = () => {
               <div className="flex justify-end mt-6 space-x-4 items-center">
                 <button
                   type="submit"
-                  className="bg-white border border-purple-600 text-purple-600 hover:bg-purple-50 px-6 py-2.5 rounded-lg font-semibold transition-all flex items-center cursor-pointer"
+                  className="bg-white border border-primary text-primary hover:bg-primary-light px-6 py-2.5 rounded-lg font-semibold transition-all flex items-center cursor-pointer"
                 >
                   <FaLock className="mr-2" /> Đổi mật khẩu
                 </button>

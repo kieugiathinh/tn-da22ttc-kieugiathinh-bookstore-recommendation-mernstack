@@ -18,7 +18,7 @@ const About = () => {
         </div>
 
         <div className="p-8 md:p-12 space-y-6 text-gray-700 leading-relaxed">
-          <p className="text-lg font-medium text-purple-700">
+          <p className="text-lg font-medium text-primary-hover">
             "Sách là giấc mơ bạn cầm trên tay."
           </p>
           <p>

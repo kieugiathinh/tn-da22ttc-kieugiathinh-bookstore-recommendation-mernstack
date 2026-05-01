@@ -9,7 +9,7 @@ import "slick-carousel/slick/slick-theme.css";
 // Nút Next
 const NextArrow = ({ onClick }) => (
   <div
-    className="absolute top-1/2 -right-4 transform -translate-y-1/2 z-10 cursor-pointer bg-white text-gray-600 hover:text-purple-600 shadow-lg rounded-full p-3 border border-gray-100 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+    className="absolute top-1/2 -right-4 transform -translate-y-1/2 z-10 cursor-pointer bg-white text-gray-600 hover:text-primary shadow-lg rounded-full p-3 border border-gray-100 hover:scale-110 transition-all duration-200 flex items-center justify-center"
     onClick={onClick}
   >
     <FaChevronRight />
@@ -19,7 +19,7 @@ const NextArrow = ({ onClick }) => (
 // Nút Prev
 const PrevArrow = ({ onClick }) => (
   <div
-    className="absolute top-1/2 -left-4 transform -translate-y-1/2 z-10 cursor-pointer bg-white text-gray-600 hover:text-purple-600 shadow-lg rounded-full p-3 border border-gray-100 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+    className="absolute top-1/2 -left-4 transform -translate-y-1/2 z-10 cursor-pointer bg-white text-gray-600 hover:text-primary shadow-lg rounded-full p-3 border border-gray-100 hover:scale-110 transition-all duration-200 flex items-center justify-center"
     onClick={onClick}
   >
     <FaChevronLeft />

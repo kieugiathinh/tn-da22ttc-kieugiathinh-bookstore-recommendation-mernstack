@@ -20,7 +20,7 @@ const Footer = () => {
           <div className="space-y-4">
             {/* Logo Text hoặc Image */}
             <Link to="/">
-              <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 tracking-wide">
+              <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-pink-600 tracking-wide">
                 GTBOOKS
               </h2>
             </Link>
@@ -46,7 +46,7 @@ const Footer = () => {
 
           {/* CỘT 2: LIÊN KẾT NHANH */}
           <div>
-            <h3 className="text-white text-lg font-bold mb-4 border-b-2 border-purple-500 inline-block pb-1">
+            <h3 className="text-white text-lg font-bold mb-4 border-b-2 border-primary inline-block pb-1">
               KHÁM PHÁ
             </h3>
             <ul className="space-y-3 text-sm">
@@ -60,7 +60,7 @@ const Footer = () => {
 
           {/* CỘT 3: CHÍNH SÁCH & HỖ TRỢ (Thêm cho chuyên nghiệp) */}
           <div>
-            <h3 className="text-white text-lg font-bold mb-4 border-b-2 border-purple-500 inline-block pb-1">
+            <h3 className="text-white text-lg font-bold mb-4 border-b-2 border-primary inline-block pb-1">
               HỖ TRỢ KHÁCH HÀNG
             </h3>
             <ul className="space-y-3 text-sm">
@@ -74,20 +74,20 @@ const Footer = () => {
 
           {/* CỘT 4: LIÊN HỆ & NEWSLETTER */}
           <div>
-            <h3 className="text-white text-lg font-bold mb-4 border-b-2 border-purple-500 inline-block pb-1">
+            <h3 className="text-white text-lg font-bold mb-4 border-b-2 border-primary inline-block pb-1">
               LIÊN HỆ
             </h3>
             <ul className="space-y-4 text-sm mb-6">
               <li className="flex items-start space-x-3">
-                <FaMapMarkerAlt className="text-purple-500 mt-1 flex-shrink-0" />
+                <FaMapMarkerAlt className="text-primary mt-1 flex-shrink-0" />
                 <span>Long Hòa, Châu Thành, Vĩnh Long</span>
               </li>
               <li className="flex items-center space-x-3">
-                <FaPhoneAlt className="text-purple-500 flex-shrink-0" />
+                <FaPhoneAlt className="text-primary flex-shrink-0" />
                 <span>0339 601 263</span>
               </li>
               <li className="flex items-center space-x-3">
-                <FaEnvelope className="text-purple-500 flex-shrink-0" />
+                <FaEnvelope className="text-primary flex-shrink-0" />
                 <span>bookstore@gmail.com</span>
               </li>
             </ul>
@@ -103,7 +103,7 @@ const Footer = () => {
                   placeholder="Email của bạn..."
                   className="w-full px-3 py-2 text-gray-900 rounded-l-md focus:outline-none text-sm"
                 />
-                <button className="bg-purple-600 text-white px-4 py-2 rounded-r-md hover:bg-purple-700 transition">
+                <button className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-primary-hover transition">
                   <FaPaperPlane />
                 </button>
               </div>
@@ -147,7 +147,7 @@ const FooterLink = ({ to, text }) => (
   <li>
     <Link
       to={to}
-      className="hover:text-purple-400 hover:translate-x-1 transition-all duration-300 inline-block"
+      className="hover:text-primary hover:translate-x-1 transition-all duration-300 inline-block"
     >
       {text}
     </Link>
@@ -158,7 +158,7 @@ const FooterLink = ({ to, text }) => (
 const SocialIcon = ({ icon, link }) => (
   <a
     href={link}
-    className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-purple-600 hover:text-white transition-all duration-300"
+    className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all duration-300"
   >
     {icon}
   </a>

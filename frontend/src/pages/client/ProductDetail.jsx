@@ -202,13 +202,13 @@ const Product = () => {
             <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
               <span>
                 Tác giả:{" "}
-                <span className="text-purple-600 font-medium">
+                <span className="text-primary font-medium">
                   {product.author || "Đang cập nhật"}
                 </span>
               </span>
               <span className="border-l border-gray-300 pl-4">
                 NXB:{" "}
-                <span className="text-purple-600 font-medium">
+                <span className="text-primary font-medium">
                   {product.publisher || "Đang cập nhật"}
                 </span>
               </span>
@@ -228,12 +228,12 @@ const Product = () => {
               </span> */}
 
               {/* 3. Số lượng đánh giá & Đã bán */}
-              <span className="ml-2 text-sm text-gray-500 underline cursor-pointer hover:text-purple-600">
+              <span className="ml-2 text-sm text-gray-500 underline cursor-pointer hover:text-primary">
                 (Xem {product.numReviews || 0} đánh giá)
               </span>
               <span className="border-l ml-4 text-sm text-gray-500 border-gray-300 pl-4">
                 Đã bán:{" "}
-                <span className="text-purple-600 font-medium">
+                <span className="text-primary font-medium">
                   {product.sold || 0}
                 </span>
               </span>
@@ -255,7 +255,7 @@ const Product = () => {
               <div className="flex items-end gap-3">
                 <span
                   className={`text-3xl font-extrabold ${
-                    product.isFlashSale ? "text-red-600" : "text-purple-700"
+                    product.isFlashSale ? "text-red-600" : "text-primary-hover"
                   }`}
                 >
                   {finalPrice?.toLocaleString("vi-VN")} ₫
@@ -331,7 +331,7 @@ const Product = () => {
                 disabled={product.countInStock === 0}
                 className={`flex-1 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-2 ${
                   product.countInStock > 0
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-xl hover:scale-[1.02]"
+                    ? "bg-gradient-to-r from-primary to-pink-600 hover:shadow-xl hover:scale-[1.02]"
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
               >
@@ -375,7 +375,7 @@ const Product = () => {
             <div className="bg-white rounded-2xl shadow-sm p-6 md:p-10">
               <h2 className="text-xl font-bold text-gray-800 border-b pb-4 mb-6 flex justify-between items-center">
                 <span>Đánh giá của khách hàng</span>
-                <span className="text-sm font-normal bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                <span className="text-sm font-normal bg-primary-light text-primary-hover px-3 py-1 rounded-full">
                   {reviews.length} đánh giá
                 </span>
               </h2>
@@ -392,7 +392,7 @@ const Product = () => {
                       key={rev._id}
                       className="flex gap-4 pb-6 border-b border-gray-100 last:border-0"
                     >
-                      <div className="w-10 h-10 rounded-full bg-purple-100 overflow-hidden flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-primary-light overflow-hidden flex-shrink-0">
                         {rev.user?.avatar ? (
                           <img
                             src={rev.user.avatar}
@@ -400,7 +400,7 @@ const Product = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-purple-600 font-bold">
+                          <div className="w-full h-full flex items-center justify-center text-primary font-bold">
                             {rev.user?.fullname
                               ? rev.user.fullname.charAt(0)
                               : "U"}
@@ -426,8 +426,8 @@ const Product = () => {
                           {rev.comment}
                         </p>
                         {rev.reply && (
-                          <div className="mt-3 ml-4 bg-purple-50 p-3 rounded-lg border-l-4 border-purple-400">
-                            <p className="text-xs font-bold text-purple-700 mb-1">
+                          <div className="mt-3 ml-4 bg-primary-light p-3 rounded-lg border-l-4 border-primary">
+                            <p className="text-xs font-bold text-primary-hover mb-1">
                               Phản hồi của Nhà sách:
                             </p>
                             <p className="text-sm text-gray-700">{rev.reply}</p>

@@ -172,7 +172,7 @@ const Product = () => {
                     </div>
                     <input type="file" id="file" onChange={handleImageChange} className="hidden" accept="image/*" />
                   </div>
-                  {uploadStatus && <p className="mt-2 text-center text-xs font-medium text-brand-600">{uploadStatus}</p>}
+                  {uploadStatus && <p className="mt-2 text-center text-xs font-medium text-primary">{uploadStatus}</p>}
                 </div>
 
                 <div className="pt-2">

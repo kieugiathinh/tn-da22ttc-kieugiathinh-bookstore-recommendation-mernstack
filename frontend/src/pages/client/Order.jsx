@@ -155,7 +155,7 @@ const Order = () => {
   if (loading)
     return (
       <div className="flex justify-center items-center min-h-[60vh] text-gray-500 font-medium">
-        <FaSpinner className="animate-spin mr-3 text-purple-600" /> Đang tải
+        <FaSpinner className="animate-spin mr-3 text-primary" /> Đang tải
         lịch sử đơn hàng...
       </div>
     );
@@ -180,8 +180,8 @@ const Order = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
                 activeTab === tab.id
-                  ? "bg-purple-600 text-white shadow-md transform scale-105"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-purple-600"
+                  ? "bg-primary text-white shadow-md transform scale-105"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-primary"
               }`}
             >
               <span className="mr-2 text-lg">{tab.icon}</span>
@@ -189,7 +189,7 @@ const Order = () => {
               <span
                 className={`ml-2 text-xs py-0.5 px-2 rounded-full font-bold ${
                   activeTab === tab.id
-                    ? "bg-white text-purple-600"
+                    ? "bg-white text-primary"
                     : "bg-gray-100 text-gray-600"
                 }`}
               >
@@ -211,7 +211,7 @@ const Order = () => {
             {activeTab !== "all" && (
               <button
                 onClick={() => setActiveTab("all")}
-                className="mt-4 text-purple-600 font-bold hover:underline"
+                className="mt-4 text-primary font-bold hover:underline"
               >
                 Xem tất cả đơn hàng
               </button>
@@ -294,7 +294,7 @@ const Order = () => {
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block text-right">
                           Tổng thanh toán
                         </span>
-                        <p className="text-lg font-extrabold text-purple-600 text-right">
+                        <p className="text-lg font-extrabold text-primary text-right">
                           {order.total?.toLocaleString("vi-VN")} ₫
                         </p>
                       </div>
@@ -331,12 +331,12 @@ const Order = () => {
                               </span>
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-bold text-slate-800 line-clamp-2 text-sm sm:text-base hover:text-purple-600 cursor-pointer transition-colors">
+                              <h4 className="font-bold text-slate-800 line-clamp-2 text-sm sm:text-base hover:text-primary cursor-pointer transition-colors">
                                 <Link to={`/product/${item.productId}`}>
                                   {item.title}
                                 </Link>
                               </h4>
-                              <p className="text-sm text-purple-600 font-bold mt-1">
+                              <p className="text-sm text-primary font-bold mt-1">
                                 {item.price?.toLocaleString("vi-VN")} ₫
                               </p>
 
@@ -357,7 +357,7 @@ const Order = () => {
                                             : item.productId
                                         )
                                       }
-                                      className="text-xs flex items-center text-purple-600 border border-purple-600 px-3 py-1.5 rounded-md hover:bg-purple-600 hover:text-white transition-all font-bold"
+                                      className="text-xs flex items-center text-primary border border-primary px-3 py-1.5 rounded-md hover:bg-primary hover:text-white transition-all font-bold"
                                     >
                                       <FaPen className="mr-1.5" /> Viết đánh giá
                                     </button>
@@ -402,7 +402,7 @@ const Order = () => {
                                   <textarea
                                     rows="3"
                                     placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé..."
-                                    className="w-full text-sm p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                                    className="w-full text-sm p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
                                     onChange={(e) =>
                                       handleRatingChange(
                                         item.productId,
@@ -422,7 +422,7 @@ const Order = () => {
                                       onClick={() =>
                                         submitRating(item.productId, order._id)
                                       }
-                                      className="bg-purple-600 text-white text-sm font-bold py-2 px-6 rounded-lg hover:bg-purple-700 transition shadow-md hover:shadow-lg transform active:scale-95"
+                                      className="bg-primary text-white text-sm font-bold py-2 px-6 rounded-lg hover:bg-primary-hover transition shadow-md hover:shadow-lg transform active:scale-95"
                                     >
                                       Gửi Đánh Giá
                                     </button>
@@ -438,7 +438,7 @@ const Order = () => {
                     <div className="space-y-6 border-l border-gray-100 lg:pl-8 flex flex-col justify-between h-full">
                       <div>
                         <h3 className="font-bold text-slate-800 border-b border-gray-100 pb-2 mb-3 flex items-center text-xs uppercase tracking-wider">
-                          <FaShippingFast className="mr-2 text-purple-500" />{" "}
+                          <FaShippingFast className="mr-2 text-primary" />{" "}
                           Thông tin nhận hàng
                         </h3>
                         <div className="text-sm text-slate-600 space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
@@ -500,7 +500,7 @@ const Order = () => {
 
         <div className="mt-12 text-center">
           <Link to="/products">
-            <button className="bg-white border-2 border-purple-600 text-purple-600 font-bold py-3 px-8 rounded-full hover:bg-purple-600 hover:text-white transition-all shadow-sm hover:shadow-md transform hover:-translate-y-1">
+            <button className="bg-white border-2 border-primary text-primary font-bold py-3 px-8 rounded-full hover:bg-primary hover:text-white transition-all shadow-sm hover:shadow-md transform hover:-translate-y-1">
               Tiếp Tục Mua Sắm
             </button>
           </Link>

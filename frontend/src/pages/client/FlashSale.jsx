@@ -127,7 +127,7 @@ const FlashSalePage = () => {
             <p className="text-xl">
               Hiện không có chương trình Flash Sale nào diễn ra.
             </p>
-            <Link to="/" className="mt-4 text-purple-600 hover:underline">
+            <Link to="/" className="mt-4 text-primary hover:underline">
               Quay lại trang chủ
             </Link>
           </div>

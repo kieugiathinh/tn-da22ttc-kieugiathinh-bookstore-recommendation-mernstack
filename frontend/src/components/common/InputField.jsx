@@ -14,7 +14,7 @@ import clsx from "clsx";
 
 // Base input style – single source of truth (thay thế inputCls cũ)
 export const inputBaseClass =
-  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-200/30";
+  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-light/30";
 
 const InputField = ({
   label,

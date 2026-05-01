@@ -17,7 +17,7 @@ const Contact = () => {
 
           <div className="space-y-6">
             <div className="flex items-start space-x-4">
-              <div className="bg-purple-600 p-3 rounded-full">
+              <div className="bg-primary p-3 rounded-full">
                 <FaMapMarkerAlt className="text-xl" />
               </div>
               <div>
@@ -29,7 +29,7 @@ const Contact = () => {
             </div>
 
             <div className="flex items-start space-x-4">
-              <div className="bg-purple-600 p-3 rounded-full">
+              <div className="bg-primary p-3 rounded-full">
                 <FaPhoneAlt className="text-xl" />
               </div>
               <div>
@@ -39,7 +39,7 @@ const Contact = () => {
             </div>
 
             <div className="flex items-start space-x-4">
-              <div className="bg-purple-600 p-3 rounded-full">
+              <div className="bg-primary p-3 rounded-full">
                 <FaEnvelope className="text-xl" />
               </div>
               <div>
@@ -59,7 +59,7 @@ const Contact = () => {
               </label>
               <input
                 type="text"
-                className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
                 placeholder="Tên của bạn"
               />
             </div>
@@ -69,7 +69,7 @@ const Contact = () => {
               </label>
               <input
                 type="email"
-                className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
                 placeholder="email@example.com"
               />
             </div>
@@ -79,11 +79,11 @@ const Contact = () => {
               </label>
               <textarea
                 rows="4"
-                className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
                 placeholder="Nội dung cần hỗ trợ..."
               ></textarea>
             </div>
-            <button className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-all shadow-lg">
+            <button className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-primary-hover transition-all shadow-lg">
               Gửi tin nhắn
             </button>
           </form>

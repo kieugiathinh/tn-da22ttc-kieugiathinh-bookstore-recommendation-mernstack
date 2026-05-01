@@ -19,7 +19,7 @@ const Category = () => {
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
       <div className="flex items-center mb-6 border-b border-gray-100 pb-4">
-        <FaListAlt className="text-purple-600 text-xl mr-2" />
+        <FaListAlt className="text-primary text-xl mr-2" />
         <h2 className="text-xl font-extrabold text-gray-800 uppercase tracking-wide">
           Thể Loại Sách
         </h2>
@@ -37,7 +37,7 @@ const Category = () => {
                   - Đổi kích thước w-20 h-20 -> w-full aspect-[2/3] (Tỉ lệ chuẩn bìa sách)
                   - Thêm shadow để tạo cảm giác sách nổi lên
               */}
-              <div className="w-24 md:w-28 aspect-[2/3] rounded-lg bg-gray-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-xl border border-gray-200 group-hover:border-purple-300 transition-all overflow-hidden relative">
+              <div className="w-24 md:w-28 aspect-[2/3] rounded-lg bg-gray-100 flex items-center justify-center mb-3 shadow-sm group-hover:shadow-xl border border-gray-200 group-hover:border-primary transition-all overflow-hidden relative">
                 {cat.img ? (
                   <img
                     src={cat.img}
@@ -46,7 +46,7 @@ const Category = () => {
                   />
                 ) : (
                   // Nếu không có ảnh, hiện icon nhưng vẫn trong khung chữ nhật
-                  <div className="flex flex-col items-center justify-center text-purple-300 group-hover:text-purple-600 transition-colors">
+                  <div className="flex flex-col items-center justify-center text-primary group-hover:text-primary transition-colors">
                     <FaBookOpen className="text-3xl mb-1" />
                     <span className="text-[10px] uppercase font-bold">
                       No Image
@@ -59,7 +59,7 @@ const Category = () => {
               </div>
               {/* -------------------------------------------------------- */}
 
-              <span className="text-xs md:text-sm font-bold text-gray-700 text-center group-hover:text-purple-700 transition-colors line-clamp-2 px-1 leading-tight">
+              <span className="text-xs md:text-sm font-bold text-gray-700 text-center group-hover:text-primary-hover transition-colors line-clamp-2 px-1 leading-tight">
                 {cat.name}
               </span>
             </div>

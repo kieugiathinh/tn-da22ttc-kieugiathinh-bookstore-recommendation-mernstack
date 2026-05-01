@@ -78,7 +78,7 @@ const Products = () => {
       <div className="relative max-w-xs">
         <input type="text" placeholder="Tìm kiếm tên sách, tác giả..."
           value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-          className="h-9 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-200/30"
+          className="h-9 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-light/30"
         />
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" clipRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
@@ -131,7 +131,7 @@ const Products = () => {
                           {p.countInStock > 0 ? `${p.countInStock} cuốn` : "Hết hàng"}
                         </Badge>
                       </td>
-                      <td className="px-5 py-3.5 font-semibold text-brand-600">{p.sold || 0}</td>
+                      <td className="px-5 py-3.5 font-semibold text-primary">{p.sold || 0}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-3">
                           <Link to={`/admin/product/${p._id}`}>

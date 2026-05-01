@@ -139,7 +139,7 @@ const Users = () => {
                     <tr key={user.id} className="hover:bg-gray-50/60 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary-hover">
                             {user.avatar
                               ? <img src={user.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
                               : (user.fullname?.charAt(0) || "U").toUpperCase()

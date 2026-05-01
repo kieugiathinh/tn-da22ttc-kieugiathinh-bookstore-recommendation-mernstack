@@ -29,7 +29,7 @@ const RelatedProducts = ({ categoryId, currentProductId }) => {
     <div className="mt-12 pt-8 border-t border-gray-200">
       <div className="flex items-center justify-center mb-8">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2 uppercase">
-          <FaThumbsUp className="text-purple-500" /> Có thể bạn sẽ thích
+          <FaThumbsUp className="text-primary" /> Có thể bạn sẽ thích
         </h2>
       </div>
 

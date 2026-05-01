@@ -18,7 +18,7 @@ const LoadingSpinner = ({
         className
       )}
     >
-      <FaSync className="animate-spin text-brand-500" />
+      <FaSync className="animate-spin text-primary" />
       {text}
     </div>
   );

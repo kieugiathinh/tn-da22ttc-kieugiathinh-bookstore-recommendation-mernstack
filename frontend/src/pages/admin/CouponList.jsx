@@ -123,7 +123,7 @@ const AdminCoupon = () => {
             <tbody className="divide-y divide-gray-50">
               {coupons.map((c) => (
                 <tr key={c._id} className="hover:bg-gray-50/60 transition-colors">
-                  <td className="px-5 py-3.5 font-bold text-brand-600">{c.code}</td>
+                  <td className="px-5 py-3.5 font-bold text-primary">{c.code}</td>
                   <td className="px-5 py-3.5 text-gray-800">
                     <span className="font-semibold">
                       {c.discountType === "PERCENT" ? `${c.discountValue}%` : `${c.discountValue.toLocaleString()}đ`}
@@ -168,7 +168,7 @@ const AdminCoupon = () => {
             <div className="md:col-span-2">
               <InputField label="Mã Code (Viết liền, không dấu)" required name="code"
                 value={formData.code} onChange={handleChange} placeholder="VD: SALE2025"
-                className="uppercase font-bold text-brand-600 placeholder:normal-case placeholder:font-normal" />
+                className="uppercase font-bold text-primary placeholder:normal-case placeholder:font-normal" />
             </div>
             <div className="md:col-span-2">
               <InputField label="Mô tả" required name="description"
@@ -196,7 +196,7 @@ const AdminCoupon = () => {
               value={formData.usageLimit} onChange={handleChange} />
             <div className="flex items-center md:mt-6">
               <input type="checkbox" id="isActive" name="isActive" checked={formData.isActive}
-                onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+                onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
               <label htmlFor="isActive" className="ml-2 text-sm font-semibold text-gray-700">Kích hoạt ngay</label>
             </div>
           </div>

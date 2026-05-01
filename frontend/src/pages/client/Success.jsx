@@ -74,7 +74,7 @@ const Success = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center px-4">
       {isProcessing ? (
         <div className="flex flex-col items-center">
-          <FaSpinner className="text-purple-600 text-6xl animate-spin mb-4" />
+          <FaSpinner className="text-primary text-6xl animate-spin mb-4" />
           <h2 className="text-xl font-semibold text-gray-700">
             Đang xử lý đơn hàng của bạn...
           </h2>
@@ -95,7 +95,7 @@ const Success = () => {
               <p className="text-sm text-gray-500 uppercase font-bold">
                 Mã đơn hàng
               </p>
-              <p className="text-xl font-mono text-purple-600 font-bold">
+              <p className="text-xl font-mono text-primary font-bold">
                 #{orderId.slice(-8).toUpperCase()}
               </p>
             </div>
@@ -104,13 +104,13 @@ const Success = () => {
           <div className="flex flex-col gap-3">
             <button
               onClick={() => navigate("/myorders")}
-              className="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition shadow-lg"
+              className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-primary-hover transition shadow-lg"
             >
               Xem Đơn Hàng Của Tôi
             </button>
             <button
               onClick={() => navigate("/")}
-              className="w-full bg-white border-2 border-purple-600 text-purple-600 py-3 rounded-lg font-bold hover:bg-purple-50 transition"
+              className="w-full bg-white border-2 border-primary text-primary py-3 rounded-lg font-bold hover:bg-primary-light transition"
             >
               Tiếp Tục Mua Sắm
             </button>

@@ -184,11 +184,11 @@ const FlashSales = () => {
                   </div>
                   <div className="mt-2 flex items-center gap-2 text-xs font-medium text-gray-500">
                     <span className="flex items-center gap-1.5 rounded-md bg-white px-2 py-1 shadow-sm border border-gray-100">
-                      <FaCalendarAlt className="text-brand-500" /> {formatDateDisplay(sale.startTime)}
+                      <FaCalendarAlt className="text-primary" /> {formatDateDisplay(sale.startTime)}
                     </span>
                     <span>➔</span>
                     <span className="flex items-center gap-1.5 rounded-md bg-white px-2 py-1 shadow-sm border border-gray-100">
-                      <FaClock className="text-brand-500" /> {formatDateDisplay(sale.endTime)}
+                      <FaClock className="text-primary" /> {formatDateDisplay(sale.endTime)}
                     </span>
                   </div>
                 </div>
@@ -205,7 +205,7 @@ const FlashSales = () => {
                     Sản phẩm khuyến mãi <span className="text-gray-500 text-sm font-normal">({sale.products.length})</span>
                   </h4>
                   <button onClick={() => { setSelectedSaleId(sale._id); setShowProductModal(true); }}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700">
+                    className="flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary-hover">
                     <FaPlus size={12} /> Thêm sách vào đợt này
                   </button>
                 </div>
@@ -298,7 +298,7 @@ const FlashSales = () => {
           </div>
           {editingSaleId && (
             <div className="flex items-center mt-2">
-              <input type="checkbox" id="isActiveSale" className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              <input type="checkbox" id="isActiveSale" className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 checked={saleForm.isActive} onChange={(e) => setSaleForm({ ...saleForm, isActive: e.target.checked })} />
               <label htmlFor="isActiveSale" className="ml-2 text-sm font-semibold text-gray-700">Đang hoạt động</label>
             </div>

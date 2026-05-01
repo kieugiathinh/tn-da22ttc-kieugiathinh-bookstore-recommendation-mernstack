@@ -103,8 +103,8 @@ const Orders = () => {
             onClick={() => { setFilterStatus(tab.value); setCurrentPage(1); }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all border ${
               filterStatus === tab.value
-                ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                : "bg-white text-gray-600 border-gray-200 hover:border-brand-300"
+                ? "bg-primary text-white border-primary shadow-sm"
+                : "bg-white text-gray-600 border-gray-200 hover:border-primary"
             }`}
           >
             {tab.label}

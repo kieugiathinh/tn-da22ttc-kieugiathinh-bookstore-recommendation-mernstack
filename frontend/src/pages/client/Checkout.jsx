@@ -188,7 +188,7 @@ const Checkout = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm mb-4 border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
               <span>Thông tin nhận hàng</span>
-              <span className="text-xs font-normal text-purple-600 bg-purple-50 px-2 py-1 rounded-full border border-purple-100">
+              <span className="text-xs font-normal text-primary bg-primary-light px-2 py-1 rounded-full border border-primary-light">
                 Mặc định
               </span>
             </h2>
@@ -234,7 +234,7 @@ const Checkout = () => {
               className="p-4 flex items-center justify-between cursor-pointer bg-gray-50 hover:bg-gray-100 transition select-none"
             >
               <div className="flex items-center text-gray-700">
-                <FaEdit className="mr-3 text-purple-500" />
+                <FaEdit className="mr-3 text-primary" />
                 <span className="font-semibold text-sm md:text-base">
                   Thay đổi địa chỉ / SĐT nhận hàng
                 </span>
@@ -248,7 +248,7 @@ const Checkout = () => {
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                      <FaPhoneAlt className="mr-2 text-purple-500 text-xs" /> Số
+                      <FaPhoneAlt className="mr-2 text-primary text-xs" /> Số
                       điện thoại mới
                     </label>
                     <input
@@ -257,12 +257,12 @@ const Checkout = () => {
                       value={alternateInputs.otherPhone}
                       onChange={handleAlternateChange}
                       placeholder="Nhập SĐT người nhận..."
-                      className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-200"
+                      className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                      <FaMapMarkerAlt className="mr-2 text-purple-500 text-xs" />{" "}
+                      <FaMapMarkerAlt className="mr-2 text-primary text-xs" />{" "}
                       Địa chỉ nhận hàng mới
                     </label>
                     <textarea
@@ -271,7 +271,7 @@ const Checkout = () => {
                       value={alternateInputs.otherAddress}
                       onChange={handleAlternateChange}
                       placeholder="Nhập địa chỉ giao hàng cụ thể..."
-                      className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-200"
+                      className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
                     />
                   </div>
                 </div>
@@ -287,8 +287,8 @@ const Checkout = () => {
               <label
                 className={`flex items-center p-4 border rounded-lg cursor-pointer transition ${
                   paymentMethod === "COD"
-                    ? "border-purple-500 bg-purple-50 ring-1 ring-purple-500"
-                    : "border-gray-200 hover:border-purple-200"
+                    ? "border-primary bg-primary-light ring-1 ring-primary"
+                    : "border-gray-200 hover:border-primary-light"
                 }`}
               >
                 <input
@@ -297,7 +297,7 @@ const Checkout = () => {
                   value="COD"
                   checked={paymentMethod === "COD"}
                   onChange={() => setPaymentMethod("COD")}
-                  className="w-5 h-5 text-purple-600 accent-purple-600"
+                  className="w-5 h-5 text-primary accent-primary"
                 />
                 <div className="ml-4 flex items-center">
                   <FaMoneyBillWave className="text-green-600 text-2xl mr-3" />
@@ -311,8 +311,8 @@ const Checkout = () => {
               <label
                 className={`flex items-center p-4 border rounded-lg cursor-pointer transition ${
                   paymentMethod === "Stripe"
-                    ? "border-purple-500 bg-purple-50 ring-1 ring-purple-500"
-                    : "border-gray-200 hover:border-purple-200"
+                    ? "border-primary bg-primary-light ring-1 ring-primary"
+                    : "border-gray-200 hover:border-primary-light"
                 }`}
               >
                 <input
@@ -321,7 +321,7 @@ const Checkout = () => {
                   value="Stripe"
                   checked={paymentMethod === "Stripe"}
                   onChange={() => setPaymentMethod("Stripe")}
-                  className="w-5 h-5 text-purple-600 accent-purple-600"
+                  className="w-5 h-5 text-primary accent-primary"
                 />
                 <div className="ml-4 flex items-center">
                   <FaCreditCard className="text-blue-600 text-2xl mr-3" />
@@ -361,7 +361,7 @@ const Checkout = () => {
                         {item.quantity}
                       </span>
                     </div>
-                    <p className="font-medium text-gray-700 line-clamp-2 w-28 text-xs group-hover:text-purple-600 transition">
+                    <p className="font-medium text-gray-700 line-clamp-2 w-28 text-xs group-hover:text-primary transition">
                       {item.title}
                     </p>
                   </div>
@@ -376,12 +376,12 @@ const Checkout = () => {
             <div className="border-t border-dashed pt-4 pb-4">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-bold text-gray-700 flex items-center">
-                  <FaTicketAlt className="mr-2 text-purple-600" /> Voucher
+                  <FaTicketAlt className="mr-2 text-primary" /> Voucher
                 </label>
                 {availableVouchers.length > 0 && (
                   <button
                     onClick={() => setShowVoucherList(!showVoucherList)}
-                    className="text-xs text-purple-600 font-bold hover:underline"
+                    className="text-xs text-primary font-bold hover:underline"
                     disabled={discountAmount > 0}
                   >
                     {showVoucherList ? "Đóng" : "Chọn mã"}
@@ -395,7 +395,7 @@ const Checkout = () => {
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   placeholder="Mã giảm giá"
                   disabled={discountAmount > 0}
-                  className="w-full p-2 border border-gray-300 rounded text-sm uppercase outline-none focus:border-purple-500 disabled:bg-gray-100"
+                  className="w-full p-2 border border-gray-300 rounded text-sm uppercase outline-none focus:border-primary disabled:bg-gray-100"
                 />
                 {discountAmount > 0 ? (
                   <button
@@ -408,7 +408,7 @@ const Checkout = () => {
                   <button
                     onClick={() => handleApplyCoupon()}
                     disabled={!couponCode || isCheckingCode}
-                    className="bg-purple-600 text-white px-3 rounded text-sm font-bold hover:bg-purple-700 disabled:opacity-50"
+                    className="bg-primary text-white px-3 rounded text-sm font-bold hover:bg-primary-hover disabled:opacity-50"
                   >
                     Áp dụng
                   </button>
@@ -423,17 +423,17 @@ const Checkout = () => {
                         setCouponCode(item.coupon.code);
                         handleApplyCoupon(item.coupon.code);
                       }}
-                      className="bg-white p-2 mb-1 rounded border border-gray-100 hover:border-purple-300 cursor-pointer flex justify-between items-center"
+                      className="bg-white p-2 mb-1 rounded border border-gray-100 hover:border-primary cursor-pointer flex justify-between items-center"
                     >
                       <div>
-                        <p className="font-bold text-xs text-purple-700">
+                        <p className="font-bold text-xs text-primary-hover">
                           {item.coupon.code}
                         </p>
                         <p className="text-[10px] text-gray-500">
                           {item.coupon.description}
                         </p>
                       </div>
-                      <span className="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold">
+                      <span className="text-[10px] bg-primary-light text-primary px-2 py-0.5 rounded-full font-bold">
                         Dùng
                       </span>
                     </div>
@@ -461,7 +461,7 @@ const Checkout = () => {
               )}
               <div className="flex justify-between text-lg font-extrabold text-gray-800 border-t pt-2 mt-2">
                 <span>Tổng tiền</span>
-                <span className="text-purple-600">
+                <span className="text-primary">
                   {/* TỔNG = (TIỀN HÀNG - VOUCHER) + SHIP */}
                   {(subTotalAfterDiscount + SHIPPING_FEE).toLocaleString()} ₫
                 </span>
@@ -470,7 +470,7 @@ const Checkout = () => {
 
             <button
               onClick={handlePlaceOrder}
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg mt-6 font-bold hover:shadow-lg hover:scale-[1.02] transition-all active:scale-95"
+              className="w-full bg-gradient-to-r from-primary to-indigo-600 text-white py-3 rounded-lg mt-6 font-bold hover:shadow-lg hover:scale-[1.02] transition-all active:scale-95"
             >
               ĐẶT HÀNG
             </button>

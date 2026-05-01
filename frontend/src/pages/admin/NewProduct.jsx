@@ -131,10 +131,10 @@ const NewProduct = () => {
                   <div className="group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/50 p-6 transition-colors hover:bg-gray-50">
                     {!selectedImage ? (
                       <label htmlFor="file" className="flex w-full cursor-pointer flex-col items-center py-4">
-                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-500 transition-transform group-hover:scale-110">
+                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-light text-primary transition-transform group-hover:scale-110">
                           <FaCloudUploadAlt size={24} />
                         </div>
-                        <span className="text-sm font-semibold text-brand-600">Tải ảnh lên</span>
+                        <span className="text-sm font-semibold text-primary">Tải ảnh lên</span>
                       </label>
                     ) : (
                       <div className="relative w-full">
@@ -148,7 +148,7 @@ const NewProduct = () => {
                     )}
                     <input type="file" id="file" onChange={imageChange} className="hidden" accept="image/*" />
                   </div>
-                  {uploadStatus && <p className="mt-2 text-center text-xs font-medium text-brand-600">{uploadStatus}</p>}
+                  {uploadStatus && <p className="mt-2 text-center text-xs font-medium text-primary">{uploadStatus}</p>}
                 </div>
 
                 <div className="pt-2">

@@ -161,7 +161,7 @@ const Dashboard = () => {
   if (loading)
     return (
       <div className="flex h-[60vh] items-center justify-center gap-3 text-gray-500">
-        <FaSync className="animate-spin text-brand-500" />
+        <FaSync className="animate-spin text-primary" />
         <span className="font-medium">Đang tải Dashboard...</span>
       </div>
     );
@@ -187,7 +187,7 @@ const Dashboard = () => {
               onClick={() => setTimeRange(t.value)}
               className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
                 timeRange === t.value
-                  ? "bg-white text-brand-700 shadow-sm border border-gray-200"
+                  ? "bg-white text-primary-hover shadow-sm border border-gray-200"
                   : "text-gray-500 hover:text-gray-800"
               }`}
             >
@@ -203,8 +203,8 @@ const Dashboard = () => {
           title="Doanh Thu"
           value={`${(kpi?.revenue || 0).toLocaleString("vi-VN")} ₫`}
           icon={FaMoneyBillWave}
-          iconBg="bg-brand-50"
-          iconColor="text-brand-600"
+          iconBg="bg-primary-light"
+          iconColor="text-primary"
           subtitle={`${kpi?.orders || 0} đơn hàng`}
         />
         <MetricCard
@@ -249,12 +249,12 @@ const Dashboard = () => {
                 onClick={() => setIsCompare(!isCompare)}
                 className="flex items-center gap-2 text-xs font-semibold"
               >
-                <span className={isCompare ? "text-brand-600" : "text-gray-400"}>
+                <span className={isCompare ? "text-primary" : "text-gray-400"}>
                   So sánh năm
                 </span>
                 <div
                   className={`relative h-5 w-9 rounded-full transition-colors ${
-                    isCompare ? "bg-brand-600" : "bg-gray-200"
+                    isCompare ? "bg-primary" : "bg-gray-200"
                   }`}
                 >
                   <div
@@ -395,7 +395,7 @@ const Dashboard = () => {
                       <td className="flex items-center gap-3 px-5 py-3">
                         <span
                           className={`flex h-5 w-6 flex-shrink-0 items-center justify-center rounded text-[11px] font-bold ${
-                            i < 3 ? "bg-brand-50 text-brand-700" : "text-gray-400"
+                            i < 3 ? "bg-primary-light text-primary-hover" : "text-gray-400"
                           }`}
                         >
                           #{i + 1}
@@ -410,7 +410,7 @@ const Dashboard = () => {
                           {p.title}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-bold text-brand-600">
+                      <td className="px-4 py-3 text-right font-bold text-primary">
                         {p.sold}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-500 font-medium">
@@ -491,7 +491,7 @@ const Dashboard = () => {
                   >
                     <div className="flex items-center gap-3">
                       {/* Avatar chữ cái */}
-                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-brand-400 to-blue-500 text-sm font-bold text-white shadow-sm">
+                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-blue-500 text-sm font-bold text-white shadow-sm">
                         {c.name ? c.name.charAt(0).toUpperCase() : "K"}
                       </div>
                       <div>

@@ -133,7 +133,7 @@ const Cart = () => {
           Giỏ hàng của bạn đang trống
         </h2>
         <Link to="/">
-          <button className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-700 transition shadow-lg flex items-center">
+          <button className="px-6 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-hover transition shadow-lg flex items-center">
             <FaArrowLeft className="mr-2" /> Tiếp tục mua sắm
           </button>
         </Link>
@@ -166,7 +166,7 @@ const Cart = () => {
                       cart.products.length > 0
                     }
                     onChange={handleSelectAll}
-                    className="w-5 h-5 accent-purple-600 cursor-pointer"
+                    className="w-5 h-5 accent-primary cursor-pointer"
                   />
                 </div>
                 <div className="col-span-5">Sản phẩm</div>
@@ -182,7 +182,7 @@ const Cart = () => {
                     key={product._id}
                     className={`p-4 sm:grid sm:grid-cols-12 gap-4 items-center transition ${
                       selectedIds.includes(product._id)
-                        ? "bg-purple-50/30"
+                        ? "bg-primary-light/30"
                         : "hover:bg-gray-50"
                     }`}
                   >
@@ -192,7 +192,7 @@ const Cart = () => {
                         type="checkbox"
                         checked={selectedIds.includes(product._id)}
                         onChange={() => handleSelectProduct(product._id)}
-                        className="w-5 h-5 accent-purple-600 cursor-pointer"
+                        className="w-5 h-5 accent-primary cursor-pointer"
                       />
                     </div>
 
@@ -207,7 +207,7 @@ const Cart = () => {
                         <h3 className="text-base font-bold text-gray-800 line-clamp-2 mb-1">
                           <Link
                             to={`/product/${product._id}`}
-                            className="hover:text-purple-600 transition"
+                            className="hover:text-primary transition"
                           >
                             {product.title}
                           </Link>
@@ -278,7 +278,7 @@ const Cart = () => {
                     </div>
 
                     {/* Cột 4: Thành tiền */}
-                    <div className="col-span-2 text-right font-bold text-purple-600 text-lg mt-4 sm:mt-0">
+                    <div className="col-span-2 text-right font-bold text-primary text-lg mt-4 sm:mt-0">
                       {(product.price * product.quantity).toLocaleString(
                         "vi-VN"
                       )}{" "}
@@ -292,7 +292,7 @@ const Cart = () => {
             <div className="mt-6 flex justify-between items-center">
               <Link
                 to="/"
-                className="text-purple-600 hover:text-purple-800 font-semibold flex items-center transition"
+                className="text-primary hover:text-primary-hover font-semibold flex items-center transition"
               >
                 <FaArrowLeft className="mr-2" /> Tiếp tục mua sắm
               </Link>
@@ -315,7 +315,7 @@ const Cart = () => {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-gray-600">
                   <span>Đã chọn</span>
-                  <span className="font-medium text-purple-600">
+                  <span className="font-medium text-primary">
                     {selectedIds.length} sản phẩm
                   </span>
                 </div>
@@ -350,7 +350,7 @@ const Cart = () => {
                 disabled={selectedIds.length === 0}
                 className={`w-full font-bold py-3.5 rounded-lg shadow-lg transition transform active:scale-95 ${
                   selectedIds.length > 0
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 hover:-translate-y-0.5"
+                    ? "bg-gradient-to-r from-primary to-pink-600 text-white hover:from-primary-hover hover:to-pink-700 hover:-translate-y-0.5"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >

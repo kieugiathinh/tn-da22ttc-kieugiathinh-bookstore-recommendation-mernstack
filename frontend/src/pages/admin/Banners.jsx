@@ -128,7 +128,7 @@ const Banners = () => {
         <Card className="flex flex-col">
           <div className="border-b border-gray-100 px-6 py-5 flex justify-between items-center bg-gray-50/50">
             <h2 className="text-base font-bold text-gray-900">Danh sách Banner</h2>
-            <span className="flex h-6 items-center justify-center rounded-full bg-brand-100 px-2.5 text-xs font-bold text-brand-700">
+            <span className="flex h-6 items-center justify-center rounded-full bg-primary-light px-2.5 text-xs font-bold text-primary-hover">
               {banners.length} banner
             </span>
           </div>
@@ -148,7 +148,7 @@ const Banners = () => {
                     className={`group relative flex items-center justify-between rounded-xl border p-4 transition-all duration-200
                       ${!banner.isActive
                         ? "border-gray-200 bg-gray-50 opacity-70"
-                        : "border-brand-100 bg-white hover:border-brand-300 hover:shadow-md"
+                        : "border-primary-light bg-white hover:border-primary hover:shadow-md"
                       }
                     `}
                   >
@@ -199,13 +199,13 @@ const Banners = () => {
             {/* Input Ảnh */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-gray-600">1. Ảnh Banner (Bắt buộc)</label>
-              <div className="group relative flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand-200 bg-brand-50/30 p-4 transition-colors hover:bg-brand-50">
+              <div className="group relative flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary-light bg-primary-light/30 p-4 transition-colors hover:bg-primary-light">
                 {!selectedImage ? (
                   <label htmlFor="file" className="flex h-full w-full cursor-pointer flex-col items-center justify-center">
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-600 transition-transform group-hover:scale-110">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-light text-primary transition-transform group-hover:scale-110">
                       <FaPlus size={20} />
                     </div>
-                    <span className="text-sm font-semibold text-brand-700">Tải ảnh lên</span>
+                    <span className="text-sm font-semibold text-primary-hover">Tải ảnh lên</span>
                     <span className="mt-1 text-xs text-gray-500">Khuyên dùng tỷ lệ 16:9 hoặc 2:1</span>
                   </label>
                 ) : (
@@ -219,7 +219,7 @@ const Banners = () => {
                 <input type="file" id="file" onChange={imageChange} className="hidden" accept="image/*" />
               </div>
               {uploadStatus && (
-                <p className="mt-2 text-center text-xs font-medium text-brand-600">{uploadStatus}</p>
+                <p className="mt-2 text-center text-xs font-medium text-primary">{uploadStatus}</p>
               )}
             </div>
 

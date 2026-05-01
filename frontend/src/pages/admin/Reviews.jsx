@@ -139,8 +139,8 @@ const AdminReviews = () => {
                           "{review.comment}"
                         </p>
                         {review.reply && (
-                          <div className="mt-2 rounded-lg border border-brand-100 bg-brand-50 p-2.5 text-xs text-gray-700">
-                            <span className="font-bold text-brand-700 mr-1">Admin:</span>{review.reply}
+                          <div className="mt-2 rounded-lg border border-primary-light bg-primary-light p-2.5 text-xs text-gray-700">
+                            <span className="font-bold text-primary-hover mr-1">Admin:</span>{review.reply}
                           </div>
                         )}
                       </td>

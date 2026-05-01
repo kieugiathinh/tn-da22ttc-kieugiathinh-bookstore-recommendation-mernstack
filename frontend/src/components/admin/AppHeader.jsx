@@ -76,7 +76,7 @@ const AppHeader = () => {
           <input
             type="text"
             placeholder="Tìm kiếm..."
-            className="h-9 w-64 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-300/20 xl:w-80"
+            className="h-9 w-64 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 xl:w-80"
           />
         </div>
       </div>
@@ -99,7 +99,7 @@ const AppHeader = () => {
             className="flex items-center gap-2 rounded-lg border border-gray-200 px-2 py-1.5 hover:bg-gray-100 transition-colors"
           >
             {/* Avatar */}
-            <div className="h-7 w-7 overflow-hidden rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+            <div className="h-7 w-7 overflow-hidden rounded-full bg-primary-light flex items-center justify-center flex-shrink-0">
               {currentUser?.avatar ? (
                 <img
                   src={currentUser.avatar}
@@ -107,7 +107,7 @@ const AppHeader = () => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <FaUser size={13} className="text-brand-600" />
+                <FaUser size={13} className="text-primary" />
               )}
             </div>
             {/* Tên + role (chỉ hiện trên sm+) */}

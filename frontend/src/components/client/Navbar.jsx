@@ -47,7 +47,7 @@ const Navbar = () => {
       <div className="wrapper px-4 md:px-10 h-full flex items-center justify-between">
         {/* LOGO */}
         <Link to="/" className="flex-1 flex items-center">
-          <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 cursor-pointer tracking-wide">
+          <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-pink-600 cursor-pointer tracking-wide">
             GTBOOKS
           </span>
         </Link>
@@ -59,13 +59,13 @@ const Navbar = () => {
               type="text"
               placeholder="Tìm kiếm sách yêu thích..."
               value={search}
-              className="w-full py-2.5 pl-5 pr-12 border border-gray-300 rounded-full outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+              className="w-full py-2.5 pl-5 pr-12 border border-gray-300 rounded-full outline-none focus:border-primary focus:ring-2 focus:ring-primary-light transition-all duration-300 text-sm"
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleEnterKey}
             />
             <button
               onClick={handleSearch}
-              className="absolute right-1 top-1 bottom-1 bg-purple-600 text-white rounded-full w-10 h-8 flex items-center justify-center hover:bg-purple-700 transition-colors"
+              className="absolute right-1 top-1 bottom-1 bg-primary text-white rounded-full w-10 h-8 flex items-center justify-center hover:bg-primary-hover transition-colors"
             >
               <FaSearch className="text-sm" />
             </button>
@@ -76,7 +76,7 @@ const Navbar = () => {
         <div className="flex-1 flex items-center justify-end space-x-6">
           <Link to="/cart">
             <div className="relative cursor-pointer group">
-              <FaShoppingCart className="text-2xl text-gray-600 group-hover:text-purple-600 transition duration-200" />
+              <FaShoppingCart className="text-2xl text-gray-600 group-hover:text-primary transition duration-200" />
               {cart.quantity > 0 && (
                 <span className="absolute -top-2 -right-2 w-5 h-5 bg-pink-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">
                   {cart.quantity}
@@ -94,9 +94,9 @@ const Navbar = () => {
               <div className="flex items-center space-x-2 cursor-pointer py-2">
                 {currentUser.avatar ? (
                   <img src={currentUser.avatar} alt="avatar"
-                    className="w-9 h-9 rounded-full object-cover border border-purple-200" />
+                    className="w-9 h-9 rounded-full object-cover border border-primary-light" />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold border border-purple-200 select-none">
+                  <div className="w-9 h-9 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold border border-primary-light select-none">
                     {currentUser.fullname ? currentUser.fullname.charAt(0).toUpperCase() : "U"}
                   </div>
                 )}
@@ -116,13 +116,13 @@ const Navbar = () => {
                       <FaUserCog className="inline mr-2" /> Trang quản trị
                     </Link>
                   )}
-                  <Link to="/myaccount" className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition">
+                  <Link to="/myaccount" className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:text-primary-hover transition">
                     <FaUser className="inline mr-2" /> Tài khoản của tôi
                   </Link>
-                  <Link to="/my-vouchers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition">
+                  <Link to="/my-vouchers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:text-primary-hover transition">
                     <FaTicketAlt className="inline mr-2" /> Mã giảm giá của tôi
                   </Link>
-                  <Link to="/myorders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition">
+                  <Link to="/myorders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:text-primary-hover transition">
                     <FaClipboardList className="inline mr-2" /> Đơn mua
                   </Link>
                   <div className="border-t border-gray-100 mt-2 pt-2">
@@ -137,10 +137,10 @@ const Navbar = () => {
           ) : (
             <div className="flex items-center space-x-3">
               <Link to="/login">
-                <button className="text-gray-600 font-semibold hover:text-purple-600 transition text-sm">Đăng nhập</button>
+                <button className="text-gray-600 font-semibold hover:text-primary transition text-sm">Đăng nhập</button>
               </Link>
               <Link to="/register">
-                <button className="px-4 py-2 bg-purple-600 text-white rounded-full font-semibold text-sm hover:bg-purple-700 shadow-md transition transform hover:-translate-y-0.5">
+                <button className="px-4 py-2 bg-primary text-white rounded-full font-semibold text-sm hover:bg-primary-hover shadow-md transition transform hover:-translate-y-0.5">
                   Đăng ký
                 </button>
               </Link>

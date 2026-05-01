@@ -12,7 +12,7 @@ import clsx from "clsx";
  */
 const variantStyles = {
   primary:
-    "bg-brand-600 text-white shadow-sm hover:bg-brand-700 border-transparent",
+    "bg-primary text-white shadow-sm hover:bg-primary-hover border-transparent",
   secondary:
     "border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
   danger:

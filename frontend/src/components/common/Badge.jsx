@@ -12,7 +12,7 @@ const variantStyles = {
   danger: "bg-red-50 text-red-700 border-red-200",
   info: "bg-blue-50 text-blue-700 border-blue-200",
   neutral: "bg-gray-100 text-gray-600 border-gray-200",
-  brand: "bg-brand-50 text-brand-700 border-brand-200",
+  brand: "bg-primary-light text-primary-hover border-primary-light",
 };
 
 const Badge = ({

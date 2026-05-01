@@ -94,7 +94,7 @@ const AppSidebar = () => {
         ].join(" ")}
       >
         {/* Icon logo nhỏ vuông */}
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-600">
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary">
           <span className="text-sm font-black text-white">G</span>
         </div>
         {/* Tên hiển thị khi sidebar mở rộng */}
@@ -134,7 +134,7 @@ const AppSidebar = () => {
                         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
                         !showLabel && "justify-center",
                         active
-                          ? "bg-brand-50 text-brand-700"
+                          ? "bg-primary-light text-primary-hover"
                           : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
                       ]
                         .filter(Boolean)
@@ -144,7 +144,7 @@ const AppSidebar = () => {
                       <span
                         className={[
                           "flex-shrink-0",
-                          active ? "text-brand-600" : "text-gray-400",
+                          active ? "text-primary" : "text-gray-400",
                         ].join(" ")}
                       >
                         {item.icon}

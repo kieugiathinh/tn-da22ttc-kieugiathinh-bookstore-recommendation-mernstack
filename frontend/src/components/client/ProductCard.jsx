@@ -31,7 +31,7 @@ const ProductCard = ({ product, isFlashSale = false }) => {
         </div>
 
         {/* Tên sách */}
-        <h3 className="text-sm font-medium text-gray-800 line-clamp-2 mb-2 min-h-[40px] group-hover:text-purple-600 transition-colors">
+        <h3 className="text-sm font-medium text-gray-800 line-clamp-2 mb-2 min-h-[40px] group-hover:text-primary transition-colors">
           {product.title}
         </h3>
 
