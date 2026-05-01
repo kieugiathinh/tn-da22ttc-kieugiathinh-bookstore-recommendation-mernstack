@@ -8,12 +8,13 @@ import {
   FaStar,
   FaStarHalfAlt,
   FaRegStar,
-  FaChevronLeft,
-  FaChevronRight,
+  FaTimes,
+  FaSync,
 } from "react-icons/fa";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-// BỎ: import { Rating } from "react-simple-star-rating";
+import PageHeader from "../../components/admin/PageHeader";
+import Pagination from "../../components/admin/Pagination";
 
 // --- COMPONENT HIỂN THỊ SAO (READ-ONLY) ---
 const StarRating = ({ rating }) => {
@@ -29,7 +30,12 @@ const StarRating = ({ rating }) => {
   }
   return <div className="flex flex-row gap-0.5">{stars}</div>;
 };
-// ------------------------------------------
+
+const ROWS_PER_PAGE = 10;
+
+// ── Shared input style ─────────────────────────────────────────────────────
+const inputCls =
+  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-200/30";
 
 const AdminReviews = () => {
   const [reviews, setReviews] = useState([]);
@@ -37,7 +43,6 @@ const AdminReviews = () => {
 
   // --- STATE PHÂN TRANG ---
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Hiển thị 10 dòng mỗi trang
   // ------------------------
 
   // State cho Modal Reply
@@ -47,11 +52,12 @@ const AdminReviews = () => {
 
   const fetchReviews = async () => {
     try {
+      setLoading(true);
       const res = await userRequest.get("/reviews"); // Gọi API lấy tất cả
       setReviews(res.data);
-      setLoading(false);
     } catch (error) {
       console.error(error);
+    } finally {
       setLoading(false);
     }
   };
@@ -61,13 +67,9 @@ const AdminReviews = () => {
   }, []);
 
   // --- LOGIC TÍNH TOÁN PHÂN TRANG ---
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentReviews = reviews.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(reviews.length / itemsPerPage);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  // ----------------------------------
+  const totalPages = Math.ceil(reviews.length / ROWS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+  const currentReviews = reviews.slice(startIndex, startIndex + ROWS_PER_PAGE);
 
   // --- XỬ LÝ ẨN/HIỆN ---
   const handleToggleHide = async (id, currentStatus) => {
@@ -91,7 +93,7 @@ const AdminReviews = () => {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      confirmButtonText: "Xóa",
+      confirmButtonText: "Xóa ngay",
       cancelButtonText: "Hủy",
     });
 
@@ -133,223 +135,194 @@ const AdminReviews = () => {
     }
   };
 
-  if (loading)
-    return <div className="p-10 text-center">Đang tải dữ liệu...</div>;
-
   return (
-    <div className="flex-1 p-8 bg-gray-50 h-full overflow-y-auto flex flex-col">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center justify-between">
-        <span>💬 Quản lý Đánh giá ({reviews.length})</span>
-      </h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Quản lý Đánh giá"
+        subtitle={`${reviews.length} đánh giá từ khách hàng`}
+      />
 
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden flex-1 flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-purple-50 text-purple-700 uppercase text-xs font-bold">
-              <tr>
-                <th className="p-4">Sản phẩm</th>
-                <th className="p-4">Người dùng</th>
-                <th className="p-4">Đánh giá</th>
-                <th className="p-4">Trạng thái</th>
-                <th className="p-4 text-center">Hành động</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {currentReviews.map((review) => (
-                <tr key={review._id} className="hover:bg-gray-50 transition">
-                  {/* Cột Sản phẩm */}
-                  <td className="p-4 max-w-xs">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={review.product?.img}
-                        alt=""
-                        className="w-10 h-14 object-cover rounded border"
-                      />
-                      <span
-                        className="font-semibold line-clamp-2"
-                        title={review.product?.title}
-                      >
-                        {review.product?.title || "Sản phẩm đã xóa"}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Cột Người dùng */}
-                  <td className="p-4">
-                    <p className="font-bold text-gray-800">
-                      {review.user?.fullname}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {review.user?.email}
-                    </p>
-                  </td>
-
-                  {/* Cột Nội dung */}
-                  <td className="p-4 max-w-md">
-                    <div className="flex items-center mb-1">
-                      {/* THAY THẾ RATING CŨ */}
-                      <StarRating rating={review.rating} />
-                    </div>
-                    <p className="text-gray-700 italic mb-2 line-clamp-2">
-                      "{review.comment}"
-                    </p>
-
-                    {/* Hiển thị phản hồi của Admin nếu có */}
-                    {review.reply && (
-                      <div className="bg-purple-50 p-2 rounded border border-purple-100 text-xs">
-                        <span className="font-bold text-purple-700">
-                          Admin trả lời:{" "}
-                        </span>
-                        {review.reply}
-                      </div>
-                    )}
-                  </td>
-
-                  {/* Cột Trạng thái */}
-                  <td className="p-4">
-                    {review.isHidden ? (
-                      <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs font-bold">
-                        Đang Ẩn
-                      </span>
-                    ) : (
-                      <span className="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs font-bold">
-                        Hiển thị
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Cột Hành động */}
-                  <td className="p-4">
-                    <div className="flex items-center justify-center gap-2">
-                      {/* Nút Trả lời */}
-                      <button
-                        onClick={() => openReplyModal(review)}
-                        className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition"
-                        title="Trả lời"
-                      >
-                        <FaReply />
-                      </button>
-
-                      {/* Nút Ẩn/Hiện */}
-                      <button
-                        onClick={() =>
-                          handleToggleHide(review._id, review.isHidden)
-                        }
-                        className={`p-2 rounded transition ${
-                          review.isHidden
-                            ? "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                            : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
-                        }`}
-                        title={review.isHidden ? "Hiện lại" : "Ẩn đi"}
-                      >
-                        {review.isHidden ? <FaEyeSlash /> : <FaEye />}
-                      </button>
-
-                      {/* Nút Xóa */}
-                      <button
-                        onClick={() => handleDelete(review._id)}
-                        className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200 transition"
-                        title="Xóa vĩnh viễn"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {currentReviews.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-500">
-                    Chưa có đánh giá nào.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* --- THANH PHÂN TRANG (PAGINATION) --- */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-white">
-            <span className="text-sm text-gray-500">
-              Trang {currentPage} / {totalPages}
-            </span>
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => (prev > 1 ? prev - 1 : prev))
-                }
-                disabled={currentPage === 1}
-                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                <FaChevronLeft className="text-xs" />
-              </button>
-
-              {/* Render số trang */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (number) => (
-                  <button
-                    key={number}
-                    onClick={() => paginate(number)}
-                    className={`px-3 py-1 border rounded text-sm font-medium transition ${
-                      currentPage === number
-                        ? "bg-purple-600 text-white border-purple-600"
-                        : "hover:bg-gray-50 text-gray-600"
-                    }`}
-                  >
-                    {number}
-                  </button>
-                )
-              )}
-
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) =>
-                    prev < totalPages ? prev + 1 : prev
-                  )
-                }
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                <FaChevronRight className="text-xs" />
-              </button>
-            </div>
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
+            <FaSync className="animate-spin text-brand-500" /> Đang tải...
           </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="px-5 py-3.5">Sản phẩm</th>
+                    <th className="px-5 py-3.5">Khách hàng</th>
+                    <th className="px-5 py-3.5">Đánh giá & Phản hồi</th>
+                    <th className="px-5 py-3.5 text-center">Trạng thái</th>
+                    <th className="px-5 py-3.5 text-center">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {currentReviews.map((review) => (
+                    <tr key={review._id} className="hover:bg-gray-50/60 transition-colors">
+                      {/* Cột Sản phẩm */}
+                      <td className="px-5 py-3.5 max-w-[200px]">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={review.product?.img || "https://placehold.co/40x56"}
+                            alt=""
+                            className="h-14 w-10 shrink-0 rounded border border-gray-200 object-cover shadow-sm bg-gray-100"
+                          />
+                          <span className="font-semibold text-gray-800 line-clamp-2" title={review.product?.title}>
+                            {review.product?.title || "Sản phẩm đã xóa"}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Cột Người dùng */}
+                      <td className="px-5 py-3.5">
+                        <p className="font-bold text-gray-800">{review.user?.fullname}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{review.user?.email}</p>
+                      </td>
+
+                      {/* Cột Nội dung */}
+                      <td className="px-5 py-3.5 max-w-[300px]">
+                        <div className="mb-1.5 flex items-center">
+                          <StarRating rating={review.rating} />
+                        </div>
+                        <p className="text-sm text-gray-700 italic line-clamp-2" title={review.comment}>
+                          "{review.comment}"
+                        </p>
+
+                        {/* Hiển thị phản hồi của Admin nếu có */}
+                        {review.reply && (
+                          <div className="mt-2 rounded-lg border border-brand-100 bg-brand-50 p-2.5 text-xs text-gray-700">
+                            <span className="font-bold text-brand-700 mr-1">Admin:</span>
+                            {review.reply}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Cột Trạng thái */}
+                      <td className="px-5 py-3.5 text-center">
+                        {review.isHidden ? (
+                          <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                            Đang ẩn
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                            Hiển thị
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Cột Hành động */}
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-center gap-2">
+                          {/* Nút Trả lời */}
+                          <button
+                            onClick={() => openReplyModal(review)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100"
+                            title="Trả lời"
+                          >
+                            <FaReply size={13} />
+                          </button>
+
+                          {/* Nút Ẩn/Hiện */}
+                          <button
+                            onClick={() => handleToggleHide(review._id, review.isHidden)}
+                            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+                              review.isHidden
+                                ? "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+                                : "border-yellow-100 bg-yellow-50 text-yellow-600 hover:bg-yellow-100"
+                            }`}
+                            title={review.isHidden ? "Hiện lại" : "Ẩn đi"}
+                          >
+                            {review.isHidden ? <FaEyeSlash size={13} /> : <FaEye size={13} />}
+                          </button>
+
+                          {/* Nút Xóa */}
+                          <button
+                            onClick={() => handleDelete(review._id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100"
+                            title="Xóa vĩnh viễn"
+                          >
+                            <FaTrash size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {currentReviews.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="py-12 text-center text-sm text-gray-400">
+                        Chưa có đánh giá nào
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              total={reviews.length}
+              rowsPerPage={ROWS_PER_PAGE}
+              onPrev={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              unit="đánh giá"
+            />
+          </>
         )}
       </div>
 
       {/* MODAL TRẢ LỜI */}
       {isReplyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-20 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">
-              Trả lời đánh giá của {selectedReview?.user?.fullname}
-            </h3>
-            <div className="bg-gray-50 p-3 rounded mb-4 italic text-sm text-gray-600 border-l-4 border-gray-300">
-              "{selectedReview?.comment}"
-            </div>
-
-            <textarea
-              rows="4"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 outline-none"
-              placeholder="Nhập câu trả lời của shop..."
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-            ></textarea>
-
-            <div className="flex justify-end gap-3 mt-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h3 className="text-base font-bold text-gray-900">
+                Trả lời đánh giá
+              </h3>
               <button
                 onClick={() => setIsReplyModalOpen(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                Hủy
+                <FaTimes size={18} />
               </button>
-              <button
-                onClick={submitReply}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition"
-              >
-                Gửi phản hồi
-              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-5 rounded-xl border-l-4 border-gray-300 bg-gray-50 p-4 text-sm italic text-gray-600">
+                "{selectedReview?.comment}"
+                <div className="mt-2 text-xs font-semibold not-italic text-gray-500">
+                  — {selectedReview?.user?.fullname}
+                </div>
+              </div>
+
+              <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                Nội dung phản hồi từ Shop
+              </label>
+              <textarea
+                rows="4"
+                className={`${inputCls} resize-none`}
+                placeholder="Nhập câu trả lời của shop..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+              />
+
+              <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-4">
+                <button
+                  onClick={() => setIsReplyModalOpen(false)}
+                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={submitReply}
+                  className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
+                >
+                  Gửi Phản Hồi
+                </button>
+              </div>
             </div>
           </div>
         </div>

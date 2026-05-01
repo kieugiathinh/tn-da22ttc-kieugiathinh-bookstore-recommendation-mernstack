@@ -1,435 +1,266 @@
-import {
-  FaTrash,
-  FaEdit,
-  FaUserPlus,
-  FaChevronLeft,
-  FaChevronRight,
-  FaTimes,
-} from "react-icons/fa";
-import { userRequest } from "../../requestMethods";
 import { useEffect, useState } from "react";
+import { FaTrash, FaEdit, FaUserPlus, FaTimes, FaUsers, FaSync } from "react-icons/fa";
+import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
+import PageHeader from "../../components/admin/PageHeader";
+import Pagination from "../../components/admin/Pagination";
 
 const ROWS_PER_PAGE = 10;
+
+// ── Shared input style ─────────────────────────────────────────────────────
+const inputCls =
+  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-200/30";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  // --- STATE CHO MODAL ---
   const [showModal, setShowModal] = useState(false);
-  const [editingUserId, setEditingUserId] = useState(null); // State xác định đang Sửa hay Thêm
+  const [editingUserId, setEditingUserId] = useState(null);
   const [formData, setFormData] = useState({
-    fullname: "",
-    username: "",
-    email: "",
-    password: "",
-    phone: "",
-    role: 0,
+    fullname: "", username: "", email: "", password: "", phone: "", role: 0,
   });
 
-  // 1. Hàm Tải dữ liệu
+  // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const res = await userRequest.get("/users");
-      // Sắp xếp: Admin lên đầu, sau đó đến người mới nhất
-      const sortedData = res.data.sort((a, b) => {
-        if (b.role !== a.role) return b.role - a.role;
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
-      setUsers(sortedData.map((user) => ({ ...user, id: user._id })));
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Không thể tải dữ liệu người dùng.");
+      const sorted = res.data.sort((a, b) =>
+        b.role !== a.role ? b.role - a.role : new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      setUsers(sorted.map((u) => ({ ...u, id: u._id })));
+    } catch {
+      Swal.fire("Lỗi", "Không thể tải dữ liệu người dùng.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
-  // 2. Reset Form (Dùng khi đóng modal hoặc chuyển sang chế độ thêm)
+  // ── Modal helpers ─────────────────────────────────────────────────────────
   const resetForm = () => {
-    setFormData({
-      fullname: "",
-      username: "",
-      email: "",
-      password: "",
-      phone: "",
-      role: 0,
-    });
-    setEditingUserId(null); // Reset về chế độ Thêm
-    setError(null);
+    setFormData({ fullname: "", username: "", email: "", password: "", phone: "", role: 0 });
+    setEditingUserId(null);
   };
 
-  // 3. Xử lý mở Modal ở chế độ THÊM
-  const handleOpenAddModal = () => {
-    resetForm();
+  const openAdd = () => { resetForm(); setShowModal(true); };
+
+  const openEdit = (user) => {
+    setEditingUserId(user._id);
+    setFormData({ fullname: user.fullname, username: user.username, email: user.email, password: "", phone: user.phone || "", role: user.role });
     setShowModal(true);
   };
 
-  // 4. Xử lý mở Modal ở chế độ SỬA (Quan Trọng)
-  const handleOpenEditModal = (user) => {
-    setEditingUserId(user._id); // Lưu ID đang sửa
-    setFormData({
-      fullname: user.fullname,
-      username: user.username,
-      email: user.email,
-      password: "", // Mật khẩu để trống (nghĩa là không đổi)
-      phone: user.phone || "",
-      role: user.role,
-    });
-    setShowModal(true);
-  };
+  const closeModal = () => { setShowModal(false); resetForm(); };
 
-  // 5. Xử lý nhập liệu
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  // 6. Xử lý LƯU (Chung cho cả Thêm và Sửa)
-  const handleSaveUser = async (e) => {
+  // ── Save ──────────────────────────────────────────────────────────────────
+  const handleSave = async (e) => {
     e.preventDefault();
     try {
       if (editingUserId) {
-        // --- LOGIC SỬA (UPDATE) ---
-        // Nếu password rỗng thì xóa khỏi object để backend không hash chuỗi rỗng
-        const updateData = { ...formData };
-        if (!updateData.password) {
-          delete updateData.password;
-        }
-
-        await userRequest.put(`/users/${editingUserId}`, updateData);
-        Swal.fire("Thành công", "Đã cập nhật thông tin người dùng!", "success");
+        const data = { ...formData };
+        if (!data.password) delete data.password;
+        await userRequest.put(`/users/${editingUserId}`, data);
+        Swal.fire("Thành công", "Đã cập nhật người dùng!", "success");
       } else {
-        // --- LOGIC THÊM (CREATE) ---
         await userRequest.post("/users", formData);
         Swal.fire("Thành công", "Đã tạo người dùng mới!", "success");
       }
-
-      setShowModal(false);
-      resetForm();
-      fetchUsers(); // Tải lại danh sách
+      closeModal();
+      fetchUsers();
     } catch (err) {
       Swal.fire("Lỗi", err.response?.data?.message || "Có lỗi xảy ra", "error");
     }
   };
 
-  // 7. Xử lý Xóa
-  const handleDelete = async (userId) => {
-    const result = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Hành động này không thể hoàn tác!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Xóa ngay",
-      cancelButtonText: "Hủy",
+  // ── Delete ────────────────────────────────────────────────────────────────
+  const handleDelete = async (id) => {
+    const { isConfirmed } = await Swal.fire({
+      title: "Xác nhận xóa?", text: "Hành động này không thể hoàn tác!",
+      icon: "warning", showCancelButton: true,
+      confirmButtonColor: "#d33", confirmButtonText: "Xóa ngay", cancelButtonText: "Hủy",
     });
-
-    if (result.isConfirmed) {
+    if (isConfirmed) {
       try {
-        await userRequest.delete(`/users/${userId}`);
-        Swal.fire("Đã xóa!", "Người dùng đã bị xóa.", "success");
+        await userRequest.delete(`/users/${id}`);
+        Swal.fire("Đã xóa!", "", "success");
         fetchUsers();
-      } catch (error) {
+      } catch {
         Swal.fire("Lỗi!", "Xóa thất bại.", "error");
       }
     }
   };
 
-  // Logic Phân trang
+  // ── Pagination ────────────────────────────────────────────────────────────
   const totalPages = Math.ceil(users.length / ROWS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-  const currentUsers = users.slice(startIndex, startIndex + ROWS_PER_PAGE);
-
-  const handleNextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-
-  if (loading)
-    return (
-      <div className="p-8 text-center text-xl text-purple-600">
-        Đang tải dữ liệu...
-      </div>
-    );
-  if (error)
-    return (
-      <div className="p-8 text-red-500 bg-red-100 border border-red-300 rounded-lg">
-        {error}
-      </div>
-    );
+  const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
+  const pageData = users.slice(startIdx, startIdx + ROWS_PER_PAGE);
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 h-full overflow-y-auto relative">
-      {/* HEADER */}
-      <div className="flex items-center justify-between pb-6 border-b border-gray-200 mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
-          👤 Quản lý Người dùng
-        </h1>
-        <button
-          className="flex items-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition duration-300"
-          onClick={handleOpenAddModal} // Gọi hàm mở modal thêm
-        >
-          <FaUserPlus className="mr-2" />
-          Tạo Người Dùng
-        </button>
+    <div className="space-y-6">
+      <PageHeader
+        title="Quản lý Người dùng"
+        subtitle={`${users.length} tài khoản trong hệ thống`}
+        action={
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
+          >
+            <FaUserPlus size={14} /> Tạo tài khoản
+          </button>
+        }
+      />
+
+      {/* Table card */}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
+            <FaSync className="animate-spin text-brand-500" /> Đang tải...
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="px-5 py-3.5">Người dùng</th>
+                    <th className="px-5 py-3.5">Username</th>
+                    <th className="px-5 py-3.5">Email</th>
+                    <th className="px-5 py-3.5">SĐT</th>
+                    <th className="px-5 py-3.5">Vai trò</th>
+                    <th className="px-5 py-3.5 text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {pageData.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50/60 transition-colors">
+                      {/* Họ tên + avatar */}
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                            {user.avatar
+                              ? <img src={user.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
+                              : (user.fullname?.charAt(0) || "U").toUpperCase()
+                            }
+                          </div>
+                          <span className="font-semibold text-gray-800 truncate max-w-[140px]">{user.fullname}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-600">{user.username}</td>
+                      <td className="px-5 py-3.5 text-gray-600 truncate max-w-[160px]">{user.email}</td>
+                      <td className="px-5 py-3.5 text-gray-500">{user.phone || "—"}</td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                          user.role === 1
+                            ? "bg-brand-50 text-brand-700 border border-brand-200"
+                            : "bg-gray-100 text-gray-600 border border-gray-200"
+                        }`}>
+                          {user.role === 1 ? "Admin" : "Khách hàng"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            onClick={() => openEdit(user)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                          >
+                            <FaEdit size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user._id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                          >
+                            <FaTrash size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={currentPage} totalPages={totalPages}
+              total={users.length} rowsPerPage={ROWS_PER_PAGE}
+              onPrev={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              unit="người dùng"
+            />
+          </>
+        )}
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-purple-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Họ và tên
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Tên đăng nhập
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                SĐT
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Vai trò
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Thao tác
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {currentUsers.map((user) => (
-              <tr
-                key={user.id}
-                className="hover:bg-gray-50 transition duration-150"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {user.fullname}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {user.username}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {user.email}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {user.phone || "—"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.role === 1
-                        ? "bg-green-100 text-green-800"
-                        : "bg-blue-100 text-blue-800"
-                    }`}
-                  >
-                    {user.role === 1 ? "Admin" : "Khách hàng"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                  <div className="flex justify-center space-x-4">
-                    {/* NÚT SỬA: Gọi hàm handleOpenEditModal */}
-                    <FaEdit
-                      className="text-blue-500 cursor-pointer hover:text-blue-700 text-lg"
-                      onClick={() => handleOpenEditModal(user)}
-                    />
-                    <FaTrash
-                      className="text-red-500 cursor-pointer hover:text-red-700 text-lg"
-                      onClick={() => handleDelete(user._id)}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* FOOTER PHÂN TRANG (Giữ nguyên) */}
-        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Trước
-            </button>
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Sau
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <p className="text-sm text-gray-700">
-              Trang {currentPage} / {totalPages}
-            </p>
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-              <button
-                onClick={handlePrevPage}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-              >
-                <FaChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-              >
-                <FaChevronRight className="h-5 w-5" />
-              </button>
-            </nav>
-          </div>
-        </div>
-      </div>
-
-      {/* ==================== MODAL (POPUP) ==================== */}
+      {/* ── MODAL ── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-20 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-100">
-            {/* Modal Header: Đổi tiêu đề dựa trên editingUserId */}
-            <div className="flex justify-between items-center bg-purple-600 px-6 py-4">
-              <h2 className="text-xl font-bold text-white">
-                {editingUserId ? "Cập Nhật Thông Tin" : "Thêm Người Dùng Mới"}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h2 className="text-base font-bold text-gray-900">
+                {editingUserId ? "Cập nhật thông tin" : "Thêm người dùng mới"}
               </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-white hover:text-gray-200"
-              >
-                <FaTimes size={20} />
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <FaTimes size={18} />
               </button>
             </div>
 
-            {/* Modal Body (Form) */}
-            <form onSubmit={handleSaveUser} className="p-6 space-y-4">
+            {/* Form */}
+            <form onSubmit={handleSave} className="space-y-4 p-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Họ và Tên
-                </label>
-                <input
-                  type="text"
-                  name="fullname"
-                  required
-                  value={formData.fullname}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                  placeholder="Nguyễn Văn A"
-                />
+                <label className="mb-1.5 block text-xs font-semibold text-gray-600">Họ và Tên</label>
+                <input type="text" name="fullname" required placeholder="Nguyễn Văn A"
+                  value={formData.fullname} onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
+                  className={inputCls} />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    name="username"
-                    required
-                    // Nếu đang sửa thì có thể disable username nếu không muốn cho đổi
-                    // disabled={!!editingUserId}
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                    placeholder="user123"
-                  />
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">Username</label>
+                  <input type="text" name="username" required placeholder="user123"
+                    value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    className={inputCls} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại
-                  </label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                    placeholder="09xx..."
-                  />
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">Số điện thoại</label>
+                  <input type="text" name="phone" placeholder="09xx..."
+                    value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className={inputCls} />
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                  placeholder="email@example.com"
-                />
+                <label className="mb-1.5 block text-xs font-semibold text-gray-600">Email</label>
+                <input type="email" name="email" required placeholder="email@example.com"
+                  value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className={inputCls} />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {/* Đổi nhãn mật khẩu khi sửa */}
-                  {editingUserId
-                    ? "Mật khẩu mới (Để trống nếu không đổi)"
-                    : "Mật khẩu"}
+                <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                  {editingUserId ? "Mật khẩu mới (để trống = không đổi)" : "Mật khẩu"}
                 </label>
-                <input
-                  type="password"
-                  name="password"
-                  // Khi thêm mới thì BẮT BUỘC, khi sửa thì KHÔNG bắt buộc
-                  required={!editingUserId}
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                  placeholder={
-                    editingUserId ? "Giữ nguyên mật khẩu cũ..." : "********"
-                  }
-                />
+                <input type="password" name="password" required={!editingUserId}
+                  placeholder={editingUserId ? "Giữ nguyên nếu để trống..." : "********"}
+                  value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className={inputCls} />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Vai trò
-                </label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white"
-                >
+                <label className="mb-1.5 block text-xs font-semibold text-gray-600">Vai trò</label>
+                <select name="role" value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: Number(e.target.value) })}
+                  className={inputCls}>
                   <option value={0}>Khách hàng (User)</option>
                   <option value={1}>Quản trị viên (Admin)</option>
                 </select>
               </div>
 
-              {/* Modal Footer */}
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-                >
+              <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+                <button type="button" onClick={closeModal}
+                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
                   Hủy
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold shadow-lg"
-                >
-                  {/* Đổi chữ nút Lưu */}
-                  {editingUserId ? "Cập Nhật" : "Tạo Mới"}
+                <button type="submit"
+                  className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors">
+                  {editingUserId ? "Cập nhật" : "Tạo mới"}
                 </button>
               </div>
             </form>

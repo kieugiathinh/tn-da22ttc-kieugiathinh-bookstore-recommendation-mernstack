@@ -9,7 +9,10 @@ const createBanner = asyncHandler(async (req, res) => {
 
 // Update Banner
 const updateBanner = asyncHandler(async (req, res) => {
-  const updatedBanner = await bannerService.updateBanner(req.params.id, req.body);
+  const updatedBanner = await bannerService.updateBanner(
+    req.params.id,
+    req.body,
+  );
   res.status(200).json(updatedBanner);
 });
 

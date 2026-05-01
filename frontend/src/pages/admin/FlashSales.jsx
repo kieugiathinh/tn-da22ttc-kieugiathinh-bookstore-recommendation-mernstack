@@ -13,8 +13,13 @@ import {
 import { userRequest } from "../../requestMethods";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
+import PageHeader from "../../components/admin/PageHeader";
 
 const PREVIEW_LIMIT = 3;
+
+// ── Shared input style ─────────────────────────────────────────────────────
+const inputCls =
+  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-200/30";
 
 const FlashSales = () => {
   const [flashSales, setFlashSales] = useState([]);
@@ -24,7 +29,7 @@ const FlashSales = () => {
   // --- STATE QUẢN LÝ XEM THÊM ---
   const [expandedSales, setExpandedSales] = useState({});
 
-  // --- STATE MODAL TẠO / SỬA (Sửa tên biến ở đây cho chuẩn) ---
+  // --- STATE MODAL TẠO / SỬA ---
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [editingSaleId, setEditingSaleId] = useState(null);
   const [saleForm, setSaleForm] = useState({
@@ -92,7 +97,7 @@ const FlashSales = () => {
   const handleOpenCreate = () => {
     setEditingSaleId(null);
     setSaleForm({ name: "", startTime: "", endTime: "", isActive: true });
-    setShowSaleModal(true); // Dùng biến showSaleModal
+    setShowSaleModal(true);
   };
 
   const handleOpenEdit = (sale) => {
@@ -103,7 +108,7 @@ const FlashSales = () => {
       endTime: formatDateForInput(sale.endTime),
       isActive: sale.isActive,
     });
-    setShowSaleModal(true); // Dùng biến showSaleModal
+    setShowSaleModal(true);
   };
 
   // --- XỬ LÝ API ---
@@ -117,7 +122,7 @@ const FlashSales = () => {
         await userRequest.post("/flash-sales", saleForm);
         Swal.fire("Thành công", "Đã tạo đợt Flash Sale mới", "success");
       }
-      setShowSaleModal(false); // Đóng modal
+      setShowSaleModal(false);
       fetchData();
     } catch (error) {
       Swal.fire("Lỗi", error.response?.data?.message || "Thất bại", "error");
@@ -143,6 +148,7 @@ const FlashSales = () => {
       showCancelButton: true,
       confirmButtonColor: "#d33",
       confirmButtonText: "Xóa ngay",
+      cancelButtonText: "Hủy"
     });
     if (result.isConfirmed) {
       try {
@@ -180,6 +186,7 @@ const FlashSales = () => {
       showCancelButton: true,
       confirmButtonColor: "#d33",
       confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy"
     });
     if (result.isConfirmed) {
       try {
@@ -194,23 +201,24 @@ const FlashSales = () => {
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Đang tải...</div>;
+  if (loading) return <div className="flex justify-center py-20 text-gray-400">Đang tải...</div>;
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 h-full overflow-y-auto relative">
-      <div className="flex items-center justify-between pb-6 border-b border-gray-200 mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
-          ⚡ Quản lý Flash Sale
-        </h1>
-        <button
-          className="flex items-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition"
-          onClick={handleOpenCreate}
-        >
-          <FaPlus className="mr-2" /> Tạo Chiến Dịch Mới
-        </button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Quản lý Flash Sale"
+        subtitle="Quản lý các đợt giảm giá chớp nhoáng"
+        action={
+          <button
+            onClick={handleOpenCreate}
+            className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
+          >
+            <FaPlus size={14} /> Tạo Chiến Dịch Mới
+          </button>
+        }
+      />
 
-      <div className="grid gap-8">
+      <div className="space-y-6">
         {flashSales.map((sale) => {
           const isExpanded = expandedSales[sale._id];
           const productsToShow = isExpanded
@@ -221,162 +229,145 @@ const FlashSales = () => {
           return (
             <div
               key={sale._id}
-              className={`bg-white rounded-xl shadow-md border-l-4 overflow-hidden ${
-                sale.isActive ? "border-l-green-500" : "border-l-gray-400"
+              className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all ${
+                sale.isActive ? "border-green-200" : "border-gray-200 opacity-80"
               }`}
             >
               {/* Header Card */}
-              <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
+              <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center border-b px-6 py-4 ${
+                sale.isActive ? "bg-green-50/50 border-green-100" : "bg-gray-50 border-gray-100"
+              }`}>
                 <div>
-                  <div className="flex items-center space-x-3">
-                    <h3 className="text-xl font-bold text-gray-800">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-bold text-gray-900">
                       {sale.name}
                     </h3>
                     <button
                       onClick={() => handleToggleActive(sale)}
-                      className="focus:outline-none text-2xl transition-colors"
-                      title={
-                        sale.isActive ? "Tắt chiến dịch" : "Bật chiến dịch"
-                      }
+                      className="text-xl transition-colors hover:opacity-80 focus:outline-none"
+                      title={sale.isActive ? "Tắt chiến dịch" : "Bật chiến dịch"}
                     >
                       {sale.isActive ? (
-                        <FaToggleOn className="text-green-500 cursor-pointer" />
+                        <FaToggleOn className="text-green-500" />
                       ) : (
-                        <FaToggleOff className="text-gray-400 cursor-pointer" />
+                        <FaToggleOff className="text-gray-400" />
                       )}
                     </button>
+                    {!sale.isActive && (
+                      <span className="rounded bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-600">
+                        ĐÃ TẮT
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
-                    <span className="flex items-center bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                      <FaCalendarAlt className="mr-2" />{" "}
+                  <div className="mt-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+                    <span className="flex items-center gap-1.5 rounded-md bg-white px-2 py-1 shadow-sm border border-gray-100">
+                      <FaCalendarAlt className="text-brand-500" />
                       {formatDateDisplay(sale.startTime)}
                     </span>
                     <span>➔</span>
-                    <span className="flex items-center bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                      <FaClock className="mr-2" />{" "}
+                    <span className="flex items-center gap-1.5 rounded-md bg-white px-2 py-1 shadow-sm border border-gray-100">
+                      <FaClock className="text-brand-500" />
                       {formatDateDisplay(sale.endTime)}
                     </span>
                   </div>
                 </div>
-                <div className="flex space-x-3">
+                <div className="mt-4 sm:mt-0 flex gap-2">
                   <button
                     onClick={() => handleOpenEdit(sale)}
-                    className="flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 font-medium text-sm"
+                    className="flex items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100"
                   >
-                    <FaEdit className="mr-1" /> Sửa
+                    <FaEdit size={12} /> Sửa
                   </button>
                   <button
                     onClick={() => handleDeleteSale(sale._id)}
-                    className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                    className="flex items-center justify-center rounded-lg border border-red-100 bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100"
                   >
-                    <FaTrash />
+                    <FaTrash size={12} />
                   </button>
                 </div>
               </div>
 
               {/* Body: Danh sách sản phẩm */}
               <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-semibold text-gray-700">
-                    Sản phẩm khuyến mãi ({sale.products.length})
+                <div className="mb-4 flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-800">
+                    Sản phẩm khuyến mãi <span className="text-gray-500 text-sm font-normal">({sale.products.length})</span>
                   </h4>
                   <button
                     onClick={() => {
                       setSelectedSaleId(sale._id);
                       setShowProductModal(true);
                     }}
-                    className="flex items-center text-purple-600 hover:text-purple-800 font-semibold text-sm"
+                    className="flex items-center gap-1.5 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
                   >
-                    <FaPlus className="mr-1" /> Thêm sách vào đây
+                    <FaPlus size={12} /> Thêm sách vào đợt này
                   </button>
                 </div>
 
                 {sale.products.length === 0 ? (
-                  <p className="text-gray-400 italic text-sm text-center py-4 border-2 border-dashed rounded-lg">
+                  <div className="rounded-xl border-2 border-dashed border-gray-200 py-8 text-center text-sm text-gray-400">
                     Chưa có sách nào trong đợt sale này.
-                  </p>
+                  </div>
                 ) : (
                   <>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto rounded-xl border border-gray-200">
                       <table className="min-w-full text-sm">
                         <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-2 text-left text-gray-600">
-                              Sách
-                            </th>
-                            <th className="px-4 py-2 text-left text-gray-600">
-                              Giá Gốc
-                            </th>
-                            <th className="px-4 py-2 text-left text-red-600 font-bold">
-                              Giá Sale
-                            </th>
-                            <th className="px-4 py-2 text-left text-gray-600">
-                              Giới hạn
-                            </th>
-                            <th className="px-4 py-2 text-left text-gray-600">
-                              Tiến độ
-                            </th>
-                            <th className="px-4 py-2 text-center text-gray-600">
-                              Xóa
-                            </th>
+                          <tr className="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                            <th className="px-5 py-3.5">Sách</th>
+                            <th className="px-5 py-3.5">Giá Gốc</th>
+                            <th className="px-5 py-3.5 text-red-500">Giá Sale</th>
+                            <th className="px-5 py-3.5">Giới hạn</th>
+                            <th className="px-5 py-3.5">Tiến độ</th>
+                            <th className="px-5 py-3.5 text-center">Xóa</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-gray-100">
                           {productsToShow.map((item, idx) => (
-                            <tr key={idx} className="border-b hover:bg-gray-50">
-                              <td className="px-4 py-3 flex items-center">
+                            <tr key={idx} className="hover:bg-gray-50/60 transition-colors">
+                              <td className="px-5 py-3 flex items-center gap-3">
                                 <img
-                                  src={item.product?.img}
-                                  className="w-10 h-14 object-cover rounded shadow-sm mr-3"
+                                  src={item.product?.img || "https://placehold.co/40x56"}
+                                  className="h-14 w-10 rounded border border-gray-200 object-cover shadow-sm bg-gray-100"
                                   alt=""
                                 />
                                 <div>
-                                  <div className="font-medium text-gray-800">
+                                  <div className="font-semibold text-gray-800 line-clamp-1 max-w-[200px]" title={item.product?.title}>
                                     {item.product?.title}
                                   </div>
-                                  <div className="text-xs text-gray-500">
-                                    {item.product?._id}
+                                  <div className="text-xs text-gray-400 mt-0.5">
+                                    ID: {item.product?._id.slice(-6)}
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-4 py-3 text-gray-500 decoration-slate-400 line-through">
-                                {item.product?.originalPrice?.toLocaleString()}{" "}
-                                đ
+                              <td className="px-5 py-3 text-gray-400 line-through">
+                                {item.product?.originalPrice?.toLocaleString()} đ
                               </td>
-                              <td className="px-4 py-3 font-bold text-red-600 text-base">
+                              <td className="px-5 py-3 font-bold text-red-600 text-base">
                                 {item.discountPrice?.toLocaleString()} đ
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="px-5 py-3 font-medium text-gray-700">
                                 {item.quantityLimit}
                               </td>
-                              <td className="px-4 py-3 w-32">
-                                <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
+                              <td className="px-5 py-3 w-40">
+                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 mb-1.5">
                                   <div
-                                    className="bg-red-500 h-2 rounded-full"
+                                    className="h-full rounded-full bg-red-500"
                                     style={{
-                                      width: `${Math.min(
-                                        (item.soldCount / item.quantityLimit) *
-                                          100,
-                                        100
-                                      )}%`,
+                                      width: `${Math.min((item.soldCount / item.quantityLimit) * 100, 100)}%`,
                                     }}
                                   ></div>
                                 </div>
-                                <div className="text-xs text-gray-500 text-right">
-                                  {item.soldCount} đã bán
+                                <div className="text-right text-[11px] font-medium text-gray-500">
+                                  Đã bán {item.soldCount}
                                 </div>
                               </td>
-                              <td className="px-4 py-3 text-center">
+                              <td className="px-5 py-3 text-center">
                                 <button
-                                  onClick={() =>
-                                    handleRemoveProduct(
-                                      sale._id,
-                                      item.product?._id
-                                    )
-                                  }
-                                  className="text-red-400 hover:text-red-600 transition"
+                                  onClick={() => handleRemoveProduct(sale._id, item.product?._id)}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-colors"
                                 >
-                                  <FaTimes />
+                                  <FaTimes size={13} />
                                 </button>
                               </td>
                             </tr>
@@ -387,19 +378,18 @@ const FlashSales = () => {
 
                     {/* NÚT SHOW MORE / SHOW LESS */}
                     {sale.products.length > PREVIEW_LIMIT && (
-                      <div className="text-center mt-3 border-t border-dashed pt-2">
+                      <div className="mt-4 text-center">
                         <button
                           onClick={() => toggleExpand(sale._id)}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center justify-center w-full transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 px-4 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100 border border-gray-200"
                         >
                           {isExpanded ? (
                             <>
-                              <FaChevronUp className="mr-1" /> Thu gọn
+                              <FaChevronUp size={10} /> Thu gọn
                             </>
                           ) : (
                             <>
-                              <FaChevronDown className="mr-1" /> Xem thêm{" "}
-                              {hiddenCount} sách nữa
+                              <FaChevronDown size={10} /> Xem thêm {hiddenCount} sách nữa
                             </>
                           )}
                         </button>
@@ -411,127 +401,128 @@ const FlashSales = () => {
             </div>
           );
         })}
+        {flashSales.length === 0 && (
+          <div className="rounded-2xl border-2 border-dashed border-gray-200 py-20 text-center text-gray-400">
+            Chưa có chiến dịch Flash Sale nào
+          </div>
+        )}
       </div>
 
       {/* --- MODAL TẠO / SỬA CHIẾN DỊCH --- */}
-      {/* ĐÃ SỬA TÊN BIẾN showCreateModal -> showSaleModal */}
       {showSaleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-20 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex justify-between items-center mb-6 border-b pb-2">
-              <h2 className="text-xl font-bold text-gray-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h2 className="text-base font-bold text-gray-900">
                 {editingSaleId ? "Cập Nhật Chiến Dịch" : "Tạo Chiến Dịch Mới"}
               </h2>
               <button
                 onClick={() => setShowSaleModal(false)}
-                className="text-gray-500 hover:text-gray-800"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <FaTimes size={20} />
+                <FaTimes size={18} />
               </button>
             </div>
-            <form onSubmit={handleSaveSale} className="space-y-5">
+            <form onSubmit={handleSaveSale} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="mb-1.5 block text-xs font-semibold text-gray-600">
                   Tên chiến dịch
                 </label>
                 <input
                   required
                   type="text"
-                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-purple-500"
+                  className={inputCls}
                   placeholder="VD: Sale Tết 2025"
                   value={saleForm.name}
-                  onChange={(e) =>
-                    setSaleForm({ ...saleForm, name: e.target.value })
-                  }
+                  onChange={(e) => setSaleForm({ ...saleForm, name: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
                     Bắt đầu
                   </label>
                   <input
                     required
                     type="datetime-local"
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                    className={inputCls}
                     value={saleForm.startTime}
-                    onChange={(e) =>
-                      setSaleForm({ ...saleForm, startTime: e.target.value })
-                    }
+                    onChange={(e) => setSaleForm({ ...saleForm, startTime: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
                     Kết thúc
                   </label>
                   <input
                     required
                     type="datetime-local"
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                    className={inputCls}
                     value={saleForm.endTime}
-                    onChange={(e) =>
-                      setSaleForm({ ...saleForm, endTime: e.target.value })
-                    }
+                    onChange={(e) => setSaleForm({ ...saleForm, endTime: e.target.value })}
                   />
                 </div>
               </div>
               {editingSaleId && (
-                <div className="flex items-center">
+                <div className="flex items-center mt-2">
                   <input
                     type="checkbox"
                     id="isActive"
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                     checked={saleForm.isActive}
-                    onChange={(e) =>
-                      setSaleForm({ ...saleForm, isActive: e.target.checked })
-                    }
+                    onChange={(e) => setSaleForm({ ...saleForm, isActive: e.target.checked })}
                   />
-                  <label
-                    htmlFor="isActive"
-                    className="ml-2 text-sm font-medium text-gray-900"
-                  >
+                  <label htmlFor="isActive" className="ml-2 text-sm font-semibold text-gray-700">
                     Đang hoạt động
                   </label>
                 </div>
               )}
-              <button
-                type="submit"
-                className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 font-bold shadow-lg transition transform hover:-translate-y-0.5"
-              >
-                {editingSaleId ? "LƯU THAY ĐỔI" : "TẠO CHIẾN DỊCH"}
-              </button>
+              
+              <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowSaleModal(false)}
+                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
+                >
+                  {editingSaleId ? "LƯU THAY ĐỔI" : "TẠO CHIẾN DỊCH"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal Thêm Sản Phẩm (Giữ nguyên) */}
+      {/* Modal Thêm Sản Phẩm */}
       {showProductModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-            <div className="flex justify-between items-center mb-6 border-b pb-2">
-              <h2 className="text-xl font-bold text-gray-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h2 className="text-base font-bold text-gray-900">
                 Thêm Sách Vào Sale
               </h2>
-              <button onClick={() => setShowProductModal(false)}>
-                <FaTimes size={20} />
+              <button
+                onClick={() => setShowProductModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <FaTimes size={18} />
               </button>
             </div>
-            <form onSubmit={handleAddProduct} className="space-y-5">
+            <form onSubmit={handleAddProduct} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="mb-1.5 block text-xs font-semibold text-gray-600">
                   Chọn sách
                 </label>
                 <select
                   required
-                  className="w-full border border-gray-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+                  className={inputCls}
                   value={productForm.productId}
-                  onChange={(e) =>
-                    setProductForm({
-                      ...productForm,
-                      productId: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setProductForm({ ...productForm, productId: e.target.value })}
                 >
                   <option value="">-- Tìm sách --</option>
                   {allProducts.map((p) => (
@@ -543,47 +534,47 @@ const FlashSales = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
                     Giá Sale (VND)
                   </label>
                   <input
                     required
                     type="number"
-                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 outline-none"
+                    className={inputCls}
                     placeholder="50000"
                     value={productForm.discountPrice}
-                    onChange={(e) =>
-                      setProductForm({
-                        ...productForm,
-                        discountPrice: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setProductForm({ ...productForm, discountPrice: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
                     Số lượng bán
                   </label>
                   <input
                     required
                     type="number"
-                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 outline-none"
+                    className={inputCls}
                     value={productForm.quantityLimit}
-                    onChange={(e) =>
-                      setProductForm({
-                        ...productForm,
-                        quantityLimit: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setProductForm({ ...productForm, quantityLimit: e.target.value })}
                   />
                 </div>
               </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-bold shadow-lg"
-              >
-                XÁC NHẬN THÊM
-              </button>
+              
+              <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowProductModal(false)}
+                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
+                >
+                  XÁC NHẬN THÊM
+                </button>
+              </div>
             </form>
           </div>
         </div>

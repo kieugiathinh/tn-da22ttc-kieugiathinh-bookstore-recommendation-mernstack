@@ -1,13 +1,17 @@
-import { FaSave, FaCloudUploadAlt, FaArrowLeft } from "react-icons/fa";
+import { FaSave, FaCloudUploadAlt, FaArrowLeft, FaSync } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { userRequest } from "../../requestMethods";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { CLOUDINARY_CONFIG } from "../../utils/constants";
+import PageHeader from "../../components/admin/PageHeader";
+
+// ── Shared input style ─────────────────────────────────────────────────────
+const inputCls =
+  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-200/30";
 
 const Product = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -47,9 +51,9 @@ const Product = () => {
           sold: productRes.data.sold || 0,
         });
 
-        setLoading(false);
       } catch (error) {
         console.error("Lỗi:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -72,7 +76,7 @@ const Product = () => {
     setSelectedCat(e.target.value);
   };
 
-  // --- 3. Update Logic (ĐÃ SỬA) ---
+  // --- 3. Update Logic ---
   const handleUpdate = async (e) => {
     e.preventDefault();
     setUploadStatus("Đang xử lý...");
@@ -100,13 +104,10 @@ const Product = () => {
 
       await userRequest.put("/products/" + id, updatedProduct);
 
-      // --- THAY ĐỔI Ở ĐÂY ---
-      // Không hiện Swal thành công nữa
       // Chuyển hướng ngay lập tức về trang danh sách sản phẩm
       navigate("/admin/products");
     } catch (error) {
       console.error(error);
-      // Vẫn giữ thông báo lỗi để biết nếu có trục trặc
       Swal.fire("Lỗi", "Cập nhật thất bại. Vui lòng thử lại.", "error");
       setUploadStatus("Lỗi");
     }
@@ -114,208 +115,230 @@ const Product = () => {
 
   if (loading)
     return (
-      <div className="p-10 text-center text-purple-600 font-medium">
-        Đang tải dữ liệu...
+      <div className="flex items-center justify-center py-20 text-gray-400">
+        <FaSync className="mr-2 animate-spin text-brand-500" /> Đang tải dữ liệu...
       </div>
     );
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 h-full overflow-y-auto">
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-          ✏️ Chỉnh sửa sách
-        </h1>
-        <Link
-          to="/admin/products"
-          className="flex items-center text-gray-600 hover:text-purple-600 transition"
-        >
-          <FaArrowLeft className="mr-2" /> Quay lại danh sách
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Chỉnh Sửa Sách"
+        subtitle={`Chỉnh sửa thông tin cho mã sách: ${id.slice(-8)}`}
+        action={
+          <Link
+            to="/admin/products"
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+          >
+            <FaArrowLeft size={14} /> Quay lại
+          </Link>
+        }
+      />
 
-      {/* FORM */}
-      <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-        <form
-          onSubmit={handleUpdate}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-        >
-          {/* CỘT TRÁI */}
+      <form onSubmit={handleUpdate}>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* CỘT TRÁI: THÔNG TIN CƠ BẢN */}
           <div className="lg:col-span-2 space-y-6">
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Tên Sách
-              </label>
-              <input
-                type="text"
-                name="title"
-                defaultValue={product.title}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-              />
-            </div>
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-5 border-b border-gray-100 pb-3">
+                Thông tin chi tiết
+              </h2>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">
-                  Tác giả
-                </label>
-                <input
-                  type="text"
-                  name="author"
-                  defaultValue={product.author}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">
-                  Nhà xuất bản
-                </label>
-                <input
-                  type="text"
-                  name="publisher"
-                  defaultValue={product.publisher}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                />
-              </div>
-            </div>
+              <div className="space-y-5">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                    Tên Sách <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    defaultValue={product.title}
+                    onChange={handleChange}
+                    required
+                    className={inputCls}
+                  />
+                </div>
 
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Mô tả nội dung
-              </label>
-              <textarea
-                name="desc"
-                rows="6"
-                defaultValue={product.desc}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
-              />
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                      Tác giả
+                    </label>
+                    <input
+                      type="text"
+                      name="author"
+                      defaultValue={product.author}
+                      onChange={handleChange}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                      Nhà xuất bản
+                    </label>
+                    <input
+                      type="text"
+                      name="publisher"
+                      defaultValue={product.publisher}
+                      onChange={handleChange}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">
-                  Giá Bìa (VND)
-                </label>
-                <input
-                  type="number"
-                  name="originalPrice"
-                  defaultValue={product.originalPrice}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">
-                  Giá Khuyến Mãi
-                </label>
-                <input
-                  type="number"
-                  name="discountedPrice"
-                  defaultValue={product.discountedPrice}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                />
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                    Mô tả nội dung
+                  </label>
+                  <textarea
+                    name="desc"
+                    rows="6"
+                    defaultValue={product.desc}
+                    onChange={handleChange}
+                    className={`${inputCls} resize-none`}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                      Giá Bìa (VND) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="originalPrice"
+                      defaultValue={product.originalPrice}
+                      onChange={handleChange}
+                      required
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                      Giá Bán (Sau giảm)
+                    </label>
+                    <input
+                      type="number"
+                      name="discountedPrice"
+                      defaultValue={product.discountedPrice}
+                      onChange={handleChange}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* CỘT PHẢI */}
+          {/* CỘT PHẢI: PHÂN LOẠI & ẢNH */}
           <div className="space-y-6">
-            {/* Ảnh */}
-            <div className="bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300 flex flex-col items-center text-center">
-              <div className="relative w-full h-64 mb-4 bg-white rounded-lg overflow-hidden shadow-sm">
-                <img
-                  src={
-                    newSelectedImage
-                      ? URL.createObjectURL(newSelectedImage)
-                      : product.img
-                  }
-                  alt="Book Cover"
-                  className="w-full h-full object-contain"
-                />
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-5 border-b border-gray-100 pb-3">
+                Phân loại & Hình ảnh
+              </h2>
+
+              <div className="space-y-5">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                    Thể loại sách <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={selectedCat}
+                    onChange={handleCatChange}
+                    className={inputCls}
+                  >
+                    <option value="" disabled>
+                      -- Chọn thể loại --
+                    </option>
+                    {categories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                      Tồn kho
+                    </label>
+                    <input
+                      type="number"
+                      name="countInStock"
+                      defaultValue={product.countInStock}
+                      onChange={handleChange}
+                      min="0"
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-600" title="Chỉnh sửa để tăng độ uy tín">
+                      Đã bán
+                    </label>
+                    <input
+                      type="number"
+                      name="sold"
+                      defaultValue={product.sold || 0}
+                      onChange={handleChange}
+                      min="0"
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                    Ảnh Bìa Sách <span className="text-red-500">*</span>
+                  </label>
+                  <div className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/50 p-6 transition-colors hover:bg-gray-50">
+                    <div className="relative w-full">
+                      <div className="relative mx-auto h-64 w-full max-w-[200px] overflow-hidden rounded-lg bg-white shadow-sm border border-gray-100">
+                        <img
+                          src={
+                            newSelectedImage
+                              ? URL.createObjectURL(newSelectedImage)
+                              : product.img || "https://placehold.co/200x300?text=No+Img"
+                          }
+                          alt="Book Cover"
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                      <label
+                        htmlFor="file"
+                        className="absolute bottom-2 right-1/2 translate-x-1/2 flex cursor-pointer items-center gap-1.5 rounded-lg bg-black/70 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-black"
+                      >
+                        Đổi ảnh
+                      </label>
+                    </div>
+                    <input type="file" id="file" onChange={handleImageChange} className="hidden" accept="image/*" />
+                  </div>
+                  {uploadStatus && (
+                    <p className="mt-2 text-center text-xs font-medium text-brand-600">
+                      {uploadStatus}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={uploadStatus.includes("Đang")}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all ${
+                      uploadStatus.includes("Đang")
+                        ? "cursor-not-allowed bg-brand-400 opacity-70"
+                        : "bg-brand-600 hover:bg-brand-700 active:scale-[0.98]"
+                    }`}
+                  >
+                    <FaSave size={16} />
+                    {uploadStatus.includes("Đang") ? "ĐANG XỬ LÝ..." : "LƯU THAY ĐỔI"}
+                  </button>
+                </div>
               </div>
-              <label className="cursor-pointer bg-purple-100 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-200 transition flex items-center">
-                <FaCloudUploadAlt className="mr-2" /> Chọn ảnh mới
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleImageChange}
-                  accept="image/*"
-                />
-              </label>
-              {uploadStatus && (
-                <p className="text-xs text-blue-500 mt-2">{uploadStatus}</p>
-              )}
             </div>
-
-            {/* Thể loại */}
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Thể loại sách
-              </label>
-              <select
-                value={selectedCat}
-                onChange={handleCatChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white"
-              >
-                <option value="" disabled>
-                  -- Chọn thể loại --
-                </option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Tồn kho */}
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Số lượng tồn kho
-              </label>
-              <input
-                type="number"
-                name="countInStock"
-                defaultValue={product.countInStock}
-                onChange={handleChange}
-                min="0"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-              />
-            </div>
-
-            {/* Đã bán */}
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Đã bán
-              </label>
-              <input
-                type="number"
-                name="sold"
-                defaultValue={product.sold || 0}
-                onChange={handleChange}
-                min="0"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                title="Có thể chỉnh sửa số lượng đã bán để tăng độ uy tín"
-              />
-            </div>
-
-            {/* Nút Lưu */}
-            <button
-              type="submit"
-              disabled={uploadStatus.includes("Đang")}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 flex items-center justify-center"
-            >
-              <FaSave className="mr-2 text-xl" />{" "}
-              {uploadStatus.includes("Đang") ? "Đang lưu..." : "Lưu Thay Đổi"}
-            </button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 };

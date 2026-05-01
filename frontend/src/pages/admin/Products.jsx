@@ -1,270 +1,166 @@
-import {
-  FaTrash,
-  FaEdit,
-  FaPlus,
-  FaChevronLeft,
-  FaChevronRight,
-} from "react-icons/fa";
-import { Link } from "react-router-dom";
-import { userRequest } from "../../requestMethods";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { FaTrash, FaEdit, FaPlus, FaSync } from "react-icons/fa";
+import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
+import PageHeader from "../../components/admin/PageHeader";
+import Pagination from "../../components/admin/Pagination";
 
 const ROWS_PER_PAGE = 10;
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState("");
 
-  // 1. Tải dữ liệu sản phẩm
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      // Backend cần có .populate("category") để lấy được tên thể loại
       const res = await userRequest.get("/products");
       setProducts(res.data.map((p) => ({ ...p, id: p._id })));
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Không thể tải dữ liệu sản phẩm.");
+    } catch {
+      Swal.fire("Lỗi", "Không thể tải dữ liệu sản phẩm.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useEffect(() => { fetchProducts(); }, []);
 
-  // 2. Xử lý Xóa sản phẩm
-  const handleDelete = async (productId) => {
-    const result = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Sản phẩm này sẽ bị xóa vĩnh viễn khỏi hệ thống!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Xóa ngay",
-      cancelButtonText: "Hủy",
+  const handleDelete = async (id) => {
+    const { isConfirmed } = await Swal.fire({
+      title: "Xác nhận xóa?", text: "Sách sẽ bị xóa vĩnh viễn!",
+      icon: "warning", showCancelButton: true,
+      confirmButtonColor: "#d33", confirmButtonText: "Xóa ngay", cancelButtonText: "Hủy",
     });
-
-    if (result.isConfirmed) {
+    if (isConfirmed) {
       try {
-        await userRequest.delete(`/products/${productId}`);
-        Swal.fire("Đã xóa!", "Sản phẩm đã bị xóa.", "success");
-        fetchProducts(); // Tải lại danh sách sau khi xóa
-      } catch (error) {
-        Swal.fire("Lỗi!", "Xóa thất bại. Vui lòng thử lại.", "error");
+        await userRequest.delete(`/products/${id}`);
+        Swal.fire("Đã xóa!", "", "success");
+        fetchProducts();
+      } catch {
+        Swal.fire("Lỗi!", "Xóa thất bại.", "error");
       }
     }
   };
 
-  // 3. Logic Phân trang
-  const totalPages = Math.ceil(products.length / ROWS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-  const currentProducts = products.slice(
-    startIndex,
-    startIndex + ROWS_PER_PAGE
+  const filtered = products.filter((p) =>
+    p.title?.toLowerCase().includes(search.toLowerCase()) ||
+    p.author?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
-
-  const handlePrevPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  if (loading)
-    return (
-      <div className="p-8 text-center text-xl text-purple-600">
-        Đang tải danh sách sản phẩm...
-      </div>
-    );
-  if (error)
-    return (
-      <div className="p-8 text-red-500 bg-red-100 border border-red-300 rounded-lg">
-        {error}
-      </div>
-    );
+  const totalPages = Math.ceil(filtered.length / ROWS_PER_PAGE);
+  const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
+  const pageData = filtered.slice(startIdx, startIdx + ROWS_PER_PAGE);
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 h-full overflow-y-auto">
-      {/* HEADER VÀ NÚT TẠO MỚI */}
-      <div className="flex items-center justify-between pb-6 border-b border-gray-200 mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">📚 Quản lý Sách</h1>
-        <Link to="/admin/newproduct">
-          <button className="flex items-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition duration-300">
-            <FaPlus className="mr-2" />
-            Thêm Sách Mới
-          </button>
-        </Link>
+    <div className="space-y-6">
+      <PageHeader
+        title="Quản lý Sách"
+        subtitle={`${products.length} đầu sách trong hệ thống`}
+        action={
+          <Link to="/admin/newproduct">
+            <button className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors">
+              <FaPlus size={12} /> Thêm sách mới
+            </button>
+          </Link>
+        }
+      />
+
+      {/* Thanh tìm kiếm */}
+      <div className="relative max-w-xs">
+        <input type="text" placeholder="Tìm kiếm tên sách, tác giả..."
+          value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+          className="h-9 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-200/30"
+        />
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" clipRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
+        </svg>
       </div>
 
-      {/* BẢNG DỮ LIỆU SẢN PHẨM */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          {/* HEADER BẢNG */}
-          <thead className="bg-purple-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Sách & Tác giả
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Thể loại
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Giá Bán
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Tồn kho
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Đã bán
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Thao tác
-              </th>
-            </tr>
-          </thead>
-
-          {/* BODY BẢNG */}
-          <tbody className="divide-y divide-gray-100">
-            {currentProducts.map((product) => (
-              <tr
-                key={product.id}
-                className="hover:bg-gray-50 transition duration-150"
-              >
-                {/* Cột Sản phẩm & Tác giả */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <img
-                      className="h-14 w-10 object-cover rounded-sm mr-3 shadow-sm"
-                      src={product.img || "https://via.placeholder.com/100"}
-                      alt={product.title}
-                    />
-                    <div className="flex flex-col">
-                      <div
-                        className="text-sm font-bold text-gray-900 max-w-xs truncate"
-                        title={product.title}
-                      >
-                        {product.title}
-                      </div>
-                      <div className="text-xs text-gray-500 italic">
-                        {product.author || "Không rõ tác giả"}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-
-                {/* Cột Thể loại (MỚI) */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-600">
-                    {/* Kiểm tra xem category có tồn tại và có name không */}
-                    {product.category?.name || "Chưa phân loại"}
-                  </span>
-                </td>
-
-                {/* Cột Giá Bán */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">
-                  {product.discountedPrice
-                    ? product.discountedPrice.toLocaleString("vi-VN")
-                    : product.originalPrice?.toLocaleString("vi-VN") ||
-                      "0"}{" "}
-                  VND
-                </td>
-
-                {/* Cột Tồn kho (Đã sửa logic đếm số lượng) */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${
-                      product.countInStock > 0
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {product.countInStock > 0
-                      ? `${product.countInStock} cuốn`
-                      : "Hết hàng"}
-                  </span>
-                </td>
-
-                {/* Đã bán */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-600">
-                    {product.sold || 0}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                  <div className="flex justify-center space-x-4">
-                    <Link to={`/admin/product/${product._id}`}>
-                      <FaEdit
-                        className="text-blue-500 cursor-pointer text-lg hover:text-blue-700 mx-auto"
-                        title="Chỉnh sửa"
-                      />
-                    </Link>
-                    <FaTrash
-                      className="text-red-500 cursor-pointer text-lg hover:text-red-700 mx-auto"
-                      title="Xóa"
-                      onClick={() => handleDelete(product._id)}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* FOOTER PHÂN TRANG */}
-        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Hiển thị từ{" "}
-                <span className="font-medium">
-                  {Math.min(startIndex + 1, products.length)}
-                </span>{" "}
-                đến{" "}
-                <span className="font-medium">
-                  {Math.min(startIndex + ROWS_PER_PAGE, products.length)}
-                </span>{" "}
-                của <span className="font-medium">{products.length}</span> đầu
-                sách
-              </p>
-            </div>
-            <div>
-              <nav
-                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                aria-label="Pagination"
-              >
-                <button
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <FaChevronLeft className="h-5 w-5" aria-hidden="true" />
-                </button>
-
-                <span className="relative inline-flex items-center px-4 py-2 border border-purple-500 bg-purple-50 text-sm font-medium text-purple-700">
-                  Trang {currentPage} / {totalPages || 1}
-                </span>
-
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <FaChevronRight className="h-5 w-5" aria-hidden="true" />
-                </button>
-              </nav>
-            </div>
+      {/* Bảng sản phẩm */}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
+            <FaSync className="animate-spin text-brand-500" /> Đang tải...
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="px-5 py-3.5">Sách & Tác giả</th>
+                    <th className="px-5 py-3.5">Thể loại</th>
+                    <th className="px-5 py-3.5">Giá bán</th>
+                    <th className="px-5 py-3.5">Tồn kho</th>
+                    <th className="px-5 py-3.5">Đã bán</th>
+                    <th className="px-5 py-3.5 text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {pageData.map((p) => (
+                    <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <img src={p.img || "https://placehold.co/40x56?text=Book"}
+                            onError={(e) => { e.target.src = "https://placehold.co/40x56?text=Book"; }}
+                            className="h-14 w-10 flex-shrink-0 rounded-lg object-cover border border-gray-100"
+                            alt={p.title} />
+                          <div className="min-w-0">
+                            <p className="truncate max-w-[180px] font-semibold text-gray-900">{p.title}</p>
+                            <p className="text-xs italic text-gray-400">{p.author || "Không rõ tác giả"}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                          {p.category?.name || "Chưa phân loại"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-red-600">
+                        {(p.discountedPrice || p.originalPrice || 0).toLocaleString("vi-VN")} ₫
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
+                          p.countInStock > 10 ? "bg-green-50 text-green-700 border-green-200"
+                          : p.countInStock > 0 ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                          : "bg-red-50 text-red-700 border-red-200"}`}>
+                          {p.countInStock > 0 ? `${p.countInStock} cuốn` : "Hết hàng"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-brand-600">{p.sold || 0}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-center gap-3">
+                          <Link to={`/admin/product/${p._id}`}>
+                            <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                              <FaEdit size={13} />
+                            </button>
+                          </Link>
+                          <button onClick={() => handleDelete(p._id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
+                            <FaTrash size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {pageData.length === 0 && (
+                    <tr><td colSpan={6} className="py-12 text-center text-sm text-gray-400">
+                      {search ? `Không tìm thấy kết quả cho "${search}"` : "Chưa có sản phẩm nào"}
+                    </td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <Pagination currentPage={currentPage} totalPages={totalPages}
+              total={filtered.length} rowsPerPage={ROWS_PER_PAGE}
+              onPrev={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              unit="đầu sách" />
+          </>
+        )}
       </div>
     </div>
   );

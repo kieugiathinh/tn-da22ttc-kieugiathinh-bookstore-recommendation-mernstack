@@ -11,41 +11,75 @@ import {
   FaCrown,
   FaExclamationCircle,
   FaSync,
+  FaChevronDown,
+  FaArrowUp,
+  FaBoxOpen,
+  FaBan,
 } from "react-icons/fa";
 
+// ─── KPI CARD COMPONENT ──────────────────────────────────────────────────────
+const MetricCard = ({ title, value, icon: Icon, iconBg, iconColor, subtitle }) => (
+  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+          {title}
+        </p>
+        <h3 className="text-2xl font-black text-gray-900 tracking-tight leading-none">
+          {value}
+        </h3>
+        {subtitle && (
+          <p className="mt-1.5 text-xs text-gray-400 font-medium">{subtitle}</p>
+        )}
+      </div>
+      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+        <Icon className={`text-xl ${iconColor}`} />
+      </div>
+    </div>
+  </div>
+);
+
+// ─── BADGE COMPONENT ─────────────────────────────────────────────────────────
+const Badge = ({ children, color = "gray" }) => {
+  const map = {
+    yellow: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    blue:   "bg-blue-50 text-blue-700 border-blue-200",
+    green:  "bg-green-50 text-green-700 border-green-200",
+    red:    "bg-red-50 text-red-700 border-red-200",
+    gray:   "bg-gray-100 text-gray-600 border-gray-200",
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${map[color]}`}>
+      {children}
+    </span>
+  );
+};
+
+// ─── TIME FILTER BAR ──────────────────────────────────────────────────────────
+const TIME_FILTERS = [
+  { label: "Hôm nay", value: "day" },
+  { label: "Tuần này", value: "week" },
+  { label: "Tháng này", value: "month" },
+  { label: "Năm nay", value: "year" },
+  { label: "Tất cả", value: "all" },
+];
+
+// ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 const Dashboard = () => {
-  // --- STATE ---
-  const [timeRange, setTimeRange] = useState("month"); // Mặc định là tháng này
-  const [kpi, setKpi] = useState(null);
-
-  // Charts Data
+  const [timeRange, setTimeRange]       = useState("month");
+  const [kpi, setKpi]                   = useState(null);
   const [revenueChart, setRevenueChart] = useState([]);
-  const [compareData, setCompareData] = useState(null);
+  const [compareData, setCompareData]   = useState(null);
   const [categoryData, setCategoryData] = useState([]);
-  const [statusData, setStatusData] = useState([]);
+  const [statusData, setStatusData]     = useState([]);
+  const [prodStats, setProdStats]       = useState({ lowStock: [], topSelling: [] });
+  const [customers, setCustomers]       = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [isCompare, setIsCompare]       = useState(false);
+  const [year1, setYear1]               = useState(new Date().getFullYear());
+  const [year2, setYear2]               = useState(new Date().getFullYear() - 1);
 
-  // Tables Data
-  const [prodStats, setProdStats] = useState({ lowStock: [], topSelling: [] });
-  const [customers, setCustomers] = useState([]);
-
-  // UI State
-  const [loading, setLoading] = useState(true);
-  const [isCompare, setIsCompare] = useState(false);
-  const [year1, setYear1] = useState(new Date().getFullYear());
-  const [year2, setYear2] = useState(new Date().getFullYear() - 1);
-
-  // Danh sách bộ lọc thời gian (Đã thêm "Tất cả")
-  const timeFilters = [
-    { label: "Hôm nay", value: "day" },
-    { label: "Tuần này", value: "week" },
-    { label: "Tháng này", value: "month" },
-    { label: "Năm nay", value: "year" },
-    { label: "Tất cả", value: "all" },
-  ];
-
-  // --- API CALLS ---
-
-  // 1. Load KPI khi đổi filter time
+  // 1. KPI theo filter thời gian
   useEffect(() => {
     const fetchKPI = async () => {
       try {
@@ -58,7 +92,7 @@ const Dashboard = () => {
     fetchKPI();
   }, [timeRange]);
 
-  // 2. Load Dữ liệu Charts & Tables (Chạy 1 lần đầu)
+  // 2. Charts & Tables (1 lần khi mount)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -72,18 +106,12 @@ const Dashboard = () => {
 
         setRevenueChart(resRev.data);
 
-        // Fix dữ liệu Category cho PieChart
         setCategoryData(
-          resCat.data.map((i, idx) => ({
-            id: idx,
-            value: i.value,
-            label: i.name,
-          }))
+          resCat.data.map((i, idx) => ({ id: idx, value: i.value, label: i.name }))
         );
 
-        // Fix dữ liệu Status
-        const statusMap = ["Chờ xác nhận", "Đang giao", "Hoàn thành", "Đã hủy"];
-        const colorMap = ["#fbbf24", "#3b82f6", "#22c55e", "#ef4444"];
+        const statusMap  = ["Chờ xác nhận", "Đang giao", "Hoàn thành", "Đã hủy"];
+        const colorMap   = ["#fbbf24", "#3b82f6", "#22c55e", "#ef4444"];
         setStatusData(
           resStatus.data.map((i, idx) => ({
             id: idx,
@@ -95,16 +123,16 @@ const Dashboard = () => {
 
         setProdStats(resProd.data);
         setCustomers(resCus.data);
-        setLoading(false);
       } catch (err) {
         console.error("Lỗi tải dữ liệu chi tiết:", err);
+      } finally {
         setLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  // 3. Load Compare Data khi bật toggle
+  // 3. So sánh doanh thu theo năm
   useEffect(() => {
     if (!isCompare) return;
     const fetchCompare = async () => {
@@ -113,8 +141,8 @@ const Dashboard = () => {
           `/stats/revenue-comparison?year1=${year1}&year2=${year2}`
         );
         setCompareData({
-          y1: res.data.year1.map((v) => v / 1000000), // Đơn vị: Triệu VNĐ
-          y2: res.data.year2.map((v) => v / 1000000),
+          y1: res.data.year1.map((v) => v / 1_000_000),
+          y2: res.data.year2.map((v) => v / 1_000_000),
         });
       } catch (err) {
         console.error(err);
@@ -123,45 +151,44 @@ const Dashboard = () => {
     fetchCompare();
   }, [isCompare, year1, year2]);
 
-  // --- HELPERS ---
-  const handleImgError = (e) => {
-    e.target.src = "https://via.placeholder.com/150?text=GTBooks";
-  };
+  const getProductPrice = (p) =>
+    p.discountedPrice > 0 ? p.discountedPrice : p.originalPrice || 0;
 
-  // Helper tính giá sản phẩm (Sửa lỗi NaN)
-  const getProductPrice = (p) => {
-    // Nếu có giá giảm thì lấy, không thì lấy giá gốc. Nếu không có cả 2 thì = 0
-    return p.discountedPrice > 0 ? p.discountedPrice : p.originalPrice || 0;
+  const handleImgError = (e) => {
+    e.target.src = "https://placehold.co/40x40?text=Book";
   };
 
   if (loading)
     return (
-      <div className="flex h-screen justify-center items-center text-gray-500 bg-slate-50">
-        <FaSync className="animate-spin mr-2" /> Đang tải dữ liệu Dashboard...
+      <div className="flex h-[60vh] items-center justify-center gap-3 text-gray-500">
+        <FaSync className="animate-spin text-brand-500" />
+        <span className="font-medium">Đang tải Dashboard...</span>
       </div>
     );
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen font-sans text-slate-800">
-      {/* HEADER & GLOBAL FILTER */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+    <div className="space-y-6">
+      {/* ── PAGE HEADER ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 uppercase tracking-tight">
+          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
             Dashboard
           </h1>
-          <p className="text-sm text-slate-500 font-medium">
-            Tổng quan tình hình kinh doanh
+          <p className="mt-0.5 text-sm text-gray-500">
+            Tổng quan tình hình kinh doanh GTBooks
           </p>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-xl overflow-x-auto max-w-full">
-          {timeFilters.map((t) => (
+
+        {/* Bộ lọc thời gian */}
+        <div className="flex flex-wrap gap-1.5 rounded-xl border border-gray-200 bg-gray-50 p-1">
+          {TIME_FILTERS.map((t) => (
             <button
               key={t.value}
               onClick={() => setTimeRange(t.value)}
-              className={`whitespace-nowrap px-4 py-2 text-sm font-bold rounded-lg transition-all ${
+              className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
                 timeRange === t.value
-                  ? "bg-white text-indigo-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white text-brand-700 shadow-sm border border-gray-200"
+                  : "text-gray-500 hover:text-gray-800"
               }`}
             >
               {t.label}
@@ -170,258 +197,172 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* 1. KPI CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <KPICard
+      {/* ── KPI CARDS ── */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <MetricCard
           title="Doanh Thu"
-          value={`${(kpi?.revenue || 0).toLocaleString()} ₫`}
-          icon={<FaMoneyBillWave />}
-          color="text-indigo-600"
-          bg="bg-indigo-50"
+          value={`${(kpi?.revenue || 0).toLocaleString("vi-VN")} ₫`}
+          icon={FaMoneyBillWave}
+          iconBg="bg-brand-50"
+          iconColor="text-brand-600"
+          subtitle={`${kpi?.orders || 0} đơn hàng`}
         />
-        <KPICard
+        <MetricCard
           title="Đơn Hàng"
           value={kpi?.orders || 0}
-          icon={<FaShoppingBag />}
-          color="text-blue-600"
-          bg="bg-blue-50"
+          icon={FaShoppingBag}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+          subtitle={`${kpi?.canceled || 0} đơn đã hủy`}
         />
-        <KPICard
-          title="Giá Trị TB"
-          value={`${(kpi?.avgOrder || 0).toLocaleString()} ₫`}
-          icon={<FaCrown />}
-          color="text-emerald-600"
-          bg="bg-emerald-50"
+        <MetricCard
+          title="Giá Trị Trung Bình"
+          value={`${(kpi?.avgOrder || 0).toLocaleString("vi-VN")} ₫`}
+          icon={FaCrown}
+          iconBg="bg-amber-50"
+          iconColor="text-amber-600"
+          subtitle="mỗi đơn hàng"
         />
-        <KPICard
+        <MetricCard
           title="Sản Phẩm"
           value={kpi?.products || 0}
-          icon={<FaCube />}
-          color="text-orange-600"
-          bg="bg-orange-50"
+          icon={FaCube}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+          subtitle={`${kpi?.users || 0} khách hàng`}
         />
       </div>
 
-      {/* 2. MAIN CHARTS SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* REVENUE CHART (Dynamic Compare) */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <div className="flex justify-between items-start mb-6">
+      {/* ── CHARTS ROW ── */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Revenue Chart (chiếm 2 cột) */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm xl:col-span-2">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="font-bold text-lg text-slate-800">
-                Phân tích doanh thu
-              </h3>
-              <p className="text-xs text-slate-400 font-medium">
-                (Đơn vị: Triệu VNĐ)
-              </p>
+              <h3 className="font-bold text-gray-900">Phân tích doanh thu</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Đơn vị: Triệu VNĐ</p>
             </div>
 
-            {/* Toggle Compare */}
+            {/* Toggle so sánh năm */}
             <div className="flex flex-col items-end gap-2">
-              <div
-                className="flex items-center gap-2 cursor-pointer select-none"
+              <button
                 onClick={() => setIsCompare(!isCompare)}
+                className="flex items-center gap-2 text-xs font-semibold"
               >
-                <span
-                  className={`text-xs font-bold ${
-                    isCompare ? "text-indigo-600" : "text-slate-400"
-                  }`}
-                >
+                <span className={isCompare ? "text-brand-600" : "text-gray-400"}>
                   So sánh năm
                 </span>
                 <div
-                  className={`w-10 h-5 rounded-full p-1 transition-all ${
-                    isCompare ? "bg-indigo-600" : "bg-slate-200"
+                  className={`relative h-5 w-9 rounded-full transition-colors ${
+                    isCompare ? "bg-brand-600" : "bg-gray-200"
                   }`}
                 >
                   <div
-                    className={`w-3 h-3 bg-white rounded-full shadow-sm transition-all ${
-                      isCompare ? "translate-x-5" : ""
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                      isCompare ? "translate-x-4" : "translate-x-0.5"
                     }`}
-                  ></div>
+                  />
                 </div>
-              </div>
+              </button>
 
-              {/* Selectors Năm (Chỉ hiện khi Compare ON) */}
               {isCompare && (
-                <div className="flex gap-2 animate-pulse">
-                  <select
-                    value={year1}
-                    onChange={(e) => setYear1(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 text-xs rounded px-2 py-1 font-bold outline-none cursor-pointer hover:border-indigo-300"
-                  >
-                    {[2023, 2024, 2025, 2026].map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-xs font-bold text-slate-400">-</span>
-                  <select
-                    value={year2}
-                    onChange={(e) => setYear2(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 text-xs rounded px-2 py-1 font-bold outline-none cursor-pointer hover:border-indigo-300"
-                  >
-                    {[2021, 2022, 2023, 2024].map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
+                <div className="flex items-center gap-2">
+                  {[
+                    { value: year1, onChange: setYear1, options: [2023, 2024, 2025, 2026] },
+                    { value: year2, onChange: setYear2, options: [2021, 2022, 2023, 2024] },
+                  ].map((sel, i) => (
+                    <select
+                      key={i}
+                      value={sel.value}
+                      onChange={(e) => sel.onChange(e.target.value)}
+                      className="rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold outline-none"
+                    >
+                      {sel.options.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  ))}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="h-[300px] w-full">
+          <div className="h-[280px] w-full">
             {isCompare && compareData ? (
               <BarChart
                 series={[
-                  {
-                    data: compareData.y1,
-                    label: `Năm ${year1}`,
-                    color: "#6366f1",
-                  },
-                  {
-                    data: compareData.y2,
-                    label: `Năm ${year2}`,
-                    color: "#cbd5e1",
-                  },
+                  { data: compareData.y1, label: `Năm ${year1}`, color: "#7c3aed" },
+                  { data: compareData.y2, label: `Năm ${year2}`, color: "#e2d9f3" },
                 ]}
-                xAxis={[
-                  {
-                    scaleType: "band",
-                    data: Array.from({ length: 12 }, (_, i) => `T${i + 1}`),
-                  },
-                ]}
-                margin={{ top: 20, bottom: 30, left: 40, right: 10 }}
+                xAxis={[{ scaleType: "band", data: Array.from({ length: 12 }, (_, i) => `T${i + 1}`) }]}
+                margin={{ top: 20, bottom: 30, left: 45, right: 10 }}
                 borderRadius={4}
               />
             ) : (
               <LineChart
                 series={[
-                  {
-                    data: revenueChart.map((i) => i.revenue / 1000000),
-                    label: "Doanh thu",
-                    color: "#6366f1",
-                    area: true,
-                    showMark: false,
-                    curve: "monotone", // Làm mượt đường
-                  },
-                  {
-                    data: revenueChart.map((i) => i.orders),
-                    label: "Đơn hàng",
-                    color: "#f59e0b",
-                    yAxisKey: "orders",
-                    showMark: true,
-                  },
+                  { data: revenueChart.map((i) => i.revenue / 1_000_000), label: "Doanh thu", color: "#7c3aed", area: true, showMark: false, curve: "monotone" },
+                  { data: revenueChart.map((i) => i.orders), label: "Đơn hàng", color: "#f59e0b", yAxisKey: "orders", showMark: true },
                 ]}
-                xAxis={[
-                  {
-                    scaleType: "point",
-                    data: revenueChart.map((i) => i.month),
-                  },
-                ]}
+                xAxis={[{ scaleType: "point", data: revenueChart.map((i) => i.month) }]}
                 yAxis={[{ id: "default" }, { id: "orders", position: "right" }]}
                 rightAxis="orders"
-                margin={{ top: 20, bottom: 30, left: 40, right: 40 }}
+                margin={{ top: 20, bottom: 30, left: 45, right: 45 }}
               />
             )}
           </div>
         </div>
 
-        {/* PIE CHARTS STACK */}
-        <div className="flex flex-col gap-6">
-          {/* Category Chart */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex-1 flex flex-col">
-            <h3 className="font-bold text-sm text-slate-800 mb-2">
-              Tỷ trọng danh mục
-            </h3>
-            <div className="flex-1 min-h-[160px] flex justify-center items-center">
+        {/* Pie Charts Stack */}
+        <div className="flex flex-col gap-4">
+          {/* Danh mục */}
+          <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-sm font-bold text-gray-900">Tỷ trọng danh mục</h3>
+            <div className="flex min-h-[140px] items-center justify-center">
               {categoryData.length > 0 ? (
                 <PieChart
-                  series={[
-                    {
-                      data: categoryData,
-                      innerRadius: 0,
-                      outerRadius: 80,
-                      paddingAngle: 0,
-                      cornerRadius: 0,
-                    },
-                  ]}
+                  series={[{ data: categoryData, innerRadius: 0, outerRadius: 65, paddingAngle: 0 }]}
                   slotProps={{ legend: { hidden: true } }}
-                  margin={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  margin={{ top: 5, bottom: 5, left: 5, right: 5 }}
                 />
               ) : (
                 <span className="text-xs text-gray-400">Chưa có dữ liệu</span>
               )}
             </div>
-            {/* Custom Legend */}
-            <div className="mt-2 space-y-1 max-h-[100px] overflow-y-auto custom-scrollbar">
+            <div className="mt-2 max-h-[90px] space-y-1 overflow-y-auto">
               {categoryData.map((c, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between text-xs border-b border-dashed border-slate-100 py-1"
-                >
-                  <div className="flex items-center gap-2">
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
                     <span
-                      className="w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor:
-                          [
-                            "#02b2af",
-                            "#2e96ff",
-                            "#b800d8",
-                            "#60009b",
-                            "#2731c8",
-                            "#ff0000",
-                          ][i % 6] || "#ccc",
-                      }}
-                    ></span>
-                    <span className="text-slate-600 truncate w-24">
-                      {c.label}
-                    </span>
+                      className="h-2 w-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: ["#02b2af","#2e96ff","#b800d8","#60009b","#2731c8","#ef4444"][i % 6] }}
+                    />
+                    <span className="truncate max-w-[100px] text-gray-600">{c.label}</span>
                   </div>
-                  <span className="font-bold">{c.value}</span>
+                  <span className="font-bold text-gray-700">{c.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Order Status Chart */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex-1 flex flex-col">
-            <h3 className="font-bold text-sm text-slate-800 mb-2">
-              Trạng thái đơn hàng
-            </h3>
-            <div className="flex-1 min-h-[160px] flex justify-center items-center">
+          {/* Trạng thái đơn */}
+          <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-sm font-bold text-gray-900">Trạng thái đơn hàng</h3>
+            <div className="flex min-h-[140px] items-center justify-center">
               {statusData.length > 0 ? (
                 <PieChart
-                  series={[
-                    {
-                      data: statusData,
-                      innerRadius: 40,
-                      outerRadius: 80,
-                      paddingAngle: 2,
-                      cornerRadius: 4,
-                    },
-                  ]}
+                  series={[{ data: statusData, innerRadius: 35, outerRadius: 65, paddingAngle: 2, cornerRadius: 3 }]}
                   slotProps={{ legend: { hidden: true } }}
-                  margin={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  margin={{ top: 5, bottom: 5, left: 5, right: 5 }}
                 />
               ) : (
                 <span className="text-xs text-gray-400">Chưa có dữ liệu</span>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
               {statusData.map((s, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-1 text-[10px] text-slate-500 font-medium"
-                >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ background: s.color }}
-                  ></span>
+                <div key={i} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                  <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
                   {s.label} ({s.value})
                 </div>
               ))}
@@ -430,37 +371,31 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* 3. TABLES SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Products */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-          <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-            <FaCrown className="text-yellow-500" /> Sản phẩm bán chạy
-          </h3>
+      {/* ── BOTTOM TABLES ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Sản phẩm bán chạy */}
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
+            <FaCrown className="text-amber-400" />
+            <h3 className="font-bold text-gray-900">Sản phẩm bán chạy</h3>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-400 uppercase bg-slate-50">
-                <tr>
-                  <th className="px-3 py-2 rounded-l-lg">Sản phẩm</th>
-                  <th className="px-3 py-2 text-right">Đã bán</th>
-                  <th className="px-3 py-2 text-right rounded-r-lg">
-                    Doanh thu
-                  </th>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                  <th className="px-5 py-3 rounded-tl-none">Sản phẩm</th>
+                  <th className="px-4 py-3 text-right">Đã bán</th>
+                  <th className="px-4 py-3 text-right rounded-tr-none">Doanh thu</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-50">
                 {prodStats.topSelling.length > 0 ? (
                   prodStats.topSelling.map((p, i) => (
-                    <tr
-                      key={i}
-                      className="border-b border-slate-50 hover:bg-slate-50 transition group"
-                    >
-                      <td className="px-3 py-3 flex items-center gap-3">
+                    <tr key={i} className="hover:bg-gray-50 transition-colors group">
+                      <td className="flex items-center gap-3 px-5 py-3">
                         <span
-                          className={`text-xs font-bold w-5 h-5 flex items-center justify-center rounded ${
-                            i < 3
-                              ? "bg-indigo-100 text-indigo-600"
-                              : "text-gray-400"
+                          className={`flex h-5 w-6 flex-shrink-0 items-center justify-center rounded text-[11px] font-bold ${
+                            i < 3 ? "bg-brand-50 text-brand-700" : "text-gray-400"
                           }`}
                         >
                           #{i + 1}
@@ -468,31 +403,24 @@ const Dashboard = () => {
                         <img
                           src={p.img}
                           onError={handleImgError}
-                          className="w-10 h-10 rounded object-cover border border-slate-100 group-hover:scale-105 transition-transform"
+                          className="h-9 w-9 flex-shrink-0 rounded-lg object-cover border border-gray-100 group-hover:scale-105 transition-transform"
                           alt=""
                         />
-                        <span
-                          className="font-medium text-slate-700 line-clamp-1 max-w-[150px]"
-                          title={p.title}
-                        >
+                        <span className="truncate max-w-[140px] font-medium text-gray-700" title={p.title}>
                           {p.title}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-right font-bold text-indigo-600">
+                      <td className="px-4 py-3 text-right font-bold text-brand-600">
                         {p.sold}
                       </td>
-                      <td className="px-3 py-3 text-right text-slate-500 font-medium">
-                        {/* FIX NaN: Dùng helper function */}
-                        {(getProductPrice(p) * p.sold).toLocaleString()} ₫
+                      <td className="px-4 py-3 text-right text-gray-500 font-medium">
+                        {(getProductPrice(p) * p.sold).toLocaleString("vi-VN")} ₫
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan="3"
-                      className="text-center py-4 text-gray-400 text-xs"
-                    >
+                    <td colSpan={3} className="py-8 text-center text-sm text-gray-400">
                       Chưa có dữ liệu
                     </td>
                   </tr>
@@ -502,92 +430,84 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Low Stock & Customers */}
-        <div className="flex flex-col gap-6">
+        {/* Cột phải: Cảnh báo tồn kho + Khách VIP */}
+        <div className="flex flex-col gap-4">
           {/* Low Stock Alert */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                <FaExclamationCircle className="text-red-500" /> Cảnh báo tồn
-                kho
-              </h3>
-              <span className="bg-red-50 text-red-600 text-xs font-bold px-2 py-1 rounded border border-red-100">
-                Critical
-              </span>
+          <div className="rounded-2xl border border-red-100 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-red-50 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <FaExclamationCircle className="text-red-500" />
+                <h3 className="font-bold text-gray-900">Cảnh báo tồn kho</h3>
+              </div>
+              <Badge color="red">Critical</Badge>
             </div>
-            <div className="space-y-3 max-h-[200px] overflow-y-auto custom-scrollbar pr-1">
+            <div className="max-h-[200px] space-y-2 overflow-y-auto p-4">
               {prodStats.lowStock.length > 0 ? (
                 prodStats.lowStock.map((p, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between p-3 bg-red-50/50 rounded-lg border border-red-50 hover:bg-red-50 transition"
+                    className="flex items-center justify-between rounded-xl bg-red-50/60 px-3 py-2.5 hover:bg-red-50 transition"
                   >
                     <div className="flex items-center gap-3">
                       <img
                         src={p.img}
                         onError={handleImgError}
-                        className="w-10 h-10 rounded object-cover mix-blend-multiply"
+                        className="h-9 w-9 rounded-lg object-cover mix-blend-multiply"
                         alt=""
                       />
                       <div>
-                        <p
-                          className="text-sm font-bold text-slate-700 line-clamp-1 max-w-[180px]"
-                          title={p.title}
-                        >
-                          {p.title}
-                        </p>
-                        <p className="text-xs text-red-500 font-medium">
-                          Còn lại: {p.countInStock}
+                        <p className="text-xs font-bold text-gray-800 line-clamp-1 max-w-[150px]">{p.title}</p>
+                        <p className="text-[11px] font-semibold text-red-500">
+                          Còn lại: {p.countInStock} cuốn
                         </p>
                       </div>
                     </div>
-                    <button className="text-xs bg-white text-red-600 border border-red-200 px-3 py-1.5 rounded hover:bg-red-600 hover:text-white transition-colors font-bold">
+                    <button className="rounded-lg border border-red-200 bg-white px-3 py-1 text-xs font-bold text-red-600 hover:bg-red-600 hover:text-white transition-colors">
                       Nhập
                     </button>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-4 bg-green-50 rounded-lg border border-green-100">
-                  <p className="text-sm text-green-600 font-medium">
-                    Kho hàng ổn định ✅
-                  </p>
+                <div className="flex flex-col items-center justify-center gap-2 py-6">
+                  <FaBoxOpen className="text-3xl text-green-400" />
+                  <p className="text-sm font-semibold text-green-600">Kho hàng ổn định ✅</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Top Customers */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex-1">
-            <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-              <FaUserFriends className="text-blue-500" /> Khách hàng thân thiết
-            </h3>
-            <div className="space-y-3">
+          <div className="flex-1 rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
+              <FaUserFriends className="text-blue-500" />
+              <h3 className="font-bold text-gray-900">Khách hàng thân thiết</h3>
+            </div>
+            <div className="space-y-1 p-3">
               {customers.length > 0 ? (
                 customers.map((c, i) => (
                   <div
                     key={i}
-                    className="flex justify-between items-center p-2 hover:bg-slate-50 rounded-lg transition border border-transparent hover:border-slate-100"
+                    className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-gray-50 transition"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                        {c.name ? c.name.charAt(0).toUpperCase() : "U"}
+                      {/* Avatar chữ cái */}
+                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-brand-400 to-blue-500 text-sm font-bold text-white shadow-sm">
+                        {c.name ? c.name.charAt(0).toUpperCase() : "K"}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-700 line-clamp-1">
+                        <p className="text-sm font-semibold text-gray-800 line-clamp-1">
                           {c.name || "Khách vãng lai"}
                         </p>
-                        <p className="text-xs text-slate-400 font-medium">
-                          {c.count} đơn hàng
-                        </p>
+                        <p className="text-[11px] text-gray-400">{c.count} đơn hàng</p>
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
-                      +{c.total.toLocaleString()} ₫
+                    <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
+                      +{c.total.toLocaleString("vi-VN")} ₫
                     </span>
                   </div>
                 ))
               ) : (
-                <p className="text-center text-xs text-gray-400 py-2">
+                <p className="py-6 text-center text-sm text-gray-400">
                   Chưa có dữ liệu khách hàng
                 </p>
               )}
@@ -598,22 +518,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-// Component Card nhỏ
-const KPICard = ({ title, value, icon, color, bg }) => (
-  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-start justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-    <div>
-      <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
-        {title}
-      </p>
-      <h3 className="text-2xl font-black text-slate-800 tracking-tight">
-        {value}
-      </h3>
-    </div>
-    <div className={`p-3.5 rounded-xl ${bg} ${color} text-xl shadow-inner`}>
-      {icon}
-    </div>
-  </div>
-);
 
 export default Dashboard;
