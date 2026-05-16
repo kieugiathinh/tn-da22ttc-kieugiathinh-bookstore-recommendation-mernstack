@@ -12,6 +12,7 @@ import {
   FaTicketAlt,
   FaElementor,
   FaGlobe,
+  FaRobot,
 } from "react-icons/fa";
 
 // Cấu hình tất cả menu nhóm của Admin
@@ -38,6 +39,12 @@ const menuGroups = [
       { name: "Flash Sale", icon: <FaBolt size={17} />, path: "/admin/flash-sales" },
       { name: "Mã giảm giá", icon: <FaTicketAlt size={17} />, path: "/admin/coupons" },
       { name: "Banner", icon: <FaElementor size={17} />, path: "/admin/banners" },
+    ],
+  },
+  {
+    label: "Trí tuệ nhân tạo",
+    items: [
+      { name: "AI Chat Insights", icon: <FaRobot size={17} />, path: "/admin/chat-analytics" },
     ],
   },
 ];

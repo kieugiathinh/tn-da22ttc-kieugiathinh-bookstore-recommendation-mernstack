@@ -18,6 +18,7 @@ import reviewRoute from "./routes/reviewRoute.js";
 import couponRoute from "./routes/couponRoute.js";
 import statsRoute from "./routes/statsRoute.js";
 import chatbotRoute from "./routes/chatbotRoute.js";
+import analyticsRoute from "./routes/analyticsRoute.js";
 
 const app = express();
 
@@ -78,6 +79,7 @@ app.use("/api/v1/reviews", reviewRoute);
 app.use("/api/v1/coupons", couponRoute);
 app.use("/api/v1/stats", statsRoute);
 app.use("/api/v1/chatbot", chatbotRoute);
+app.use("/api/v1/analytics", analyticsRoute);
 
 // --- ERROR MIDDLEWARE ---
 app.use(notFound);

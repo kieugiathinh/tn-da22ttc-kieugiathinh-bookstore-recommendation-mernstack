@@ -37,6 +37,7 @@ import AdminNewProduct from "./pages/admin/NewProduct";
 import AdminCategories from "./pages/admin/Categories";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminCoupon from "./pages/admin/CouponList";
+import AdminChatAnalytics from "./pages/admin/ChatAnalytics";
 
 // ── Router Configuration ─────────────────────────────────────────────────────
 const router = createBrowserRouter([
@@ -87,6 +88,7 @@ const router = createBrowserRouter([
       { path: "flash-sales", element: <AdminFlashSales /> },
       { path: "reviews", element: <AdminReviews /> },
       { path: "coupons", element: <AdminCoupon /> },
+      { path: "chat-analytics", element: <AdminChatAnalytics /> },
     ],
   },
 ]);
