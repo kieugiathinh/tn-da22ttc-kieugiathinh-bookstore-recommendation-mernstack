@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FaBolt, FaChevronRight, FaClock } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import ProductCard from "./ProductCard";
@@ -72,10 +72,10 @@ const FlashSale = () => {
   if (products.length === 0 || timeLeft <= 0) return null;
 
   return (
-    <div className="rounded-xl shadow-sm mb-8 overflow-hidden border border-red-200">
+    <div className="rounded-xl shadow-sm mb-8 overflow-hidden border border-primary-light">
       {/* --- HEADER STYLE FAHASA --- */}
       {/* Sử dụng Background màu đỏ/cam đặc trưng */}
-      <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-red-600 to-orange-500 text-white">
+      <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between bg-primary text-white">
         <div className="flex items-center gap-6 mb-2 md:mb-0">
           {/* Title có icon tia sét */}
           <div className="flex items-center text-2xl font-extrabold italic uppercase tracking-tighter transform -skew-x-10">
@@ -88,7 +88,7 @@ const FlashSale = () => {
             <span className="text-sm font-medium opacity-90 hidden sm:inline-block">
               Kết thúc sau
             </span>
-            <div className="flex items-center font-bold text-red-600">
+            <div className="flex items-center font-bold text-primary">
               <div className="bg-white px-2 py-1 rounded-md min-w-[32px] text-center shadow-sm">
                 {time.h}
               </div>

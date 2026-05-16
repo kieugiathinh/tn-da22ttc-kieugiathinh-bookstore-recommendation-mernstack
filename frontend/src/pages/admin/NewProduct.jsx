@@ -1,4 +1,4 @@
-import { FaSave, FaCloudUploadAlt, FaArrowLeft } from "react-icons/fa";
+import { FaSave, FaCloudUploadAlt, FaArrowLeft, FaMagic } from "react-icons/fa";
 import axios from "axios";
 import { userRequest } from "../../requestMethods";
 import { useState, useEffect } from "react";
@@ -16,6 +16,8 @@ const NewProduct = () => {
   const [cat, setCat] = useState("");
   const [categories, setCategories] = useState([]);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [isFetchingData, setIsFetchingData] = useState(false);
+  const [autoFilledImg, setAutoFilledImg] = useState("");
   const navigate = useNavigate();
 
   // 1. Load danh sách thể loại từ Backend khi vào trang
@@ -36,6 +38,7 @@ const NewProduct = () => {
   const imageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedImage(e.target.files[0]);
+      setAutoFilledImg("");
     }
   };
 
@@ -44,20 +47,75 @@ const NewProduct = () => {
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // ✨ Auto Fill: Tra cứu thông tin sách từ Google Books
+  const handleAutoFill = async () => {
+    const title = inputs.title;
+    if (!title || !title.trim()) {
+      Swal.fire("Chưa nhập tên sách", "Vui lòng nhập tên sách trước khi sử dụng Auto Fill.", "warning");
+      return;
+    }
+
+    setIsFetchingData(true);
+    try {
+      const res = await userRequest.get("/products/autofill", {
+        params: { title: title.trim() },
+      });
+
+      const bookData = res.data;
+
+      // Tạo giá ngẫu nhiên hợp lý (vì Google Books không cung cấp giá VNĐ)
+      const randomPrice = Math.floor(Math.random() * (250000 - 50000 + 1) / 1000) * 1000 + 50000;
+
+      setInputs((prev) => ({
+        ...prev,
+        title: bookData.title || prev.title,
+        author: bookData.authors || prev.author || "",
+        publisher: bookData.publisher || prev.publisher || "",
+        desc: bookData.description || prev.desc || "",
+        originalPrice: prev.originalPrice || randomPrice,
+      }));
+
+      // Nếu có ảnh bìa từ Google Books
+      if (bookData.thumbnail) {
+        setAutoFilledImg(bookData.thumbnail);
+        setSelectedImage(null);
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Đã tự động điền!",
+        text: `Tìm thấy: "${bookData.title}". Hãy kiểm tra lại thông tin và chỉnh sửa nếu cần.`,
+        timer: 3000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("AutoFill Error:", error);
+      const message = error.response?.data?.message || "Không tìm thấy thông tin sách. Vui lòng thử tên khác.";
+      Swal.fire("Không tìm thấy", message, "info");
+    } finally {
+      setIsFetchingData(false);
+    }
+  };
+
   // 4. Xử lý Upload & Submit
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!selectedImage) { Swal.fire("Cảnh báo", "Vui lòng chọn ảnh bìa sách.", "warning"); return; }
+    if (!selectedImage && !autoFilledImg) { Swal.fire("Cảnh báo", "Vui lòng chọn ảnh bìa sách.", "warning"); return; }
     if (!cat) { Swal.fire("Cảnh báo", "Vui lòng chọn thể loại sách.", "warning"); return; }
 
     setUploadStatus("Đang tải ảnh lên Cloudinary...");
-    const data = new FormData();
-    data.append("file", selectedImage);
-    data.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
 
     try {
-      const uploadRes = await axios.post(CLOUDINARY_CONFIG.uploadUrl, data);
-      const { url } = uploadRes.data;
+      let url = autoFilledImg;
+
+      // Nếu admin đã chọn file ảnh thủ công → upload lên Cloudinary
+      if (selectedImage) {
+        const data = new FormData();
+        data.append("file", selectedImage);
+        data.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
+        const uploadRes = await axios.post(CLOUDINARY_CONFIG.uploadUrl, data);
+        url = uploadRes.data.url;
+      }
 
       setUploadStatus("Đang lưu vào cơ sở dữ liệu...");
       const newProduct = {
@@ -78,6 +136,11 @@ const NewProduct = () => {
 
   const isProcessing = uploadStatus.includes("Đang");
 
+  // Xác định ảnh preview hiển thị
+  const previewImgSrc = selectedImage
+    ? URL.createObjectURL(selectedImage)
+    : autoFilledImg || null;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -97,16 +160,48 @@ const NewProduct = () => {
             <Card className="p-6">
               <h2 className="text-base font-bold text-gray-900 mb-5 border-b border-gray-100 pb-3">Thông tin chi tiết</h2>
               <div className="space-y-5">
-                <InputField label="Tên Sách" required name="title" placeholder="Ví dụ: Đắc Nhân Tâm" onChange={handleChange} />
+                {/* Tên sách + Nút Auto Fill */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                    Tên Sách <span className="ml-0.5 text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <InputField
+                      name="title"
+                      placeholder="Ví dụ: Đắc Nhân Tâm"
+                      value={inputs.title || ""}
+                      onChange={handleChange}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="md"
+                      onClick={handleAutoFill}
+                      isLoading={isFetchingData}
+                      disabled={isFetchingData}
+                      icon={!isFetchingData ? <FaMagic size={14} /> : undefined}
+                      style={{
+                        whiteSpace: "nowrap",
+                        background: isFetchingData ? undefined : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        color: isFetchingData ? undefined : "#fff",
+                        border: "none",
+                      }}
+                    >
+                      {isFetchingData ? "Đang tìm..." : "✨ Auto Fill"}
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <InputField label="Tác giả" required name="author" placeholder="Nguyễn Nhật Ánh..." onChange={handleChange} />
-                  <InputField label="Nhà xuất bản" required name="publisher" placeholder="NXB Trẻ..." onChange={handleChange} />
+                  <InputField label="Tác giả" required name="author" placeholder="Nguyễn Nhật Ánh..." value={inputs.author || ""} onChange={handleChange} />
+                  <InputField label="Nhà xuất bản" required name="publisher" placeholder="NXB Trẻ..." value={inputs.publisher || ""} onChange={handleChange} />
                 </div>
                 <InputField label="Mô tả nội dung" as="textarea" name="desc" rows={6} required
-                  placeholder="Tóm tắt nội dung sách..." onChange={handleChange} />
+                  placeholder="Tóm tắt nội dung sách..." value={inputs.desc || ""} onChange={handleChange} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <InputField label="Giá Bìa (VND)" required type="number" name="originalPrice" placeholder="100000" onChange={handleChange} />
-                  <InputField label="Giá Bán (Sau giảm)" type="number" name="discountedPrice" placeholder="80000" onChange={handleChange} />
+                  <InputField label="Giá Bìa (VND)" required type="number" name="originalPrice" placeholder="100000" value={inputs.originalPrice || ""} onChange={handleChange} />
+                  <InputField label="Giá Bán (Sau giảm)" type="number" name="discountedPrice" placeholder="80000" value={inputs.discountedPrice || ""} onChange={handleChange} />
                 </div>
               </div>
             </Card>
@@ -122,14 +217,14 @@ const NewProduct = () => {
                   {categories.map((c) => (<option key={c._id} value={c._id}>{c.name}</option>))}
                 </InputField>
 
-                <InputField label="Số lượng nhập kho" required type="number" name="countInStock" placeholder="Ví dụ: 50" onChange={handleChange} min="0" />
+                <InputField label="Số lượng nhập kho" required type="number" name="countInStock" placeholder="Ví dụ: 50" value={inputs.countInStock || ""} onChange={handleChange} min="0" />
 
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-gray-600">
                     Ảnh Bìa Sách <span className="text-red-500">*</span>
                   </label>
                   <div className="group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/50 p-6 transition-colors hover:bg-gray-50">
-                    {!selectedImage ? (
+                    {!previewImgSrc ? (
                       <label htmlFor="file" className="flex w-full cursor-pointer flex-col items-center py-4">
                         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-light text-primary transition-transform group-hover:scale-110">
                           <FaCloudUploadAlt size={24} />
@@ -139,8 +234,11 @@ const NewProduct = () => {
                     ) : (
                       <div className="relative w-full">
                         <div className="relative mx-auto h-64 w-full max-w-[200px] overflow-hidden rounded-lg bg-white shadow-sm border border-gray-100">
-                          <img src={URL.createObjectURL(selectedImage)} alt="Preview" className="h-full w-full object-contain" />
+                          <img src={previewImgSrc} alt="Preview" className="h-full w-full object-contain" />
                         </div>
+                        {autoFilledImg && !selectedImage && (
+                          <p className="mt-2 text-center text-xs text-indigo-600 font-medium">📷 Ảnh từ Google Books</p>
+                        )}
                         <label htmlFor="file" className="absolute bottom-2 right-2 flex cursor-pointer items-center gap-1.5 rounded-lg bg-black/70 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-black">
                           Đổi ảnh
                         </label>

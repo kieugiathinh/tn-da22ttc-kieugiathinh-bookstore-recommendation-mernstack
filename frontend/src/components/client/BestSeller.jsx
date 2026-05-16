@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaTrophy, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import ProductCard from "./ProductCard";
@@ -80,7 +80,7 @@ const BestSeller = () => {
     <div className="bg-white rounded-xl shadow-sm mb-8 border border-indigo-100">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-white rounded-t-xl">
-        <h2 className="text-xl font-extrabold text-gray-800 flex items-center uppercase tracking-wide">
+        <h2 className="text-xl font-extrabold text-primary flex items-center uppercase tracking-wide border-l-4 border-primary pl-3">
           <FaTrophy className="mr-3 text-yellow-500 text-2xl" />
           Bảng Xếp Hạng Bán Chạy
         </h2>

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaBookOpen, FaMagic } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import ProductCard from "./ProductCard";
@@ -25,7 +25,7 @@ const NewProducts = () => {
       {/* Tiêu đề đẹp mắt */}
       <div className="flex items-center gap-3 mb-6 mt-8 justify-center">
         <div className="h-[2px] w-12 bg-blue-300 rounded-full hidden sm:block"></div>
-        <h2 className="text-2xl font-extrabold text-gray-800 uppercase flex items-center gap-2 tracking-wide text-blue-700">
+        <h2 className="text-2xl font-extrabold uppercase flex items-center gap-2 tracking-wide text-primary border-l-4 border-primary pl-3">
           <FaBookOpen className="text-xl" />
           Sách Mới Tuyển Chọn
           <FaMagic className="text-yellow-400 animate-pulse text-lg" />

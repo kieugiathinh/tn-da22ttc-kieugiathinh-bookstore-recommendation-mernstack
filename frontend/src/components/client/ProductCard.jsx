@@ -1,4 +1,4 @@
-﻿import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FaFire, FaStar } from "react-icons/fa"; // Import thêm FaStar nếu muốn hiện đánh giá
 
 const ProductCard = ({ product, isFlashSale = false }) => {
@@ -15,7 +15,7 @@ const ProductCard = ({ product, isFlashSale = false }) => {
     <div className="bg-white p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 cursor-pointer relative group h-full flex flex-col">
       {/* Badge giảm giá (Chỉ hiện nếu có giảm giá) */}
       {discountPercent > 0 && (
-        <div className="absolute top-0 right-0 bg-yellow-400 text-red-600 font-bold text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg z-10">
+        <div className="absolute top-0 right-0 bg-primary text-white font-bold text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg z-10">
           -{discountPercent}%
         </div>
       )}
@@ -38,7 +38,7 @@ const ProductCard = ({ product, isFlashSale = false }) => {
         {/* Giá tiền */}
         <div className="mt-auto">
           <div className="flex items-end space-x-2">
-            <span className="text-red-600 font-bold text-lg">
+            <span className="text-primary font-bold text-lg">
               {product.discountedPrice?.toLocaleString("vi-VN")}đ
             </span>
             {product.originalPrice > 0 && (
@@ -53,9 +53,9 @@ const ProductCard = ({ product, isFlashSale = false }) => {
           {isFlashSale ? (
             // TRƯỜNG HỢP 1: FLASH SALE -> Hiện thanh Progress Bar đỏ rực
             <div className="mt-3 relative">
-              <div className="w-full bg-red-100 rounded-full h-4 relative overflow-hidden">
+              <div className="w-full bg-primary-light rounded-full h-4 relative overflow-hidden">
                 <div
-                  className="bg-red-500 h-full absolute top-0 left-0 z-0"
+                  className="bg-primary h-full absolute top-0 left-0 z-0"
                   style={{
                     width: `${Math.min(
                       (product.sold / (product.sold + product.countInStock)) *

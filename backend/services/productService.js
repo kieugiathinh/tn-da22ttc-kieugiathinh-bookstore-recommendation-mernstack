@@ -1,5 +1,64 @@
 import Product from "../models/productModel.js";
 import mongoose from "mongoose";
+import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+/**
+ * Gọi Google Books API để lấy thông tin sách theo tên.
+ * Trả về object chứa các trường cần thiết hoặc null nếu không tìm thấy.
+ */
+const fetchBookInfoFromGoogle = async (title) => {
+  try {
+    const params = {
+      q: `intitle:${title}`,
+      maxResults: 1,
+    };
+
+    // Nếu có API Key → gắn vào để tránh bị rate limit
+    if (process.env.GOOGLE_BOOKS_API_KEY) {
+      params.key = process.env.GOOGLE_BOOKS_API_KEY;
+    }
+
+    const response = await axios.get(
+      "https://www.googleapis.com/books/v1/volumes",
+      { params, timeout: 10000 }
+    );
+
+    if (!response.data.totalItems || !response.data.items?.length) {
+      return null;
+    }
+
+    const volumeInfo = response.data.items[0].volumeInfo;
+
+    return {
+      title: volumeInfo.title || "",
+      authors: Array.isArray(volumeInfo.authors)
+        ? volumeInfo.authors.join(", ")
+        : volumeInfo.authors || "",
+      description: volumeInfo.description || "",
+      publisher: volumeInfo.publisher || "",
+      publishedDate: volumeInfo.publishedDate || "",
+      pageCount: volumeInfo.pageCount || 0,
+      thumbnail: volumeInfo.imageLinks?.thumbnail || "",
+    };
+  } catch (error) {
+    console.error("Google Books API Error:", error.message);
+
+    // Lỗi 429: Quota exceeded
+    if (error.response?.status === 429) {
+      throw new Error(
+        "Google Books API đã hết quota. Vui lòng thêm API Key hoặc thử lại sau."
+      );
+    }
+
+    throw new Error(
+      error.response?.data?.error?.message ||
+        "Không thể kết nối tới Google Books API. Vui lòng thử lại."
+    );
+  }
+};
 
 const createProduct = async (productData) => {
   const newProduct = new Product(productData);
@@ -101,4 +160,5 @@ export {
   getAllProducts,
   getNewProducts,
   getRelatedProducts,
+  fetchBookInfoFromGoogle,
 };
