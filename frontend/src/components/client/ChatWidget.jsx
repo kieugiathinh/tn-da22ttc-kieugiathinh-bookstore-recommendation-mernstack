@@ -1,12 +1,24 @@
-import { useState, useRef, useEffect } from "react";
-import { publicRequest } from "../../requestMethods";
-import { FaTimes, FaPaperPlane } from "react-icons/fa";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { userRequest, publicRequest } from "../../requestMethods";
+import { useAuth } from "../../context/AuthContext";
+import { FaTimes, FaPaperPlane, FaTrash } from "react-icons/fa";
 import { IoChatbubblesSharp } from "react-icons/io5";
 
 // ── Tin nhắn chào mừng mặc định ───────────────────────────────────────────────
 const WELCOME_MESSAGE = {
   sender: "bot",
   text: "Xin chào! 👋 Mình là trợ lý tư vấn của **GTBOOKS**.\n\nBạn muốn tìm sách gì hôm nay? Mình có thể giúp bạn:\n📚 Gợi ý sách theo thể loại\n🔍 Tìm sách theo tên / tác giả\n💰 Tư vấn sách theo ngân sách",
+};
+
+// ── Sinh sessionId cho khách vãng lai (lưu localStorage) ──────────────────────
+const getGuestSessionId = () => {
+  const KEY = "gtbooks_chat_session_id";
+  let id = localStorage.getItem(KEY);
+  if (!id) {
+    id = "guest_" + crypto.randomUUID();
+    localStorage.setItem(KEY, id);
+  }
+  return id;
 };
 
 // ── Format markdown đơn giản ──────────────────────────────────────────────────
@@ -18,56 +30,93 @@ const formatMessage = (text) => {
 };
 
 const ChatWidget = () => {
+  const { currentUser } = useAuth();
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPulse, setShowPulse] = useState(true);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Chọn request instance: user đã login dùng userRequest (có cookie), guest dùng publicRequest
+  const apiRequest = currentUser ? userRequest : publicRequest;
+
+  // ── Tải lịch sử chat khi mở widget lần đầu ─────────────────────────────────
+  const loadHistory = useCallback(async () => {
+    if (historyLoaded) return;
+
+    try {
+      const params = {};
+      if (!currentUser) {
+        params.sessionId = getGuestSessionId();
+      }
+
+      const res = await apiRequest.get("/chatbot/history", { params });
+      const history = res.data.messages || [];
+
+      if (history.length > 0) {
+        // Có lịch sử → hiển thị (thêm welcome message ở đầu)
+        setMessages([WELCOME_MESSAGE, ...history]);
+      }
+    } catch (error) {
+      console.error("Load chat history error:", error);
+      // Không show lỗi – chỉ giữ welcome message
+    } finally {
+      setHistoryLoaded(true);
+    }
+  }, [currentUser, historyLoaded, apiRequest]);
 
   // Auto-scroll khi có tin nhắn mới
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Focus vào input khi mở chat
+  // Focus vào input + load history khi mở chat
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 300);
       setShowPulse(false);
+      loadHistory();
     }
-  }, [isOpen]);
+  }, [isOpen, loadHistory]);
 
+  // Reset history loaded khi user login/logout (thay đổi context)
+  useEffect(() => {
+    setHistoryLoaded(false);
+    setMessages([WELCOME_MESSAGE]);
+  }, [currentUser?._id]);
+
+  // ── Gửi tin nhắn ───────────────────────────────────────────────────────────
   const handleSend = async () => {
     const trimmed = inputValue.trim();
     if (!trimmed || isLoading) return;
 
-    // Thêm tin nhắn user
     const userMsg = { sender: "user", text: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setInputValue("");
     setIsLoading(true);
 
     try {
-      const res = await publicRequest.post("/chatbot/ask", {
-        message: trimmed,
-      });
-      const botMsg = {
-        sender: "bot",
-        text: res.data.reply,
-      };
+      const payload = { message: trimmed };
+
+      // Gửi sessionId cho khách vãng lai
+      if (!currentUser) {
+        payload.sessionId = getGuestSessionId();
+      }
+
+      const res = await apiRequest.post("/chatbot/ask", payload);
+      const botMsg = { sender: "bot", text: res.data.reply };
       setMessages((prev) => [...prev, botMsg]);
     } catch (error) {
       console.error("Chatbot error:", error);
       const errorText =
         error.response?.data?.message ||
         "Xin lỗi, mình đang gặp sự cố. Bạn thử lại sau nhé! 🙏";
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: errorText },
-      ]);
+      setMessages((prev) => [...prev, { sender: "bot", text: errorText }]);
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +127,11 @@ const ChatWidget = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  // ── Xóa lịch sử hiển thị (reset về welcome) ───────────────────────────────
+  const handleClearChat = () => {
+    setMessages([WELCOME_MESSAGE]);
   };
 
   return (
@@ -137,8 +191,17 @@ const ChatWidget = () => {
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-sm leading-tight">GTBOOKS Assistant</h3>
-              <p className="text-[11px] text-white/80">Tư vấn sách 24/7 • Powered by AI</p>
+              <p className="text-[11px] text-white/80">
+                {currentUser ? `👤 ${currentUser.fullname}` : "Khách vãng lai"} • AI 24/7
+              </p>
             </div>
+            <button
+              onClick={handleClearChat}
+              className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
+              title="Xóa lịch sử hiển thị"
+            >
+              <FaTrash className="text-xs" />
+            </button>
             <button
               onClick={() => setIsOpen(false)}
               className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
