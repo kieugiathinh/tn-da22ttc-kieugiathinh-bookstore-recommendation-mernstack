@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Navbar from "../components/client/Navbar";
 import Footer from "../components/client/Footer";
 import ScrollToTop from "../components/common/ScrollToTop";
+import ChatWidget from "../components/client/ChatWidget";
 
 // Layout dùng chung cho tất cả các trang khách hàng (Client)
 const ClientLayout = () => {
@@ -13,6 +14,7 @@ const ClientLayout = () => {
         <Outlet />
       </div>
       <Footer />
+      <ChatWidget />
     </div>
   );
 };

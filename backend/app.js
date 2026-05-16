@@ -17,6 +17,7 @@ import flashSaleRoutes from "./routes/flashsaleRoute.js";
 import reviewRoute from "./routes/reviewRoute.js";
 import couponRoute from "./routes/couponRoute.js";
 import statsRoute from "./routes/statsRoute.js";
+import chatbotRoute from "./routes/chatbotRoute.js";
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use("/api/v1/flash-sales", flashSaleRoutes);
 app.use("/api/v1/reviews", reviewRoute);
 app.use("/api/v1/coupons", couponRoute);
 app.use("/api/v1/stats", statsRoute);
+app.use("/api/v1/chatbot", chatbotRoute);
 
 // --- ERROR MIDDLEWARE ---
 app.use(notFound);
