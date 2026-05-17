@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useAuth } from "../../context/AuthContext";
-import { userRequest } from "../../requestMethods";
+import { publicRequest, userRequest } from "../../requestMethods";
 import { useNavigate, useLocation } from "react-router-dom";
 import { clearCart } from "../../redux/cartRedux";
 import { toast } from "sonner";
@@ -15,6 +15,8 @@ import {
   FaMapMarkerAlt,
   FaPhoneAlt,
   FaEdit,
+  FaTruck,
+  FaSpinner,
 } from "react-icons/fa";
 
 const Checkout = () => {
@@ -39,9 +41,6 @@ const Checkout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // --- CONSTANT ---
-  const SHIPPING_FEE = 30000;
-
   // --- STATE ---
   const [couponCode, setCouponCode] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -58,20 +57,150 @@ const Checkout = () => {
     name: user?.fullname || user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    address: user?.address || "",
   });
 
   const [alternateInputs, setAlternateInputs] = useState({
     otherPhone: "",
-    otherAddress: "",
   });
   const [showAlternate, setShowAlternate] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("COD");
+
+  // --- GHN ADDRESS STATES ---
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+
+  const [selectedProvince, setSelectedProvince] = useState(null);
+  const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [selectedWard, setSelectedWard] = useState(null);
+  const [streetAddress, setStreetAddress] = useState("");
+
+  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+  const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
+  const [isLoadingWards, setIsLoadingWards] = useState(false);
+
+  // --- DYNAMIC SHIPPING FEE ---
+  const [shippingFee, setShippingFee] = useState(0);
+  const [isCalculatingFee, setIsCalculatingFee] = useState(false);
 
   // Reset lại tổng tiền nếu danh sách sản phẩm thay đổi (phòng hờ)
   useEffect(() => {
     setSubTotalAfterDiscount(calculateProductsTotal());
   }, [checkoutItems]);
+
+  // --- GHN: Load Tỉnh/Thành khi mount ---
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      setIsLoadingProvinces(true);
+      try {
+        const res = await publicRequest.get("/shipping/provinces");
+        setProvinces(res.data?.data || []);
+      } catch (err) {
+        console.error("Lỗi load tỉnh/thành:", err);
+      } finally {
+        setIsLoadingProvinces(false);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // --- GHN: Load Quận/Huyện khi chọn Tỉnh ---
+  useEffect(() => {
+    if (!selectedProvince) {
+      setDistricts([]);
+      setSelectedDistrict(null);
+      setWards([]);
+      setSelectedWard(null);
+      setShippingFee(0);
+      return;
+    }
+    const fetchDistricts = async () => {
+      setIsLoadingDistricts(true);
+      setSelectedDistrict(null);
+      setWards([]);
+      setSelectedWard(null);
+      setShippingFee(0);
+      try {
+        const res = await publicRequest.get(
+          `/shipping/districts?province_id=${selectedProvince.ProvinceID}`
+        );
+        setDistricts(res.data?.data || []);
+      } catch (err) {
+        console.error("Lỗi load quận/huyện:", err);
+      } finally {
+        setIsLoadingDistricts(false);
+      }
+    };
+    fetchDistricts();
+  }, [selectedProvince]);
+
+  // --- GHN: Load Phường/Xã khi chọn Quận ---
+  useEffect(() => {
+    if (!selectedDistrict) {
+      setWards([]);
+      setSelectedWard(null);
+      setShippingFee(0);
+      return;
+    }
+    const fetchWards = async () => {
+      setIsLoadingWards(true);
+      setSelectedWard(null);
+      setShippingFee(0);
+      try {
+        const res = await publicRequest.get(
+          `/shipping/wards?district_id=${selectedDistrict.DistrictID}`
+        );
+        setWards(res.data?.data || []);
+      } catch (err) {
+        console.error("Lỗi load phường/xã:", err);
+      } finally {
+        setIsLoadingWards(false);
+      }
+    };
+    fetchWards();
+  }, [selectedDistrict]);
+
+  // --- GHN: Tự động tính phí ship khi chọn xong Phường/Xã ---
+  useEffect(() => {
+    if (!selectedDistrict || !selectedWard || checkoutItems.length === 0) {
+      setShippingFee(0);
+      return;
+    }
+    const calcFee = async () => {
+      setIsCalculatingFee(true);
+      try {
+        // Tính tổng weight từ checkoutItems (default 300g nếu không có)
+        const totalWeight = checkoutItems.reduce(
+          (acc, item) => acc + (item.weight || 300) * item.quantity,
+          0
+        );
+        const res = await publicRequest.post("/shipping/fee", {
+          to_district_id: selectedDistrict.DistrictID,
+          to_ward_code: selectedWard.WardCode,
+          weight: totalWeight,
+          insurance_value: initialProductsTotal,
+        });
+        setShippingFee(res.data?.data?.total || 0);
+      } catch (err) {
+        console.error("Lỗi tính phí ship:", err);
+        toast.error("Không thể tính phí vận chuyển");
+        setShippingFee(0);
+      } finally {
+        setIsCalculatingFee(false);
+      }
+    };
+    calcFee();
+  }, [selectedDistrict, selectedWard, checkoutItems]);
+
+  // --- Tạo chuỗi địa chỉ đầy đủ từ dropdown ---
+  const getFullAddress = useCallback(() => {
+    const parts = [];
+    if (streetAddress.trim()) parts.push(streetAddress.trim());
+    if (selectedWard) parts.push(selectedWard.WardName);
+    if (selectedDistrict) parts.push(selectedDistrict.DistrictName);
+    if (selectedProvince) parts.push(selectedProvince.ProvinceName);
+    return parts.join(", ");
+  }, [streetAddress, selectedWard, selectedDistrict, selectedProvince]);
 
   const availableVouchers =
     user?.wallet?.filter((item) => !item.isUsed && item.coupon) || [];
@@ -125,16 +254,31 @@ const Checkout = () => {
     const shippingEmail = defaultInputs.email;
     const shippingPhone =
       alternateInputs.otherPhone.trim() || defaultInputs.phone;
-    const shippingAddress =
-      alternateInputs.otherAddress.trim() || defaultInputs.address;
+    const shippingAddress = getFullAddress();
 
-    if (!shippingName || !shippingPhone || !shippingAddress) {
+    if (!shippingName || !shippingPhone) {
       toast.error("Vui lòng nhập đầy đủ thông tin giao hàng!");
       return;
     }
 
+    if (!selectedProvince || !selectedDistrict || !selectedWard) {
+      toast.error("Vui lòng chọn đầy đủ Tỉnh/Quận/Phường!");
+      return;
+    }
+
+    if (!streetAddress.trim()) {
+      toast.error("Vui lòng nhập số nhà / tên đường!");
+      return;
+    }
+
+    // Tính tổng khối lượng
+    const totalWeight = checkoutItems.reduce(
+      (acc, item) => acc + (item.weight || 300) * item.quantity,
+      0
+    );
+
     // TỔNG TIỀN CUỐI CÙNG = (Tiền hàng đã trừ voucher) + SHIP
-    const grandTotal = subTotalAfterDiscount + SHIPPING_FEE;
+    const grandTotal = subTotalAfterDiscount + shippingFee;
 
     const orderData = {
       userId: user._id,
@@ -146,6 +290,8 @@ const Checkout = () => {
         price: item.price,
       })),
       total: grandTotal,
+      shippingFee: shippingFee,
+      totalWeight: totalWeight,
       couponCode: discountAmount > 0 ? couponCode : null,
       name: shippingName,
       email: shippingEmail,
@@ -217,17 +363,152 @@ const Checkout = () => {
                   {defaultInputs.email}
                 </div>
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
-                  Địa chỉ
-                </label>
-                <div className="font-medium text-gray-800">
-                  {defaultInputs.address || "Chưa cập nhật"}
-                </div>
-              </div>
             </div>
           </div>
 
+          {/* ĐỊA CHỈ GIAO HÀNG - GHN Dropdown */}
+          <div className="bg-white p-6 rounded-xl shadow-sm mb-4 border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <FaMapMarkerAlt className="mr-2 text-primary" />
+              Địa chỉ giao hàng
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              {/* Tỉnh / Thành */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tỉnh / Thành phố <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="province-select"
+                    value={selectedProvince?.ProvinceID || ""}
+                    onChange={(e) => {
+                      const prov = provinces.find(
+                        (p) => p.ProvinceID === Number(e.target.value)
+                      );
+                      setSelectedProvince(prov || null);
+                    }}
+                    disabled={isLoadingProvinces}
+                    className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed pr-8"
+                  >
+                    <option value="">
+                      {isLoadingProvinces ? "Đang tải..." : "-- Chọn Tỉnh/Thành --"}
+                    </option>
+                    {provinces.map((p) => (
+                      <option key={p.ProvinceID} value={p.ProvinceID}>
+                        {p.ProvinceName}
+                      </option>
+                    ))}
+                  </select>
+                  <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Quận / Huyện */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quận / Huyện <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="district-select"
+                    value={selectedDistrict?.DistrictID || ""}
+                    onChange={(e) => {
+                      const dist = districts.find(
+                        (d) => d.DistrictID === Number(e.target.value)
+                      );
+                      setSelectedDistrict(dist || null);
+                    }}
+                    disabled={!selectedProvince || isLoadingDistricts}
+                    className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed pr-8"
+                  >
+                    <option value="">
+                      {isLoadingDistricts
+                        ? "Đang tải..."
+                        : !selectedProvince
+                        ? "-- Chọn Tỉnh trước --"
+                        : "-- Chọn Quận/Huyện --"}
+                    </option>
+                    {districts.map((d) => (
+                      <option key={d.DistrictID} value={d.DistrictID}>
+                        {d.DistrictName}
+                      </option>
+                    ))}
+                  </select>
+                  <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Phường / Xã */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phường / Xã <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="ward-select"
+                    value={selectedWard?.WardCode || ""}
+                    onChange={(e) => {
+                      const ward = wards.find(
+                        (w) => w.WardCode === e.target.value
+                      );
+                      setSelectedWard(ward || null);
+                    }}
+                    disabled={!selectedDistrict || isLoadingWards}
+                    className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed pr-8"
+                  >
+                    <option value="">
+                      {isLoadingWards
+                        ? "Đang tải..."
+                        : !selectedDistrict
+                        ? "-- Chọn Quận trước --"
+                        : "-- Chọn Phường/Xã --"}
+                    </option>
+                    {wards.map((w) => (
+                      <option key={w.WardCode} value={w.WardCode}>
+                        {w.WardName}
+                      </option>
+                    ))}
+                  </select>
+                  <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* Số nhà / Đường */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Số nhà, tên đường <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="street-address-input"
+                type="text"
+                value={streetAddress}
+                onChange={(e) => setStreetAddress(e.target.value)}
+                placeholder="Ví dụ: 123 Nguyễn Văn A"
+                className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
+              />
+            </div>
+
+            {/* Hiển thị phí ship (preview) */}
+            {selectedWard && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                <div className="flex items-center text-green-700">
+                  <FaTruck className="mr-2" />
+                  <span className="text-sm font-medium">Phí vận chuyển (GHN):</span>
+                </div>
+                <span className="font-bold text-green-700">
+                  {isCalculatingFee ? (
+                    <FaSpinner className="animate-spin inline" />
+                  ) : (
+                    `${shippingFee.toLocaleString()} ₫`
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* SĐT thay thế */}
           <div className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden border border-gray-100">
             <div
               onClick={() => setShowAlternate(!showAlternate)}
@@ -236,7 +517,7 @@ const Checkout = () => {
               <div className="flex items-center text-gray-700">
                 <FaEdit className="mr-3 text-primary" />
                 <span className="font-semibold text-sm md:text-base">
-                  Thay đổi địa chỉ / SĐT nhận hàng
+                  Thay đổi SĐT nhận hàng
                 </span>
               </div>
               <div className="text-gray-500">
@@ -245,35 +526,19 @@ const Checkout = () => {
             </div>
             {showAlternate && (
               <div className="p-6 border-t border-gray-100 animate-fadeIn">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                      <FaPhoneAlt className="mr-2 text-primary text-xs" /> Số
-                      điện thoại mới
-                    </label>
-                    <input
-                      type="text"
-                      name="otherPhone"
-                      value={alternateInputs.otherPhone}
-                      onChange={handleAlternateChange}
-                      placeholder="Nhập SĐT người nhận..."
-                      className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                      <FaMapMarkerAlt className="mr-2 text-primary text-xs" />{" "}
-                      Địa chỉ nhận hàng mới
-                    </label>
-                    <textarea
-                      name="otherAddress"
-                      rows="2"
-                      value={alternateInputs.otherAddress}
-                      onChange={handleAlternateChange}
-                      placeholder="Nhập địa chỉ giao hàng cụ thể..."
-                      className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    <FaPhoneAlt className="mr-2 text-primary text-xs" /> Số
+                    điện thoại mới
+                  </label>
+                  <input
+                    type="text"
+                    name="otherPhone"
+                    value={alternateInputs.otherPhone}
+                    onChange={handleAlternateChange}
+                    placeholder="Nhập SĐT người nhận..."
+                    className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
+                  />
                 </div>
               </div>
             )}
@@ -446,12 +711,21 @@ const Checkout = () => {
             <div className="border-t pt-4 space-y-2 text-sm">
               <div className="flex justify-between text-gray-500">
                 <span>Tạm tính</span>
-                {/* HIỂN THỊ INITIAL TOTAL ĐỂ ĐẢM BẢO CHỈ LÀ TIỀN HÀNG */}
                 <span>{initialProductsTotal.toLocaleString()} ₫</span>
               </div>
               <div className="flex justify-between text-gray-500">
-                <span>Phí vận chuyển</span>
-                <span>{SHIPPING_FEE.toLocaleString()} ₫</span>
+                <span className="flex items-center">
+                  <FaTruck className="mr-1 text-xs" /> Phí vận chuyển
+                </span>
+                <span>
+                  {isCalculatingFee ? (
+                    <FaSpinner className="animate-spin inline text-primary" />
+                  ) : shippingFee > 0 ? (
+                    `${shippingFee.toLocaleString()} ₫`
+                  ) : (
+                    <span className="text-xs text-gray-400 italic">Chọn địa chỉ để tính</span>
+                  )}
+                </span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-600 font-bold">
@@ -462,17 +736,17 @@ const Checkout = () => {
               <div className="flex justify-between text-lg font-extrabold text-gray-800 border-t pt-2 mt-2">
                 <span>Tổng tiền</span>
                 <span className="text-primary">
-                  {/* TỔNG = (TIỀN HÀNG - VOUCHER) + SHIP */}
-                  {(subTotalAfterDiscount + SHIPPING_FEE).toLocaleString()} ₫
+                  {(subTotalAfterDiscount + shippingFee).toLocaleString()} ₫
                 </span>
               </div>
             </div>
 
             <button
               onClick={handlePlaceOrder}
-              className="w-full bg-gradient-to-r from-primary to-indigo-600 text-white py-3 rounded-lg mt-6 font-bold hover:shadow-lg hover:scale-[1.02] transition-all active:scale-95"
+              disabled={isCalculatingFee || !selectedWard}
+              className="w-full bg-gradient-to-r from-primary to-indigo-600 text-white py-3 rounded-lg mt-6 font-bold hover:shadow-lg hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              ĐẶT HÀNG
+              {isCalculatingFee ? "Đang tính phí..." : "ĐẶT HÀNG"}
             </button>
           </div>
         </div>

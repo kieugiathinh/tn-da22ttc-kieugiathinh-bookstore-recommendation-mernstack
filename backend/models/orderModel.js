@@ -62,6 +62,18 @@ const OrderSchema = mongoose.Schema(
       default: "COD",
     },
 
+    // Phí vận chuyển (tính từ GHN API)
+    shippingFee: {
+      type: Number,
+      default: 0,
+    },
+
+    // Tổng khối lượng đơn hàng (gram)
+    totalWeight: {
+      type: Number,
+      default: 0,
+    },
+
     // Trạng thái đơn hàng (0: Chờ, 1: Đã thanh toán/Đang xử lý, 2: Đã giao)
     status: {
       type: Number,

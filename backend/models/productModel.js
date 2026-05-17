@@ -80,6 +80,13 @@ const ProductSchema = mongoose.Schema(
       required: true,
       default: 0,
     },
+
+    // 11. Khối lượng sách (gram) - Dùng tính phí vận chuyển GHN
+    weight: {
+      type: Number,
+      default: 300, // Mặc định 300g cho mỗi cuốn sách
+      min: 0,
+    },
   },
   {
     timestamps: true,
