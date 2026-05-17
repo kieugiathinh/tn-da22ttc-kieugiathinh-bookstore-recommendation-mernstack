@@ -76,6 +76,8 @@ export const AuthProvider = ({ children }) => {
 
   // ── Verify token khi app mount ────────────────────────────────────────────
   useEffect(() => {
+    let cancelled = false;
+
     const verifyAuth = async () => {
       // Nếu không có user trong Redux → không cần verify
       if (!currentUser) {
@@ -87,16 +89,24 @@ export const AuthProvider = ({ children }) => {
         // Gọi một endpoint nhẹ để kiểm tra cookie/token còn hợp lệ
         await userRequest.get("/auth/verify");
       } catch (error) {
-        // Token hết hạn hoặc không hợp lệ → tự động logout
-        if (error.response?.status === 401 || error.response?.status === 403) {
+        if (cancelled) return;
+        const status = error.response?.status;
+        // Chỉ logout khi thực sự hết hạn (401/403)
+        // KHÔNG logout khi 429 (rate limit) → tránh vòng lặp
+        if (status === 401 || status === 403) {
           dispatch(logOut());
         }
       } finally {
-        setIsInitializing(false);
+        if (!cancelled) setIsInitializing(false);
       }
     };
 
     verifyAuth();
+
+    // Cleanup: cancel khi StrictMode unmount-remount
+    return () => {
+      cancelled = true;
+    };
     // Chỉ chạy 1 lần khi mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

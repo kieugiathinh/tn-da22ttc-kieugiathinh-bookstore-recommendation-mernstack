@@ -25,7 +25,12 @@ const app = express();
 
 // --- BẢO MẬT (SECURITY) ---
 // 1. Set Security HTTP Headers
-app.use(helmet());
+// crossOriginOpenerPolicy: cho phép Google Sign-In popup giao tiếp qua postMessage
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  })
+);
 
 // 2. Cấu hình CORS
 const allowedOrigins = [
@@ -43,32 +48,27 @@ app.use(
 );
 
 // 3. Rate Limiting (Giới hạn API)
-// Áp dụng cho auth trước
+const isDev = process.env.NODE_ENV !== "production";
+
+// Auth limiter: nới lỏng trong Dev để tránh 429 khi hot-reload
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 phút
-  max: 20, // Tối đa 20 requests
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 1000 : 20, // Dev: 1000 | Prod: 20
   message: "Quá nhiều lượt đăng nhập, vui lòng thử lại sau 15 phút.",
 });
 
-// Bạn có thể tạo apiLimiter chung cho toàn bộ app
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: isDev ? 5000 : 1000,
 });
 app.use("/api/", apiLimiter);
 
 // 4. Body Parser
-app.use(express.json({ limit: "10kb" })); // Chống payload quá lớn
+app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
-// 5. Data Sanitization (Chống Injection)
-// Chống NoSQL Injection (Tạm tắt do không tương thích Express 5)
-// app.use(mongoSanitize());
-// Chống XSS (Cross-Site Scripting)
-// app.use(xss());
-
-// --- ROUTES ---
-app.use("/api/v1/auth", authLimiter, authRoute); // Áp dụng authLimiter
+// ...
+app.use("/api/v1/auth", authLimiter, authRoute);
 app.use("/api/v1/products", productRoute);
 app.use("/api/v1/banners", bannerRoute);
 app.use("/api/v1/users", userRoute);

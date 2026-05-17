@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FaCheckCircle,
   FaShippingFast,
@@ -44,7 +44,6 @@ const Order = () => {
   const [ratingData, setRatingData] = useState({});
   const [showRatingFor, setShowRatingFor] = useState(null);
 
-  const SHIPPING_FEE = 30000; // Phí ship cố định để tính toán hiển thị
 
   const tabs = [
     { id: "all", label: "Tất cả", icon: <FaClipboardList /> },
@@ -226,8 +225,10 @@ const Order = () => {
                 0
               );
 
-              // Tổng thực tế (Tiền hàng + Ship cố định)
-              const realTotalWithoutDiscount = subtotal + SHIPPING_FEE;
+              const orderShipFee = order.shippingFee || 0;
+
+              // Tổng thực tế (Tiền hàng + Ship)
+              const realTotalWithoutDiscount = subtotal + orderShipFee;
 
               // Voucher = (Tiền hàng + Ship) - (Số tiền khách trả thực trong DB)
               // Dùng Math.max(0, ...) để tránh số âm nếu dữ liệu cũ bị sai
@@ -277,7 +278,7 @@ const Order = () => {
                         <p className="text-xs text-gray-500">
                           Phí vận chuyển:{" "}
                           <span className="font-medium text-slate-700">
-                            {SHIPPING_FEE.toLocaleString()}đ
+                          {orderShipFee.toLocaleString()}đ
                           </span>
                         </p>
                         {discountAmount > 0 && (

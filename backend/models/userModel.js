@@ -44,6 +44,22 @@ const userSchema = mongoose.Schema(
       default: "",
     },
 
+    // Sổ địa chỉ (Address Book) - Lưu nhiều địa chỉ giao hàng
+    addresses: [
+      {
+        name: { type: String, required: true },       // Tên người nhận
+        phone: { type: String, required: true },      // SĐT người nhận
+        provinceId: { type: Number, required: true },
+        provinceName: { type: String, required: true },
+        districtId: { type: Number, required: true },
+        districtName: { type: String, required: true },
+        wardCode: { type: String, required: true },
+        wardName: { type: String, required: true },
+        street: { type: String, required: true },     // Số nhà, tên đường
+        isDefault: { type: Boolean, default: false },
+      },
+    ],
+
     role: {
       type: Number,
       default: 0,

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FaMinus, FaPlus, FaTrashAlt, FaArrowLeft } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart, removeProduct, updateQuantity } from "../../redux/cartRedux";
@@ -95,7 +95,7 @@ const Cart = () => {
     0
   );
 
-  const shipping = subtotal > 0 ? 30000 : 0;
+  const shipping = 0; // Phí ship sẽ được tính tại trang Checkout
   const total = subtotal + shipping;
 
   // --- LOGIC CHUYỂN TRANG THANH TOÁN ---
@@ -327,10 +327,8 @@ const Cart = () => {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Phí vận chuyển</span>
-                  <span className="font-medium">
-                    {shipping > 0
-                      ? `${shipping.toLocaleString("vi-VN")} ₫`
-                      : "Miễn phí"}
+                  <span className="font-medium text-sm text-gray-400 italic">
+                    Tính tại trang thanh toán
                   </span>
                 </div>
               </div>

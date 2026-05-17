@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { CLOUDINARY_CONFIG } from "../../utils/constants";
 import { toast } from "sonner";
+import AddressBook from "../../components/client/AddressBook";
 
 // --- 1. MANG RA NGOÀI ĐỂ KHÔNG BỊ RERENDER ---
 const DisabledInput = ({ label, value, icon }) => (
@@ -305,7 +306,10 @@ const MyAccount = () => {
             </form>
           </section>
 
-          {/* PHẦN 3: SECURITY */}
+          {/* PHẦN 3: SỔ ĐỊA CHỈ */}
+          <AddressBook />
+
+          {/* PHẦN 4: SECURITY */}
           <section className="border-t border-gray-100 pt-8">
             <h2 className="text-lg font-bold text-gray-800 mb-5">Bảo mật</h2>
             <form onSubmit={handleChangePassword} className="space-y-5">

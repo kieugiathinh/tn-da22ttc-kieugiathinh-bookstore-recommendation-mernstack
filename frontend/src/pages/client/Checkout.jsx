@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { publicRequest, userRequest } from "../../requestMethods";
 import { useNavigate, useLocation } from "react-router-dom";
 import { clearCart } from "../../redux/cartRedux";
+import { loginSuccess } from "../../redux/userRedux";
 import { toast } from "sonner";
 import {
   FaMoneyBillWave,
@@ -17,6 +18,9 @@ import {
   FaEdit,
   FaTruck,
   FaSpinner,
+  FaPlus,
+  FaStar,
+  FaCheck,
 } from "react-icons/fa";
 
 const Checkout = () => {
@@ -65,142 +69,162 @@ const Checkout = () => {
   const [showAlternate, setShowAlternate] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("COD");
 
-  // --- GHN ADDRESS STATES ---
+  // --- SMART ADDRESS STATES ---
+  const userAddresses = user?.addresses || [];
+  const defaultAddr = userAddresses.find((a) => a.isDefault) || userAddresses[0] || null;
+  const [selectedAddress, setSelectedAddress] = useState(defaultAddr);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showInlineForm, setShowInlineForm] = useState(!defaultAddr);
+
+  // Inline form states (khi chưa có địa chỉ)
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
-
-  const [selectedProvince, setSelectedProvince] = useState(null);
-  const [selectedDistrict, setSelectedDistrict] = useState(null);
-  const [selectedWard, setSelectedWard] = useState(null);
-  const [streetAddress, setStreetAddress] = useState("");
-
-  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
-  const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
-  const [isLoadingWards, setIsLoadingWards] = useState(false);
+  const [selProv, setSelProv] = useState(null);
+  const [selDist, setSelDist] = useState(null);
+  const [selWard, setSelWard] = useState(null);
+  const [inlineStreet, setInlineStreet] = useState("");
+  const [inlineName, setInlineName] = useState(user?.fullname || "");
+  const [inlinePhone, setInlinePhone] = useState(user?.phone || "");
+  const [loadingProv, setLoadingProv] = useState(false);
+  const [loadingDist, setLoadingDist] = useState(false);
+  const [loadingWard, setLoadingWard] = useState(false);
 
   // --- DYNAMIC SHIPPING FEE ---
   const [shippingFee, setShippingFee] = useState(0);
   const [isCalculatingFee, setIsCalculatingFee] = useState(false);
 
-  // Reset lại tổng tiền nếu danh sách sản phẩm thay đổi (phòng hờ)
+  // Reset tổng tiền khi sản phẩm thay đổi
   useEffect(() => {
     setSubTotalAfterDiscount(calculateProductsTotal());
   }, [checkoutItems]);
 
-  // --- GHN: Load Tỉnh/Thành khi mount ---
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      setIsLoadingProvinces(true);
-      try {
-        const res = await publicRequest.get("/shipping/provinces");
-        setProvinces(res.data?.data || []);
-      } catch (err) {
-        console.error("Lỗi load tỉnh/thành:", err);
-      } finally {
-        setIsLoadingProvinces(false);
+  // --- Hàm tính phí ship dùng chung ---
+  const calculateFee = useCallback(
+    async (districtId, wardCode) => {
+      if (!districtId || !wardCode || checkoutItems.length === 0) {
+        setShippingFee(0);
+        return;
       }
-    };
-    fetchProvinces();
-  }, []);
-
-  // --- GHN: Load Quận/Huyện khi chọn Tỉnh ---
-  useEffect(() => {
-    if (!selectedProvince) {
-      setDistricts([]);
-      setSelectedDistrict(null);
-      setWards([]);
-      setSelectedWard(null);
-      setShippingFee(0);
-      return;
-    }
-    const fetchDistricts = async () => {
-      setIsLoadingDistricts(true);
-      setSelectedDistrict(null);
-      setWards([]);
-      setSelectedWard(null);
-      setShippingFee(0);
-      try {
-        const res = await publicRequest.get(
-          `/shipping/districts?province_id=${selectedProvince.ProvinceID}`
-        );
-        setDistricts(res.data?.data || []);
-      } catch (err) {
-        console.error("Lỗi load quận/huyện:", err);
-      } finally {
-        setIsLoadingDistricts(false);
-      }
-    };
-    fetchDistricts();
-  }, [selectedProvince]);
-
-  // --- GHN: Load Phường/Xã khi chọn Quận ---
-  useEffect(() => {
-    if (!selectedDistrict) {
-      setWards([]);
-      setSelectedWard(null);
-      setShippingFee(0);
-      return;
-    }
-    const fetchWards = async () => {
-      setIsLoadingWards(true);
-      setSelectedWard(null);
-      setShippingFee(0);
-      try {
-        const res = await publicRequest.get(
-          `/shipping/wards?district_id=${selectedDistrict.DistrictID}`
-        );
-        setWards(res.data?.data || []);
-      } catch (err) {
-        console.error("Lỗi load phường/xã:", err);
-      } finally {
-        setIsLoadingWards(false);
-      }
-    };
-    fetchWards();
-  }, [selectedDistrict]);
-
-  // --- GHN: Tự động tính phí ship khi chọn xong Phường/Xã ---
-  useEffect(() => {
-    if (!selectedDistrict || !selectedWard || checkoutItems.length === 0) {
-      setShippingFee(0);
-      return;
-    }
-    const calcFee = async () => {
       setIsCalculatingFee(true);
       try {
-        // Tính tổng weight từ checkoutItems (default 300g nếu không có)
         const totalWeight = checkoutItems.reduce(
           (acc, item) => acc + (item.weight || 300) * item.quantity,
           0
         );
         const res = await publicRequest.post("/shipping/fee", {
-          to_district_id: selectedDistrict.DistrictID,
-          to_ward_code: selectedWard.WardCode,
+          to_district_id: districtId,
+          to_ward_code: wardCode,
           weight: totalWeight,
           insurance_value: initialProductsTotal,
         });
         setShippingFee(res.data?.data?.total || 0);
       } catch (err) {
         console.error("Lỗi tính phí ship:", err);
-        toast.error("Không thể tính phí vận chuyển");
         setShippingFee(0);
       } finally {
         setIsCalculatingFee(false);
       }
-    };
-    calcFee();
-  }, [selectedDistrict, selectedWard, checkoutItems]);
+    },
+    [checkoutItems, initialProductsTotal]
+  );
 
-  // --- Tạo chuỗi địa chỉ đầy đủ từ dropdown ---
+  // --- Auto-calculate khi có selectedAddress ---
+  useEffect(() => {
+    if (selectedAddress) {
+      calculateFee(selectedAddress.districtId, selectedAddress.wardCode);
+    } else {
+      setShippingFee(0);
+    }
+  }, [selectedAddress, calculateFee]);
+
+  // --- Inline form: load provinces ---
+  useEffect(() => {
+    if (!showInlineForm) return;
+    const fetch = async () => {
+      setLoadingProv(true);
+      try {
+        const res = await publicRequest.get("/shipping/provinces");
+        setProvinces(res.data?.data || []);
+      } catch (e) { console.error(e); }
+      finally { setLoadingProv(false); }
+    };
+    fetch();
+  }, [showInlineForm]);
+
+  // --- Inline form: load districts ---
+  useEffect(() => {
+    if (!selProv) { setDistricts([]); setSelDist(null); setWards([]); setSelWard(null); return; }
+    const fetch = async () => {
+      setLoadingDist(true); setSelDist(null); setWards([]); setSelWard(null);
+      try {
+        const res = await publicRequest.get(`/shipping/districts?province_id=${selProv.ProvinceID}`);
+        setDistricts(res.data?.data || []);
+      } catch (e) { console.error(e); }
+      finally { setLoadingDist(false); }
+    };
+    fetch();
+  }, [selProv]);
+
+  // --- Inline form: load wards ---
+  useEffect(() => {
+    if (!selDist) { setWards([]); setSelWard(null); return; }
+    const fetch = async () => {
+      setLoadingWard(true); setSelWard(null);
+      try {
+        const res = await publicRequest.get(`/shipping/wards?district_id=${selDist.DistrictID}`);
+        setWards(res.data?.data || []);
+      } catch (e) { console.error(e); }
+      finally { setLoadingWard(false); }
+    };
+    fetch();
+  }, [selDist]);
+
+  // --- Inline form: tính phí khi chọn xong ward ---
+  useEffect(() => {
+    if (showInlineForm && selDist && selWard) {
+      calculateFee(selDist.DistrictID, selWard.WardCode);
+    }
+  }, [selDist, selWard, showInlineForm, calculateFee]);
+
+  // --- Lưu địa chỉ inline vào sổ + chọn luôn ---
+  const handleSaveInlineAddress = async () => {
+    if (!inlineName.trim() || !inlinePhone.trim() || !inlineStreet.trim()) {
+      toast.error("Vui lòng nhập đầy đủ thông tin!"); return;
+    }
+    if (!selProv || !selDist || !selWard) {
+      toast.error("Vui lòng chọn đầy đủ Tỉnh/Quận/Phường!"); return;
+    }
+    try {
+      const payload = {
+        name: inlineName.trim(), phone: inlinePhone.trim(), street: inlineStreet.trim(),
+        provinceId: selProv.ProvinceID, provinceName: selProv.ProvinceName,
+        districtId: selDist.DistrictID, districtName: selDist.DistrictName,
+        wardCode: selWard.WardCode, wardName: selWard.WardName,
+        isDefault: userAddresses.length === 0,
+      };
+      const res = await userRequest.post("/users/addresses", payload);
+      dispatch(loginSuccess({ ...user, ...res.data }));
+      const newAddresses = res.data.addresses || [];
+      const newAddr = newAddresses[newAddresses.length - 1];
+      setSelectedAddress(newAddr);
+      setShowInlineForm(false);
+      toast.success("Đã lưu và chọn địa chỉ!");
+    } catch (err) {
+      toast.error("Lưu địa chỉ thất bại!");
+    }
+  };
+
+  // --- Tạo chuỗi địa chỉ ---
   const getFullAddress = useCallback(() => {
-    const parts = [];
-    if (streetAddress.trim()) parts.push(streetAddress.trim());
-    if (selectedWard) parts.push(selectedWard.WardName);
-    if (selectedDistrict) parts.push(selectedDistrict.DistrictName);
-    if (selectedProvince) parts.push(selectedProvince.ProvinceName);
-    return parts.join(", ");
-  }, [streetAddress, selectedWard, selectedDistrict, selectedProvince]);
+    if (selectedAddress) {
+      return `${selectedAddress.street}, ${selectedAddress.wardName}, ${selectedAddress.districtName}, ${selectedAddress.provinceName}`;
+    }
+    if (showInlineForm && selWard && selDist && selProv && inlineStreet.trim()) {
+      return `${inlineStreet.trim()}, ${selWard.WardName}, ${selDist.DistrictName}, ${selProv.ProvinceName}`;
+    }
+    return "";
+  }, [selectedAddress, showInlineForm, selWard, selDist, selProv, inlineStreet]);
 
   const availableVouchers =
     user?.wallet?.filter((item) => !item.isUsed && item.coupon) || [];
@@ -250,24 +274,19 @@ const Checkout = () => {
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
 
-    const shippingName = defaultInputs.name;
+    const addrSource = selectedAddress || null;
+    const shippingName = addrSource?.name || inlineName.trim() || defaultInputs.name;
     const shippingEmail = defaultInputs.email;
-    const shippingPhone =
-      alternateInputs.otherPhone.trim() || defaultInputs.phone;
+    const shippingPhone = alternateInputs.otherPhone.trim() || addrSource?.phone || defaultInputs.phone;
     const shippingAddress = getFullAddress();
+
+    if (!shippingAddress) {
+      toast.error("Vui lòng chọn hoặc thêm địa chỉ giao hàng!");
+      return;
+    }
 
     if (!shippingName || !shippingPhone) {
       toast.error("Vui lòng nhập đầy đủ thông tin giao hàng!");
-      return;
-    }
-
-    if (!selectedProvince || !selectedDistrict || !selectedWard) {
-      toast.error("Vui lòng chọn đầy đủ Tỉnh/Quận/Phường!");
-      return;
-    }
-
-    if (!streetAddress.trim()) {
-      toast.error("Vui lòng nhập số nhà / tên đường!");
       return;
     }
 
@@ -331,218 +350,146 @@ const Checkout = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* CỘT TRÁI (Giữ nguyên UI) */}
         <div className="lg:col-span-2">
-          <div className="bg-white p-6 rounded-xl shadow-sm mb-4 border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
-              <span>Thông tin nhận hàng</span>
-              <span className="text-xs font-normal text-primary bg-primary-light px-2 py-1 rounded-full border border-primary-light">
-                Mặc định
-              </span>
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
-                  Họ tên
-                </label>
-                <div className="font-medium text-gray-800">
-                  {defaultInputs.name}
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
-                  Số điện thoại
-                </label>
-                <div className="font-medium text-gray-800">
-                  {defaultInputs.phone || "Chưa cập nhật"}
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
-                  Email
-                </label>
-                <div className="font-medium text-gray-800">
-                  {defaultInputs.email}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ĐỊA CHỈ GIAO HÀNG - GHN Dropdown */}
+          {/* SMART ADDRESS CARD */}
           <div className="bg-white p-6 rounded-xl shadow-sm mb-4 border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
               <FaMapMarkerAlt className="mr-2 text-primary" />
-              Địa chỉ giao hàng
+              Địa chỉ nhận hàng
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              {/* Tỉnh / Thành */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tỉnh / Thành phố <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    id="province-select"
-                    value={selectedProvince?.ProvinceID || ""}
-                    onChange={(e) => {
-                      const prov = provinces.find(
-                        (p) => p.ProvinceID === Number(e.target.value)
-                      );
-                      setSelectedProvince(prov || null);
-                    }}
-                    disabled={isLoadingProvinces}
-                    className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed pr-8"
-                  >
-                    <option value="">
-                      {isLoadingProvinces ? "Đang tải..." : "-- Chọn Tỉnh/Thành --"}
-                    </option>
-                    {provinces.map((p) => (
-                      <option key={p.ProvinceID} value={p.ProvinceID}>
-                        {p.ProvinceName}
-                      </option>
-                    ))}
-                  </select>
-                  <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
-                </div>
-              </div>
 
-              {/* Quận / Huyện */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quận / Huyện <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    id="district-select"
-                    value={selectedDistrict?.DistrictID || ""}
-                    onChange={(e) => {
-                      const dist = districts.find(
-                        (d) => d.DistrictID === Number(e.target.value)
-                      );
-                      setSelectedDistrict(dist || null);
-                    }}
-                    disabled={!selectedProvince || isLoadingDistricts}
-                    className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed pr-8"
-                  >
-                    <option value="">
-                      {isLoadingDistricts
-                        ? "Đang tải..."
-                        : !selectedProvince
-                        ? "-- Chọn Tỉnh trước --"
-                        : "-- Chọn Quận/Huyện --"}
-                    </option>
-                    {districts.map((d) => (
-                      <option key={d.DistrictID} value={d.DistrictID}>
-                        {d.DistrictName}
-                      </option>
-                    ))}
-                  </select>
-                  <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Phường / Xã */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phường / Xã <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    id="ward-select"
-                    value={selectedWard?.WardCode || ""}
-                    onChange={(e) => {
-                      const ward = wards.find(
-                        (w) => w.WardCode === e.target.value
-                      );
-                      setSelectedWard(ward || null);
-                    }}
-                    disabled={!selectedDistrict || isLoadingWards}
-                    className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed pr-8"
-                  >
-                    <option value="">
-                      {isLoadingWards
-                        ? "Đang tải..."
-                        : !selectedDistrict
-                        ? "-- Chọn Quận trước --"
-                        : "-- Chọn Phường/Xã --"}
-                    </option>
-                    {wards.map((w) => (
-                      <option key={w.WardCode} value={w.WardCode}>
-                        {w.WardName}
-                      </option>
-                    ))}
-                  </select>
-                  <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            {/* Số nhà / Đường */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số nhà, tên đường <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="street-address-input"
-                type="text"
-                value={streetAddress}
-                onChange={(e) => setStreetAddress(e.target.value)}
-                placeholder="Ví dụ: 123 Nguyễn Văn A"
-                className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
-              />
-            </div>
-
-            {/* Hiển thị phí ship (preview) */}
-            {selectedWard && (
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
-                <div className="flex items-center text-green-700">
-                  <FaTruck className="mr-2" />
-                  <span className="text-sm font-medium">Phí vận chuyển (GHN):</span>
-                </div>
-                <span className="font-bold text-green-700">
-                  {isCalculatingFee ? (
-                    <FaSpinner className="animate-spin inline" />
-                  ) : (
-                    `${shippingFee.toLocaleString()} ₫`
+            {/* CÓ ĐỊA CHỈ ĐÃ CHỌN */}
+            {selectedAddress && !showInlineForm && (
+              <div className="p-4 rounded-lg border border-primary bg-primary-light/40 flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-bold text-gray-800">{selectedAddress.name}</span>
+                    <span className="text-gray-400">|</span>
+                    <span className="text-gray-600">{selectedAddress.phone}</span>
+                    {selectedAddress.isDefault && (
+                      <span className="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded-full border border-primary/20">
+                        Mặc định
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    {selectedAddress.street}, {selectedAddress.wardName}, {selectedAddress.districtName}, {selectedAddress.provinceName}
+                  </p>
+                  {/* Phí ship preview */}
+                  {shippingFee > 0 && (
+                    <div className="mt-2 flex items-center text-green-700 text-sm">
+                      <FaTruck className="mr-1.5 text-xs" />
+                      <span className="font-medium">
+                        Phí ship: {isCalculatingFee ? <FaSpinner className="animate-spin inline ml-1" /> : `${shippingFee.toLocaleString()} ₫`}
+                      </span>
+                    </div>
                   )}
-                </span>
+                </div>
+                <button
+                  onClick={() => setShowAddressModal(true)}
+                  className="text-primary font-bold text-sm hover:underline cursor-pointer ml-4 shrink-0"
+                >
+                  Thay đổi
+                </button>
               </div>
             )}
-          </div>
 
-          {/* SĐT thay thế */}
-          <div className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden border border-gray-100">
-            <div
-              onClick={() => setShowAlternate(!showAlternate)}
-              className="p-4 flex items-center justify-between cursor-pointer bg-gray-50 hover:bg-gray-100 transition select-none"
-            >
-              <div className="flex items-center text-gray-700">
-                <FaEdit className="mr-3 text-primary" />
-                <span className="font-semibold text-sm md:text-base">
-                  Thay đổi SĐT nhận hàng
-                </span>
-              </div>
-              <div className="text-gray-500">
-                {showAlternate ? <FaChevronUp /> : <FaChevronDown />}
-              </div>
-            </div>
-            {showAlternate && (
-              <div className="p-6 border-t border-gray-100 animate-fadeIn">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <FaPhoneAlt className="mr-2 text-primary text-xs" /> Số
-                    điện thoại mới
-                  </label>
-                  <input
-                    type="text"
-                    name="otherPhone"
-                    value={alternateInputs.otherPhone}
-                    onChange={handleAlternateChange}
-                    placeholder="Nhập SĐT người nhận..."
-                    className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
-                  />
+            {/* CHƯA CÓ ĐỊA CHỈ → INLINE FORM */}
+            {showInlineForm && (
+              <div className="border border-gray-200 rounded-xl p-5 bg-gray-50 space-y-4">
+                <h3 className="font-bold text-gray-800 text-sm">Thêm địa chỉ giao hàng</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input type="text" value={inlineName} onChange={(e) => setInlineName(e.target.value)}
+                    placeholder="Họ tên người nhận *"
+                    className="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:border-primary text-sm" />
+                  <input type="text" value={inlinePhone} onChange={(e) => setInlinePhone(e.target.value)}
+                    placeholder="Số điện thoại *"
+                    className="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:border-primary text-sm" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="relative">
+                    <select value={selProv?.ProvinceID || ""} onChange={(e) => { const p = provinces.find(x => x.ProvinceID === Number(e.target.value)); setSelProv(p || null); }}
+                      disabled={loadingProv} className="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:border-primary appearance-none bg-white disabled:bg-gray-100 pr-8 text-sm">
+                      <option value="">{loadingProv ? "Đang tải..." : "-- Tỉnh/Thành --"}</option>
+                      {provinces.map(p => <option key={p.ProvinceID} value={p.ProvinceID}>{p.ProvinceName}</option>)}
+                    </select>
+                    <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none" />
+                  </div>
+                  <div className="relative">
+                    <select value={selDist?.DistrictID || ""} onChange={(e) => { const d = districts.find(x => x.DistrictID === Number(e.target.value)); setSelDist(d || null); }}
+                      disabled={!selProv || loadingDist} className="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:border-primary appearance-none bg-white disabled:bg-gray-100 pr-8 text-sm">
+                      <option value="">{loadingDist ? "Đang tải..." : !selProv ? "-- Chọn Tỉnh trước --" : "-- Quận/Huyện --"}</option>
+                      {districts.map(d => <option key={d.DistrictID} value={d.DistrictID}>{d.DistrictName}</option>)}
+                    </select>
+                    <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none" />
+                  </div>
+                  <div className="relative">
+                    <select value={selWard?.WardCode || ""} onChange={(e) => { const w = wards.find(x => x.WardCode === e.target.value); setSelWard(w || null); }}
+                      disabled={!selDist || loadingWard} className="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:border-primary appearance-none bg-white disabled:bg-gray-100 pr-8 text-sm">
+                      <option value="">{loadingWard ? "Đang tải..." : !selDist ? "-- Chọn Quận trước --" : "-- Phường/Xã --"}</option>
+                      {wards.map(w => <option key={w.WardCode} value={w.WardCode}>{w.WardName}</option>)}
+                    </select>
+                    <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none" />
+                  </div>
+                </div>
+                <input type="text" value={inlineStreet} onChange={(e) => setInlineStreet(e.target.value)}
+                  placeholder="Số nhà, tên đường *"
+                  className="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:border-primary text-sm" />
+                {selWard && shippingFee > 0 && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center text-green-700"><FaTruck className="mr-2" /><span className="text-sm font-medium">Phí vận chuyển (GHN):</span></div>
+                    <span className="font-bold text-green-700">{isCalculatingFee ? <FaSpinner className="animate-spin inline" /> : `${shippingFee.toLocaleString()} ₫`}</span>
+                  </div>
+                )}
+                <div className="flex justify-end gap-3">
+                  {userAddresses.length > 0 && (
+                    <button type="button" onClick={() => { setShowInlineForm(false); setSelectedAddress(defaultAddr); }}
+                      className="px-4 py-2 text-sm text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">Hủy</button>
+                  )}
+                  <button type="button" onClick={handleSaveInlineAddress}
+                    className="px-5 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer flex items-center">
+                    <FaCheck className="mr-1.5" /> Lưu & chọn địa chỉ
+                  </button>
                 </div>
               </div>
             )}
           </div>
+
+          {/* ADDRESS PICKER MODAL */}
+          {showAddressModal && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowAddressModal(false)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-800">Chọn địa chỉ giao hàng</h3>
+                  <button onClick={() => setShowAddressModal(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer"><FaTimes size={18} /></button>
+                </div>
+                <div className="p-5 overflow-y-auto max-h-[55vh] space-y-3">
+                  {userAddresses.map((addr) => (
+                    <div key={addr._id}
+                      onClick={() => { setSelectedAddress(addr); setShowInlineForm(false); setShowAddressModal(false); }}
+                      className={`p-4 rounded-lg border cursor-pointer transition hover:shadow-sm ${selectedAddress?._id === addr._id ? "border-primary bg-primary-light/50 ring-1 ring-primary" : "border-gray-200 hover:border-primary/50"}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="font-bold text-gray-800 text-sm">{addr.name}</span>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-gray-600 text-sm">{addr.phone}</span>
+                        {addr.isDefault && (
+                          <span className="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded-full border border-primary/20">Mặc định</span>
+                        )}
+                        {selectedAddress?._id === addr._id && <FaCheck className="text-primary text-xs ml-auto" />}
+                      </div>
+                      <p className="text-sm text-gray-500">{addr.street}, {addr.wardName}, {addr.districtName}, {addr.provinceName}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-5 border-t border-gray-100">
+                  <button onClick={() => { setShowAddressModal(false); setShowInlineForm(true); setSelectedAddress(null); }}
+                    className="w-full py-2.5 border-2 border-dashed border-primary text-primary rounded-lg font-bold text-sm hover:bg-primary-light transition cursor-pointer flex items-center justify-center">
+                    <FaPlus className="mr-2" /> Thêm địa chỉ mới
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
@@ -743,8 +690,8 @@ const Checkout = () => {
 
             <button
               onClick={handlePlaceOrder}
-              disabled={isCalculatingFee || !selectedWard}
-              className="w-full bg-gradient-to-r from-primary to-indigo-600 text-white py-3 rounded-lg mt-6 font-bold hover:shadow-lg hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              disabled={isCalculatingFee || !getFullAddress()}
+              className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-lg mt-6 font-bold hover:shadow-lg hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isCalculatingFee ? "Đang tính phí..." : "ĐẶT HÀNG"}
             </button>

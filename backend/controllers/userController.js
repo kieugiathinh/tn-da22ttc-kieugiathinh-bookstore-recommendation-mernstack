@@ -45,6 +45,34 @@ const updatePassword = asyncHandler(async (req, res) => {
   res.json({ message: "Đổi mật khẩu thành công!" });
 });
 
+// ============================================================
+// ADDRESS BOOK
+// ============================================================
+
+// POST /api/v1/users/addresses
+const addAddress = asyncHandler(async (req, res) => {
+  const user = await userService.addAddress(req.user._id, req.body);
+  res.status(201).json(user);
+});
+
+// PUT /api/v1/users/addresses/:addressId/default
+const setDefaultAddress = asyncHandler(async (req, res) => {
+  const user = await userService.setDefaultAddress(
+    req.user._id,
+    req.params.addressId
+  );
+  res.status(200).json(user);
+});
+
+// DELETE /api/v1/users/addresses/:addressId
+const deleteAddress = asyncHandler(async (req, res) => {
+  const user = await userService.deleteAddress(
+    req.user._id,
+    req.params.addressId
+  );
+  res.status(200).json(user);
+});
+
 export {
   getAllUsers,
   getUser,
@@ -52,4 +80,7 @@ export {
   updateUser,
   createUser,
   updatePassword,
+  addAddress,
+  setDefaultAddress,
+  deleteAddress,
 };
