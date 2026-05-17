@@ -87,7 +87,7 @@ const Success = () => {
             Thanh toán thành công!
           </h1>
           <p className="text-gray-600 mb-6">
-            Cảm ơn bạn đã mua sắm tại GTBooks.
+            Cảm ơn bạn đã mua sắm tại BookBee.
           </p>
 
           {orderId && (

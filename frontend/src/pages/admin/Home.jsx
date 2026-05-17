@@ -19,7 +19,7 @@ import {
 
 // ─── KPI CARD COMPONENT ──────────────────────────────────────────────────────
 const MetricCard = ({ title, value, icon: Icon, iconBg, iconColor, subtitle }) => (
-  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
     <div className="flex items-start justify-between">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
@@ -175,7 +175,7 @@ const Dashboard = () => {
             Dashboard
           </h1>
           <p className="mt-0.5 text-sm text-gray-500">
-            Tổng quan tình hình kinh doanh GTBooks
+            Tổng quan tình hình kinh doanh BookBee
           </p>
         </div>
 
@@ -198,7 +198,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── KPI CARDS ── */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Doanh Thu"
           value={`${(kpi?.revenue || 0).toLocaleString("vi-VN")} ₫`}
@@ -236,7 +236,7 @@ const Dashboard = () => {
       {/* ── CHARTS ROW ── */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Revenue Chart (chiếm 2 cột) */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm xl:col-span-2">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm xl:col-span-2">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-bold text-gray-900">Phân tích doanh thu</h3>
@@ -316,7 +316,7 @@ const Dashboard = () => {
         {/* Pie Charts Stack */}
         <div className="flex flex-col gap-4">
           {/* Danh mục */}
-          <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex-1 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <h3 className="mb-3 text-sm font-bold text-gray-900">Tỷ trọng danh mục</h3>
             <div className="flex min-h-[140px] items-center justify-center">
               {categoryData.length > 0 ? (
@@ -346,7 +346,7 @@ const Dashboard = () => {
           </div>
 
           {/* Trạng thái đơn */}
-          <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex-1 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <h3 className="mb-3 text-sm font-bold text-gray-900">Trạng thái đơn hàng</h3>
             <div className="flex min-h-[140px] items-center justify-center">
               {statusData.length > 0 ? (
@@ -374,7 +374,7 @@ const Dashboard = () => {
       {/* ── BOTTOM TABLES ── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Sản phẩm bán chạy */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
             <FaCrown className="text-amber-400" />
             <h3 className="font-bold text-gray-900">Sản phẩm bán chạy</h3>
@@ -433,7 +433,7 @@ const Dashboard = () => {
         {/* Cột phải: Cảnh báo tồn kho + Khách VIP */}
         <div className="flex flex-col gap-4">
           {/* Low Stock Alert */}
-          <div className="rounded-2xl border border-red-100 bg-white shadow-sm">
+          <div className="rounded-xl border border-red-100 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-red-50 px-5 py-4">
               <div className="flex items-center gap-2">
                 <FaExclamationCircle className="text-red-500" />
@@ -477,7 +477,7 @@ const Dashboard = () => {
           </div>
 
           {/* Top Customers */}
-          <div className="flex-1 rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex-1 rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
               <FaUserFriends className="text-blue-500" />
               <h3 className="font-bold text-gray-900">Khách hàng thân thiết</h3>

@@ -12,7 +12,7 @@ const AdminLayoutContent = () => {
   const { isExpanded, isHovered } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Sidebar cố định bên trái */}
       <AppSidebar />
       {/* Màn hình mờ phía sau sidebar khi mở trên mobile */}

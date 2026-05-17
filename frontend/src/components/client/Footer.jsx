@@ -1,4 +1,4 @@
-﻿import {
+import {
   FaFacebookF,
   FaInstagram,
   FaTwitter,
@@ -9,6 +9,7 @@
   FaPaperPlane,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import BookBeeLogo from "../shared/BookBeeLogo";
 
 const Footer = () => {
   return (
@@ -20,9 +21,7 @@ const Footer = () => {
           <div className="space-y-4">
             {/* Logo Text hoặc Image */}
             <Link to="/">
-              <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-pink-600 tracking-wide">
-                GTBOOKS
-              </h2>
+              <BookBeeLogo className="h-10" />
             </Link>
             <p className="text-sm leading-relaxed text-gray-400">
               Nơi hội tụ những cuốn sách hay nhất để nuôi dưỡng tâm hồn và trí
@@ -114,7 +113,7 @@ const Footer = () => {
         {/* --- BOTTOM FOOTER --- */}
         <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} GTBooks Store. All rights
+            &copy; {new Date().getFullYear()} BookBee.com. All rights
             reserved.
           </p>
 

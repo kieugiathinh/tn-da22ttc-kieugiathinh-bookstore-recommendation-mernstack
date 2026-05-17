@@ -329,13 +329,13 @@ const Product = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={product.countInStock === 0}
-                className={`flex-1 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                className={`flex-1 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group ${
                   product.countInStock > 0
-                    ? "bg-gradient-to-r from-primary to-pink-600 hover:shadow-xl hover:scale-[1.02]"
+                    ? "bg-primary hover:bg-honey-gold hover:shadow-xl hover:scale-[1.02]"
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
               >
-                <FaShoppingCart className="text-xl" />
+                <FaShoppingCart className="text-xl group-hover:text-white transition-colors" />
                 {product.countInStock > 0 ? "THÊM VÀO GIỎ HÀNG" : "HẾT HÀNG"}
               </button>
             </div>

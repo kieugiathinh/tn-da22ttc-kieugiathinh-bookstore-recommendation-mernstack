@@ -13,7 +13,9 @@ import {
   FaElementor,
   FaGlobe,
   FaRobot,
+  FaTimes,
 } from "react-icons/fa";
+import BookBeeLogo from "../shared/BookBeeLogo";
 
 // Cấu hình tất cả menu nhóm của Admin
 const menuGroups = [
@@ -93,42 +95,50 @@ const AppSidebar = () => {
         "lg:translate-x-0",
       ].join(" ")}
     >
-      {/* ---- LOGO ---- */}
+      {/* ---- LOGO AREA ---- */}
       <div
         className={[
-          "flex h-16 flex-shrink-0 items-center border-b border-gray-200",
-          showLabel ? "justify-start gap-2.5 px-5" : "justify-center",
+          "flex flex-shrink-0 items-center border-b border-gray-200",
+          showLabel ? "justify-between px-6 py-5" : "justify-center py-5",
         ].join(" ")}
       >
-        {/* Icon logo nhỏ vuông */}
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary">
-          <span className="text-sm font-black text-white">G</span>
-        </div>
-        {/* Tên hiển thị khi sidebar mở rộng */}
-        {showLabel && (
-          <span className="truncate text-[17px] font-extrabold tracking-tight text-gray-900">
-            GTBooks{" "}
-            <span className="text-xs font-medium text-gray-400">Admin</span>
-          </span>
+        {showLabel ? (
+          <div className="flex items-center gap-2">
+            <BookBeeLogo className="h-9 max-w-[140px]" />
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Admin</span>
+          </div>
+        ) : (
+          <BookBeeLogo className="w-8 h-8" />
+        )}
+
+        {/* Nút đóng sidebar (chỉ hiện trên mobile) */}
+        {isMobileOpen && (
+          <button
+            onClick={toggleMobileSidebar}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors lg:hidden"
+            aria-label="Đóng menu"
+          >
+            <FaTimes size={14} />
+          </button>
         )}
       </div>
 
       {/* ---- NAVIGATION ---- */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+      <nav className="flex-1 overflow-y-auto py-4 px-4 space-y-6">
         {menuGroups.map((group, gi) => (
           <div key={gi}>
             {/* Tiêu đề nhóm: chỉ hiện khi sidebar mở */}
             {group.label && showLabel && (
-              <p className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 {group.label}
               </p>
             )}
             {/* Divider khi sidebar thu gọn */}
             {group.label && !showLabel && (
-              <hr className="mb-2 border-gray-200" />
+              <hr className="mb-2 border-gray-100" />
             )}
 
-            <ul className="space-y-0.5">
+            <ul className="space-y-1">
               {group.items.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -141,8 +151,8 @@ const AppSidebar = () => {
                         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
                         !showLabel && "justify-center",
                         active
-                          ? "bg-primary-light text-primary-hover"
-                          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                          ? "bg-red-50 text-primary"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-800",
                       ]
                         .filter(Boolean)
                         .join(" ")}
@@ -151,7 +161,7 @@ const AppSidebar = () => {
                       <span
                         className={[
                           "flex-shrink-0",
-                          active ? "text-primary" : "text-gray-400",
+                          active ? "text-primary" : "text-slate-400",
                         ].join(" ")}
                       >
                         {item.icon}
@@ -170,14 +180,14 @@ const AppSidebar = () => {
       </nav>
 
       {/* ---- FOOTER: LINK XEM WEBSITE ---- */}
-      <div className="flex-shrink-0 border-t border-gray-200 p-3">
+      <div className="flex-shrink-0 border-t border-gray-200 p-4">
         <a
           href="/"
           target="_blank"
           rel="noopener noreferrer"
           title={!showLabel ? "Xem Website" : ""}
           className={[
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors",
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors",
             !showLabel && "justify-center",
           ]
             .filter(Boolean)

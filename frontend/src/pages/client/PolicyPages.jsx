@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 
 // Template chung cho các trang text
 const PolicyTemplate = ({ title, lastUpdated, children }) => (
@@ -37,7 +37,7 @@ export const FAQ = () => (
 // 2. Chính sách vận chuyển
 export const ShippingPolicy = () => (
   <PolicyTemplate title="Chính sách vận chuyển" lastUpdated="01/01/2026">
-    <p>GTBooks miễn phí vận chuyển cho đơn hàng từ 500.000đ.</p>
+    <p>BookBee miễn phí vận chuyển cho đơn hàng từ 500.000đ.</p>
     <p>
       Các đơn vị vận chuyển đối tác: Giao Hàng Nhanh, Viettel Post, Shopee
       Express.
@@ -63,7 +63,7 @@ export const PrivacyPolicy = () => (
 export const Terms = () => (
   <PolicyTemplate title="Điều khoản dịch vụ">
     <p>
-      Khi truy cập website GTBooks, bạn đồng ý với các điều khoản sử dụng của
+      Khi truy cập website BookBee, bạn đồng ý với các điều khoản sử dụng của
       chúng tôi...
     </p>
   </PolicyTemplate>

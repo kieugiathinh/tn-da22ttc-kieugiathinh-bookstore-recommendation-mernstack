@@ -2,14 +2,19 @@
 
 /* =========================================================
    TAILWIND V4 - Custom Theme Tokens
-   Định nghĩa màu "brand" dùng cho Admin Layout (TailAdmin style)
-   Palette: Purple/Violet - phù hợp với theme hiện tại của GTBooks
+   BookBee.com – Nhà sách trực tuyến
+   Palette: Burgundy (Đỏ Đô) + Honey Gold (Vàng Mật Ong)
    ========================================================= */
 @theme {
   /* Primary color scale (Burgundy / Đỏ Đô) */
   --color-primary: #991b1b;
   --color-primary-hover: #7f1d1d;
   --color-primary-light: #fef2f2;
+
+  /* Honey Gold – Accent color for Bee branding */
+  --color-honey-gold: #F59E0B;
+  --color-honey-gold-hover: #D97706;
+  --color-honey-gold-light: #FEF3C7;
 
   /* Z-index cho Admin Header (nằm trên Sidebar overlay) */
   --z-index-30: 30;

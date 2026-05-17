@@ -66,7 +66,7 @@ const analyzeChatInsights = async (days = 7) => {
     .join("\n");
 
   // ── BƯỚC 3: PROMPT – System Prompt ép Gemini trả JSON ───────────────────
-  const systemPrompt = `Bạn là Giám đốc Kinh doanh (Chief Business Officer) của nhà sách GTBOOKS.
+  const systemPrompt = `Bạn là Giám đốc Kinh doanh (Chief Business Officer) của nhà sách BookBee.
 Nhiệm vụ: Đọc toàn bộ dữ liệu tin nhắn của khách hàng gửi đến chatbot trong ${days} ngày qua, phân tích và trả về KẾT QUẢ DƯỚI DẠNG JSON THUẦN TÚY.
 
 QUY TẮC:
@@ -85,7 +85,7 @@ FORMAT JSON BẮT BUỘC:
   "businessAdvice": ["Đề xuất chiến lược kinh doanh 1", "..."]
 }`;
 
-  const userPrompt = `Dưới đây là ${sessions.length} tin nhắn khách hàng gửi đến chatbot GTBOOKS:\n\n${chatDataText}`;
+  const userPrompt = `Dưới đây là ${sessions.length} tin nhắn khách hàng gửi đến chatbot BookBee:\n\n${chatDataText}`;
 
   // ── BƯỚC 4: GỌI GEMINI – Xoay vòng model nếu quota exceeded ────────────
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

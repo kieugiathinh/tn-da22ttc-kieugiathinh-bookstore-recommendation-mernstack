@@ -100,7 +100,7 @@ const Login = () => {
               Xin Chào! <span className="inline-block animate-bounce">👋</span>
             </h2>
             <p className="mt-3 text-gray-500 font-medium">
-              Chào mừng bạn quay lại với nhà sách GTBooks.
+              Chào mừng bạn quay lại với nhà sách BookBee.
             </p>
           </div>
 

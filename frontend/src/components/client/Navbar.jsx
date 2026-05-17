@@ -12,6 +12,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useAuth } from "../../context/AuthContext";
+import BookBeeLogo from "../shared/BookBeeLogo";
 
 const Navbar = () => {
   const [search, setSearch] = useState("");
@@ -47,9 +48,7 @@ const Navbar = () => {
       <div className="wrapper px-4 md:px-10 h-full flex items-center justify-between">
         {/* LOGO */}
         <Link to="/" className="flex-1 flex items-center">
-          <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-pink-600 cursor-pointer tracking-wide">
-            GTBOOKS
-          </span>
+          <BookBeeLogo className="h-10" />
         </Link>
 
         {/* SEARCH BAR */}

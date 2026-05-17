@@ -7,12 +7,12 @@ import { IoChatbubblesSharp } from "react-icons/io5";
 // ── Tin nhắn chào mừng mặc định ───────────────────────────────────────────────
 const WELCOME_MESSAGE = {
   sender: "bot",
-  text: "Xin chào! 👋 Mình là trợ lý tư vấn của **GTBOOKS**.\n\nBạn muốn tìm sách gì hôm nay? Mình có thể giúp bạn:\n📚 Gợi ý sách theo thể loại\n🔍 Tìm sách theo tên / tác giả\n💰 Tư vấn sách theo ngân sách",
+  text: "Xin chào! 👋 Mình là **Bee Consultant** – trợ lý tư vấn của **BookBee**.\n\nBạn muốn tìm sách gì hôm nay? Mình có thể giúp bạn:\n📚 Gợi ý sách theo thể loại\n🔍 Tìm sách theo tên / tác giả\n💰 Tư vấn sách theo ngân sách",
 };
 
 // ── Sinh sessionId cho khách vãng lai (lưu localStorage) ──────────────────────
 const getGuestSessionId = () => {
-  const KEY = "gtbooks_chat_session_id";
+  const KEY = "bookbee_chat_session_id";
   let id = localStorage.getItem(KEY);
   if (!id) {
     id = "guest_" + crypto.randomUUID();
@@ -142,7 +142,7 @@ const ChatWidget = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-xl active:scale-95"
         style={{
-          background: "linear-gradient(135deg, var(--color-primary) 0%, #c0392b 100%)",
+          background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
         }}
         aria-label="Mở chatbot tư vấn"
       >
@@ -150,11 +150,28 @@ const ChatWidget = () => {
           <FaTimes className="text-white text-xl" />
         ) : (
           <>
-            <IoChatbubblesSharp className="text-white text-2xl" />
+            {/* Bee Avatar Icon */}
+            <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
+              <ellipse cx="20" cy="22" rx="10" ry="8" fill="#FBBF24" />
+              <path d="M12 20h16" stroke="#92400e" strokeWidth="2" strokeLinecap="round" />
+              <path d="M13 25h14" stroke="#92400e" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="20" cy="14" r="5" fill="#FDE68A" />
+              <circle cx="18" cy="13" r="1.5" fill="#1e293b" />
+              <circle cx="22" cy="13" r="1.5" fill="#1e293b" />
+              <circle cx="18.5" cy="12.5" r="0.5" fill="#fff" />
+              <circle cx="22.5" cy="12.5" r="0.5" fill="#fff" />
+              <path d="M18 16c0.5 0.8 3.5 0.8 4 0" stroke="#92400e" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+              <path d="M17 10c-2-3-4-4-5-3" stroke="#92400e" strokeWidth="1" fill="none" strokeLinecap="round" />
+              <circle cx="12" cy="7" r="1.2" fill="#F59E0B" />
+              <path d="M23 10c2-3 4-4 5-3" stroke="#92400e" strokeWidth="1" fill="none" strokeLinecap="round" />
+              <circle cx="28" cy="7" r="1.2" fill="#F59E0B" />
+              <ellipse cx="12" cy="18" rx="5" ry="3" fill="#dbeafe" opacity="0.6" transform="rotate(-20 12 18)" />
+              <ellipse cx="28" cy="18" rx="5" ry="3" fill="#dbeafe" opacity="0.6" transform="rotate(20 28 18)" />
+            </svg>
             {showPulse && (
               <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-yellow-400"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-honey-gold opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-honey-gold"></span>
               </span>
             )}
           </>
@@ -180,17 +197,17 @@ const ChatWidget = () => {
           <div
             className="flex items-center gap-3 px-5 py-4 text-white shrink-0"
             style={{
-              background: "linear-gradient(135deg, var(--color-primary) 0%, #c0392b 100%)",
+              background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
             }}
           >
             <div className="relative">
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
-                📚
+                🐝
               </div>
               <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-sm leading-tight">GTBOOKS Assistant</h3>
+              <h3 className="font-bold text-sm leading-tight">Bee Consultant</h3>
               <p className="text-[11px] text-white/80">
                 {currentUser ? `👤 ${currentUser.fullname}` : "Khách vãng lai"} • AI 24/7
               </p>
@@ -218,8 +235,8 @@ const ChatWidget = () => {
                 className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 {msg.sender === "bot" && (
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs mr-2 mt-1 shrink-0">
-                    📚
+                  <div className="w-7 h-7 rounded-full bg-honey-gold/20 flex items-center justify-center text-xs mr-2 mt-1 shrink-0">
+                    🐝
                   </div>
                 )}
                 <div
@@ -238,8 +255,8 @@ const ChatWidget = () => {
             {/* Loading indicator */}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs mr-2 mt-1 shrink-0">
-                  📚
+                <div className="w-7 h-7 rounded-full bg-honey-gold/20 flex items-center justify-center text-xs mr-2 mt-1 shrink-0">
+                  🐝
                 </div>
                 <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100">
                   <div className="flex items-center gap-2">
@@ -248,7 +265,7 @@ const ChatWidget = () => {
                       <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
                       <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                     </div>
-                    <span className="text-xs text-gray-400 ml-1">GTBOOKS đang gõ...</span>
+                    <span className="text-xs text-gray-400 ml-1">Bee đang gõ...</span>
                   </div>
                 </div>
               </div>
@@ -283,7 +300,7 @@ const ChatWidget = () => {
               </button>
             </div>
             <p className="text-[10px] text-gray-400 text-center mt-2">
-              Powered by GTBOOKS AI • Gemini
+              Powered by BookBee AI • Gemini
             </p>
           </div>
         </div>

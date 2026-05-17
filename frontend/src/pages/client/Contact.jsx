@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
 
 const Contact = () => {
@@ -12,7 +12,7 @@ const Contact = () => {
           </h2>
           <p className="text-gray-400 mb-8">
             Bạn có câu hỏi hoặc cần hỗ trợ? Đừng ngần ngại để lại lời nhắn cho
-            GTBooks nhé!
+            BookBee nhé!
           </p>
 
           <div className="space-y-6">

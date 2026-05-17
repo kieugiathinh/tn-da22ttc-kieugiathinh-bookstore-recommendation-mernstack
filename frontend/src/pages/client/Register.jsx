@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { userRequest } from "../../requestMethods.js";
 import { toast } from "sonner"; // Chuyển sang sonner
@@ -38,7 +38,7 @@ const Register = () => {
         password: password,
       });
 
-      toast.success("Đăng ký thành công! Chào mừng bạn gia nhập GTBooks.");
+      toast.success("Đăng ký thành công! Chào mừng bạn gia nhập BookBee.");
 
       setTimeout(() => {
         setLoading(false);
