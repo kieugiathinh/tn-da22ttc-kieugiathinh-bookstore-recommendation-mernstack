@@ -8,29 +8,31 @@ import ScrollToTop from "../components/common/ScrollToTop";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 
 // Inner component: nằm BÊN TRONG SidebarProvider nên có thể dùng useSidebar()
+// Cấu trúc clone chính xác từ TailAdmin AppLayout.tsx
 const AdminLayoutContent = () => {
-  const { isExpanded, isHovered } = useSidebar();
+  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen xl:flex">
       {/* Sidebar cố định bên trái */}
-      <AppSidebar />
-      {/* Màn hình mờ phía sau sidebar khi mở trên mobile */}
-      <Backdrop />
+      <div>
+        <AppSidebar />
+        <Backdrop />
+      </div>
 
-      {/* Khu vực nội dung chính - dịch phải theo độ rộng sidebar */}
+      {/* Khu vực nội dung chính - flex-1 chiếm phần còn lại */}
       <div
-        className={`flex flex-col min-h-screen transition-all duration-300 ease-in-out
-          ${isExpanded || isHovered ? "lg:ml-[260px]" : "lg:ml-[72px]"}
-        `}
+        className={`flex-1 transition-all duration-300 ease-in-out ${
+          isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
+        } ${isMobileOpen ? "ml-0" : ""}`}
       >
         {/* Header dính trên cùng */}
         <AppHeader />
 
         {/* Nội dung trang (được inject từ React Router) */}
-        <main className="flex-1 p-4 md:p-6">
+        <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
           <Outlet />
-        </main>
+        </div>
       </div>
     </div>
   );
