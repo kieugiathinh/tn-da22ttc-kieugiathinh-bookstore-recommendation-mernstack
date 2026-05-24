@@ -77,14 +77,14 @@ const BestSeller = () => {
   if (products.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm mb-8 border border-indigo-100">
+    <div className="bg-white rounded-xl shadow-sm mb-8 border border-honey-gold-light">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-white rounded-t-xl">
-        <h2 className="text-xl font-extrabold text-primary flex items-center uppercase tracking-wide border-l-4 border-primary pl-3">
-          <FaTrophy className="mr-3 text-yellow-500 text-2xl" />
+      <div className="px-6 py-4 border-b border-honey-gold-light flex items-center justify-between bg-gradient-to-r from-honey-gold-light to-white rounded-t-xl honeycomb-bg">
+        <h2 className="text-xl font-extrabold text-primary flex items-center uppercase tracking-wide border-l-4 border-honey-gold pl-3">
+          <FaTrophy className="mr-3 text-honey-gold text-2xl" />
           Bảng Xếp Hạng Bán Chạy
         </h2>
-        <span className="text-sm font-medium text-indigo-600 cursor-pointer hover:underline">
+        <span className="text-sm font-medium text-honey-gold-hover cursor-pointer hover:underline">
           Xem tất cả &gt;
         </span>
       </div>

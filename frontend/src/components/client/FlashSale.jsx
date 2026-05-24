@@ -79,7 +79,7 @@ const FlashSale = () => {
         <div className="flex items-center gap-6 mb-2 md:mb-0">
           {/* Title có icon tia sét */}
           <div className="flex items-center text-2xl font-extrabold italic uppercase tracking-tighter transform -skew-x-10">
-            <FaBolt className="mr-2 text-yellow-300 text-3xl animate-bounce" />
+            <FaBolt className="mr-2 text-honey-gold text-3xl animate-bounce" />
             <span className="text-shadow-sm">Flash Sale</span>
           </div>
 

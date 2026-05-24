@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaLightbulb } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import ProductCard from "./ProductCard";
@@ -38,7 +38,7 @@ const RandomProducts = () => {
 
           <h2 className="text-2xl font-extrabold text-gray-800 mx-4 flex items-center uppercase tracking-wide">
             {/* Icon bóng đèn giữ màu vàng cho nổi bật */}
-            <FaLightbulb className="mr-2 text-yellow-500 animate-pulse" />
+            <FaLightbulb className="mr-2 text-honey-gold animate-pulse" />
             <span className="text-teal-800">Gợi Ý Hôm Nay</span>
           </h2>
 

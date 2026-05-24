@@ -73,7 +73,7 @@ const ProductCard = ({ product, isFlashSale = false }) => {
             // TRƯỜNG HỢP 2: BEST SELLER & THƯỜNG -> Chỉ hiện text đơn giản
             <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
               {/* Có thể thêm sao đánh giá nếu thích */}
-              <div className="flex items-center text-yellow-400">
+              <div className="flex items-center text-honey-gold">
                 <FaStar className="mr-1" />
                 <span>{product.rating ? product.rating.toFixed(1) : 0}</span>
               </div>
