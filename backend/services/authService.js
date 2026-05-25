@@ -5,17 +5,17 @@ import crypto from "crypto";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const registerUser = async (userData) => {
-  const { fullname, username, email, password, phone, role } = userData;
+  const { fullname, email, password, phone, role } = userData;
 
   const userEmailExists = await User.findOne({ email }).lean();
   if (userEmailExists) {
     throw new Error("Email này đã được sử dụng");
   }
 
-  const userUsernameExists = await User.findOne({ username }).lean();
-  if (userUsernameExists) {
-    throw new Error("Username này đã được sử dụng");
-  }
+  // Auto-generate username từ email (chỉ dùng nội bộ, không dùng để đăng nhập)
+  const baseUsername = email.split("@")[0];
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  const username = `${baseUsername}${randomSuffix}`;
 
   const user = await User.create({
     fullname,
@@ -33,13 +33,13 @@ const registerUser = async (userData) => {
   return user;
 };
 
-const loginUser = async (username, password) => {
-  const user = await User.findOne({ username });
+const loginUser = async (email, password) => {
+  const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
     return user;
   } else {
-    throw new Error("Username hoặc mật khẩu không đúng");
+    throw new Error("Email hoặc mật khẩu không chính xác");
   }
 };
 

@@ -28,8 +28,8 @@ const registerUser = asyncHandler(async (req, res) => {
 // route POST api/v1/auth/Login
 // @access public
 const loginUser = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
-  const user = await authService.loginUser(username, password);
+  const { email, password } = req.body;
+  const user = await authService.loginUser(email, password);
   
   generateToken(res, user._id);
   res.status(200).json({

@@ -4,7 +4,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../context/AuthContext";
 import { useState } from "react";
 import {
-  FaUser,
+  FaEnvelope,
   FaLock,
   FaArrowRight,
   FaBookOpen,
@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, loginWithGoogle, isFetching } = useAuth();
   const navigate = useNavigate();
@@ -20,13 +20,13 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!username || !password) {
-      toast.warning("Vui lòng nhập đầy đủ Tên đăng nhập và Mật khẩu!");
+    if (!email || !password) {
+      toast.warning("Vui lòng nhập đầy đủ Email và Mật khẩu!");
       return;
     }
 
     try {
-      await login({ username, password });
+      await login({ email, password });
       toast.success("Chào mừng bạn quay trở lại!");
       navigate("/");
     } catch (error) {
@@ -107,18 +107,18 @@ const Login = () => {
           <form className="space-y-6" onSubmit={handleLogin}>
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700 ml-1">
-                Tên đăng nhập
+                Địa chỉ Email
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <FaUser className="text-gray-400 group-focus-within:text-primary transition-colors" />
+                  <FaEnvelope className="text-gray-400 group-focus-within:text-primary transition-colors" />
                 </div>
                 <input
-                  type="text"
+                  type="email"
                   required
                   className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-primary outline-none transition-all text-sm font-semibold bg-gray-50/50"
-                  placeholder="Nhập username của bạn"
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="your-email@gmail.com"
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>

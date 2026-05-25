@@ -16,7 +16,6 @@ const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -24,7 +23,7 @@ const Register = () => {
     e.preventDefault();
 
     // Validate
-    if (!name || !email || !password || !username) {
+    if (!name || !email || !password) {
       toast.warning("Vui lòng nhập đầy đủ thông tin!");
       return;
     }
@@ -33,7 +32,6 @@ const Register = () => {
     try {
       await userRequest.post("/auth/register", {
         fullname: name,
-        username: username,
         email: email,
         password: password,
       });
@@ -118,25 +116,6 @@ const Register = () => {
                   className="w-full pl-14 pr-4 py-3.5 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-primary outline-none transition-all text-sm font-semibold bg-gray-50/50"
                   placeholder="Nguyễn Văn A"
                   onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Username */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-700 ml-1 uppercase tracking-wider">
-                Tên đăng nhập
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <FaUser className="text-gray-400 group-focus-within:text-primary transition-colors" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  className="w-full pl-14 pr-4 py-3.5 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-primary outline-none transition-all text-sm font-semibold bg-gray-50/50"
-                  placeholder="nguyenvana123"
-                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
             </div>
