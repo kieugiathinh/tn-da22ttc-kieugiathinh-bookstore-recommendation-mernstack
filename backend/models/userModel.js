@@ -75,6 +75,16 @@ const userSchema = mongoose.Schema(
       default: "",
     },
 
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    resetPasswordExpire: {
+      type: Date,
+      default: null,
+    },
+
     wallet: [
       {
         coupon: {

@@ -1,5 +1,6 @@
 import User from "../models/userModel.js";
 import { OAuth2Client } from "google-auth-library";
+import crypto from "crypto";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -82,4 +83,65 @@ const loginWithGoogle = async (idToken) => {
   return user;
 };
 
-export { registerUser, loginUser, loginWithGoogle };
+// ============================================
+// FORGOT PASSWORD
+// Tạo reset token -> Hash lưu DB -> Trả về raw token
+// ============================================
+const forgotPassword = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("Không tìm thấy tài khoản với email này");
+  }
+
+  // Tạo token ngẫu nhiên 32 bytes
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // Hash token trước khi lưu vào DB (bảo mật)
+  user.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // Token hết hạn sau 15 phút
+  user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+
+  await user.save();
+
+  // Trả về raw token (chưa hash) để gửi qua email
+  return resetToken;
+};
+
+// ============================================
+// RESET PASSWORD
+// Hash token từ URL -> Tìm user hợp lệ -> Cập nhật password
+// ============================================
+const resetPassword = async (token, newPassword) => {
+  // Hash token từ URL để so khớp với token đã hash trong DB
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpire: { $gt: Date.now() }, // Token chưa hết hạn
+  });
+
+  if (!user) {
+    throw new Error("Token không hợp lệ hoặc đã hết hạn");
+  }
+
+  // Cập nhật password mới (sẽ được hash tự động bởi pre-save hook)
+  user.password = newPassword;
+
+  // Xóa token khỏi DB
+  user.resetPasswordToken = null;
+  user.resetPasswordExpire = null;
+
+  await user.save();
+
+  return user;
+};
+
+export { registerUser, loginUser, loginWithGoogle, forgotPassword, resetPassword };
+

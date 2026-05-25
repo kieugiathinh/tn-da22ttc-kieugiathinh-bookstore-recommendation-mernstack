@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import generateToken from "../utils/generateToken.js";
 import * as authService from "../services/authService.js";
+import { sendWelcomeEmail, sendResetPasswordEmail } from "../services/emailService.js";
 
 // Register User
 // Route POST /api/v1/auth/register
@@ -8,6 +9,11 @@ import * as authService from "../services/authService.js";
 const registerUser = asyncHandler(async (req, res) => {
   const user = await authService.registerUser(req.body);
   
+  // Gửi Welcome Email bất đồng bộ (không dùng await để tránh block response)
+  sendWelcomeEmail(user.email, user.fullname).catch((err) => {
+    console.error("❌ Gửi welcome email thất bại:", err.message);
+  });
+
   generateToken(res, user._id);
   res.status(201).json({
     _id: user._id,
@@ -74,4 +80,53 @@ const loginWithGoogle = asyncHandler(async (req, res) => {
   });
 });
 
-export { LogOut, loginUser, registerUser, loginWithGoogle };
+// Forgot Password
+// route POST /api/v1/auth/forgot-password
+// @access public
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400);
+    throw new Error("Vui lòng nhập email");
+  }
+
+  const resetToken = await authService.forgotPassword(email);
+
+  // Tạo reset URL trỏ về Frontend
+  const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+  // Gửi email chứa link reset
+  await sendResetPasswordEmail(email, resetUrl);
+
+  res.status(200).json({
+    message: "Email đặt lại mật khẩu đã được gửi thành công",
+  });
+});
+
+// Reset Password
+// route POST /api/v1/auth/reset-password/:token
+// @access public
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  if (!newPassword) {
+    res.status(400);
+    throw new Error("Vui lòng nhập mật khẩu mới");
+  }
+
+  if (newPassword.length < 6) {
+    res.status(400);
+    throw new Error("Mật khẩu phải có ít nhất 6 ký tự");
+  }
+
+  await authService.resetPassword(token, newPassword);
+
+  res.status(200).json({
+    message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.",
+  });
+});
+
+export { LogOut, loginUser, registerUser, loginWithGoogle, forgotPassword, resetPassword };
+

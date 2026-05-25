@@ -128,12 +128,12 @@ const Login = () => {
                 <label className="text-sm font-bold text-gray-700">
                   Mật khẩu
                 </label>
-                <a
-                  href="#"
-                  className="text-xs font-bold text-primary hover:text-primary-hover"
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-bold text-honey-gold hover:text-primary transition-colors"
                 >
                   Quên mật khẩu?
-                </a>
+                </Link>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
