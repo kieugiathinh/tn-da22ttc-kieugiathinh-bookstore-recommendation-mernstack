@@ -6,20 +6,27 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-// Nút Next
+// Arrow components — Sky/Blue accent
 const NextArrow = ({ onClick }) => (
   <div
-    className="absolute top-1/2 -right-4 transform -translate-y-1/2 z-10 cursor-pointer bg-white text-gray-600 hover:text-primary shadow-lg rounded-full p-3 border border-gray-100 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+    className="absolute top-1/2 -right-4 transform -translate-y-1/2 z-10
+               cursor-pointer bg-white text-slate-500 hover:text-sky-500
+               shadow-lg rounded-full p-3 border border-slate-100
+               hover:border-sky-200 hover:scale-110
+               transition-all duration-200 flex items-center justify-center"
     onClick={onClick}
   >
     <FaChevronRight />
   </div>
 );
 
-// Nút Prev
 const PrevArrow = ({ onClick }) => (
   <div
-    className="absolute top-1/2 -left-4 transform -translate-y-1/2 z-10 cursor-pointer bg-white text-gray-600 hover:text-primary shadow-lg rounded-full p-3 border border-gray-100 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+    className="absolute top-1/2 -left-4 transform -translate-y-1/2 z-10
+               cursor-pointer bg-white text-slate-500 hover:text-sky-500
+               shadow-lg rounded-full p-3 border border-slate-100
+               hover:border-sky-200 hover:scale-110
+               transition-all duration-200 flex items-center justify-center"
     onClick={onClick}
   >
     <FaChevronLeft />
@@ -32,7 +39,6 @@ const TopRated = () => {
   useEffect(() => {
     const fetchTopRated = async () => {
       try {
-        // Gọi API Top Rated
         const res = await userRequest.get("/products?toprated=true");
         setProducts(res.data);
       } catch (err) {
@@ -59,13 +65,21 @@ const TopRated = () => {
   if (products.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm mb-8 border border-honey-gold-light">
-      <div className="px-6 py-4 border-b border-honey-gold-light flex items-center justify-between bg-gradient-to-r from-honey-gold-light to-white rounded-t-xl honeycomb-bg">
-        <h2 className="text-xl font-extrabold text-gray-800 flex items-center uppercase tracking-wide border-l-4 border-honey-gold pl-3">
-          <FaStar className="mr-3 text-honey-gold text-2xl" />
+    <div className="bg-white rounded-2xl shadow-sm mb-8 border border-sky-100 overflow-hidden">
+      {/* Header — Sky theme */}
+      <div className="px-6 py-4 border-b border-sky-100 flex items-center justify-between
+                      bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50">
+        <h2 className="text-xl font-extrabold text-slate-800 flex items-center uppercase tracking-wide
+                       border-l-4 border-sky-500 pl-3 gap-3">
+          <FaStar className="text-amber-400 text-2xl drop-shadow-sm" />
           Đánh Giá Cao Nhất
         </h2>
+        <span className="text-sm font-semibold text-sky-600 hover:text-sky-700 cursor-pointer hover:underline transition-colors">
+          Xem tất cả &gt;
+        </span>
       </div>
+
+      {/* Slider */}
       <div className="p-5 px-6 relative">
         <Slider {...settings}>
           {products.map((item) => (
@@ -80,4 +94,3 @@ const TopRated = () => {
 };
 
 export default TopRated;
-

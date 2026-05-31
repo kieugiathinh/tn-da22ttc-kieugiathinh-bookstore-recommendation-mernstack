@@ -15,50 +15,54 @@ import {
 import { Link } from "react-router-dom";
 
 /**
- * Footer chuyên nghiệp theo phong cách Fahasa.com
- * - Nền trắng sạch sẽ, không bị lỗi logo nền trắng trên dark bg
- * - Có dải cam kết phía trên (Vận chuyển, Đổi trả, Hỗ trợ, Bảo mật)
- * - 4 cột rõ ràng: Thương hiệu | Hỗ trợ | Tài khoản | Liên hệ
- * - Bottom bar với payment icons và copyright
+ * Footer — Vibrant Garden Edition
+ * - Trust bar: gradient violet → indigo → blue (premium look)
+ * - Main body: white canvas với typography slate-800
+ * - Bottom bar: gradient dark slate → indigo (modern dark mode feel)
+ * - Newsletter CTA: gradient amber → orange (brand honey-gold identity)
  */
 const Footer = () => {
   return (
-    <footer className="mt-10">
-      {/* ============ TRUST BAR — Dải cam kết (Fahasa style) ============ */}
-      <div className="bg-primary">
+    <footer className="mt-16">
+      {/* ============ TRUST BAR — Vibrant Gradient ============ */}
+      <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 py-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 py-6">
             <TrustItem
               icon={<FaTruck />}
               title="Giao hàng nhanh"
               desc="Toàn quốc từ 2–5 ngày"
+              color="text-sky-300"
             />
             <TrustItem
               icon={<FaUndo />}
               title="Đổi trả miễn phí"
               desc="Trong 7 ngày đầu tiên"
+              color="text-emerald-300"
             />
             <TrustItem
               icon={<FaHeadset />}
               title="Hỗ trợ 24/7"
               desc="Luôn sẵn sàng phục vụ"
+              color="text-amber-300"
             />
             <TrustItem
               icon={<FaShieldAlt />}
               title="Thanh toán an toàn"
               desc="Bảo mật tuyệt đối"
+              color="text-rose-300"
             />
           </div>
         </div>
       </div>
 
-      {/* ============ MAIN FOOTER — Nền trắng (Fahasa style) ============ */}
-      <div className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* ============ MAIN FOOTER — White Canvas ============ */}
+      <div className="bg-white border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-            {/* CỘT 1: THÔNG TIN THƯƠNG HIỆU */}
-            <div className="space-y-4">
-              {/* Logo — Nền trắng nên hiển thị hoàn hảo */}
+
+            {/* CỘT 1: THƯƠNG HIỆU */}
+            <div className="space-y-5">
               <Link to="/" className="inline-block">
                 <img
                   src="/logobookbee.jpg"
@@ -66,32 +70,43 @@ const Footer = () => {
                   className="h-12 object-contain"
                 />
               </Link>
-              <p className="text-sm leading-relaxed text-gray-500">
+              <p className="text-sm leading-relaxed text-slate-500">
                 BookBee.com — Nhà sách trực tuyến hàng đầu. Nơi hội tụ những
                 cuốn sách hay nhất để nuôi dưỡng tâm hồn và trí tuệ của bạn.
               </p>
 
               {/* Social Icons */}
-              <div className="flex space-x-3 pt-2">
+              <div className="flex gap-2.5 pt-1">
                 <SocialIcon
                   icon={<FaFacebookF size={14} />}
                   link="https://www.facebook.com/kieugiathinh"
+                  gradient="from-blue-500 to-indigo-500"
                 />
                 <SocialIcon
                   icon={<FaInstagram size={14} />}
                   link="https://www.instagram.com/giathinh_1301?igsh=c2ZhOXJ0eGdidzIy"
+                  gradient="from-rose-500 to-pink-500"
                 />
-                <SocialIcon icon={<FaYoutube size={14} />} link="#" />
-                <SocialIcon icon={<FaTwitter size={14} />} link="#" />
+                <SocialIcon
+                  icon={<FaYoutube size={14} />}
+                  link="#"
+                  gradient="from-red-500 to-rose-500"
+                />
+                <SocialIcon
+                  icon={<FaTwitter size={14} />}
+                  link="#"
+                  gradient="from-sky-400 to-blue-500"
+                />
               </div>
             </div>
 
             {/* CỘT 2: DỊCH VỤ */}
             <div>
-              <h3 className="text-gray-900 text-sm font-bold mb-4 uppercase tracking-wider">
+              <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1 h-4 bg-gradient-to-b from-violet-500 to-indigo-500 rounded-full inline-block"></span>
                 Dịch vụ
               </h3>
-              <ul className="space-y-2.5 text-sm">
+              <ul className="space-y-3 text-sm">
                 <FooterLink to="/shipping" text="Điều khoản sử dụng" />
                 <FooterLink to="/shipping" text="Chính sách bảo mật" />
                 <FooterLink to="/returns" text="Chính sách đổi trả & hoàn tiền" />
@@ -102,10 +117,11 @@ const Footer = () => {
 
             {/* CỘT 3: HỖ TRỢ */}
             <div>
-              <h3 className="text-gray-900 text-sm font-bold mb-4 uppercase tracking-wider">
+              <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1 h-4 bg-gradient-to-b from-emerald-500 to-teal-500 rounded-full inline-block"></span>
                 Hỗ trợ
               </h3>
-              <ul className="space-y-2.5 text-sm">
+              <ul className="space-y-3 text-sm">
                 <FooterLink to="/about" text="Giới thiệu BookBee" />
                 <FooterLink to="/faq" text="Câu hỏi thường gặp" />
                 <FooterLink to="/contact" text="Liên hệ hợp tác" />
@@ -114,38 +130,48 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* CỘT 4: LIÊN HỆ & NEWSLETTER */}
+            {/* CỘT 4: LIÊN HỆ + NEWSLETTER */}
             <div>
-              <h3 className="text-gray-900 text-sm font-bold mb-4 uppercase tracking-wider">
+              <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1 h-4 bg-gradient-to-b from-amber-400 to-orange-400 rounded-full inline-block"></span>
                 Liên hệ
               </h3>
-              <ul className="space-y-3 text-sm text-gray-600 mb-5">
-                <li className="flex items-start space-x-3">
-                  <FaMapMarkerAlt className="text-primary mt-0.5 flex-shrink-0" size={14} />
+              <ul className="space-y-3 text-sm text-slate-500 mb-6">
+                <li className="flex items-start gap-3">
+                  <FaMapMarkerAlt className="text-amber-500 mt-0.5 flex-shrink-0" size={14} />
                   <span>Long Hòa, Châu Thành, Vĩnh Long</span>
                 </li>
-                <li className="flex items-center space-x-3">
-                  <FaPhoneAlt className="text-primary flex-shrink-0" size={13} />
+                <li className="flex items-center gap-3">
+                  <FaPhoneAlt className="text-amber-500 flex-shrink-0" size={13} />
                   <span>0339 601 263</span>
                 </li>
-                <li className="flex items-center space-x-3">
-                  <FaEnvelope className="text-primary flex-shrink-0" size={13} />
+                <li className="flex items-center gap-3">
+                  <FaEnvelope className="text-amber-500 flex-shrink-0" size={13} />
                   <span>bookbee.store@gmail.com</span>
                 </li>
               </ul>
 
               {/* Newsletter */}
               <div>
-                <p className="text-xs text-gray-500 mb-2 font-medium">
-                  Đăng ký nhận tin khuyến mãi
+                <p className="text-xs text-slate-500 mb-2.5 font-medium">
+                  📬 Đăng ký nhận tin khuyến mãi
                 </p>
-                <div className="flex">
+                <div className="flex gap-1">
                   <input
                     type="email"
                     placeholder="Nhập email của bạn..."
-                    className="flex-1 px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-l-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+                    className="flex-1 px-3 py-2.5 text-sm text-slate-700 bg-slate-50
+                               border border-slate-200 rounded-xl
+                               focus:outline-none focus:border-violet-400
+                               focus:ring-1 focus:ring-violet-300/50 transition-all"
                   />
-                  <button className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-primary-hover transition-colors text-sm font-medium">
+                  <button
+                    className="bg-gradient-to-r from-amber-400 to-orange-400
+                               hover:from-amber-500 hover:to-orange-500
+                               text-white px-4 py-2.5 rounded-xl
+                               transition-all shadow-sm shadow-amber-300/40
+                               hover:shadow-md hover:shadow-amber-400/30"
+                  >
                     <FaPaperPlane size={13} />
                   </button>
                 </div>
@@ -155,18 +181,17 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* ============ BOTTOM BAR — Copyright + Payment ============ */}
-      <div className="bg-gray-50 border-t border-gray-200">
+      {/* ============ BOTTOM BAR — Dark Gradient ============ */}
+      <div className="bg-gradient-to-br from-slate-900 to-indigo-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-gray-500">
-              &copy; {new Date().getFullYear()} BookBee.com — Đồ án tốt nghiệp
-              Kiểu Gia Thịnh. All rights reserved.
+            <p className="text-xs text-slate-400">
+              &copy; {new Date().getFullYear()} BookBee.com — Đồ án tốt nghiệp Kiểu Gia Thịnh. All rights reserved.
             </p>
 
-            {/* Phương thức thanh toán */}
+            {/* Payment methods */}
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 mr-1">Thanh toán:</span>
+              <span className="text-xs text-slate-500 mr-1">Thanh toán:</span>
               <PaymentIcon
                 src="https://cdn-icons-png.flaticon.com/512/196/196578.png"
                 alt="Visa"
@@ -179,10 +204,6 @@ const Footer = () => {
                 src="https://cdn-icons-png.flaticon.com/512/196/196566.png"
                 alt="PayPal"
               />
-              {/* <PaymentIcon
-                src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
-                alt="MoMo"
-              /> */}
             </div>
           </div>
         </div>
@@ -193,47 +214,47 @@ const Footer = () => {
 
 // ---- SUB-COMPONENTS ----
 
-// Dải cam kết (Trust bar item)
-const TrustItem = ({ icon, title, desc }) => (
+const TrustItem = ({ icon, title, desc, color }) => (
   <div className="flex items-center gap-3 text-white">
-    <div className="text-xl text-honey-gold">{icon}</div>
+    <div className={`text-xl ${color}`}>{icon}</div>
     <div>
       <p className="text-sm font-semibold leading-tight">{title}</p>
-      <p className="text-xs text-white/70">{desc}</p>
+      <p className="text-xs text-white/65">{desc}</p>
     </div>
   </div>
 );
 
-// Footer link item
 const FooterLink = ({ to, text }) => (
   <li>
     <Link
       to={to}
-      className="text-gray-500 hover:text-primary hover:translate-x-0.5 transition-all duration-200 inline-block"
+      className="text-slate-500 hover:text-violet-600 hover:translate-x-1 transition-all duration-200 inline-block"
     >
       {text}
     </Link>
   </li>
 );
 
-// Social icon button
-const SocialIcon = ({ icon, link }) => (
+const SocialIcon = ({ icon, link, gradient }) => (
   <a
     href={link}
     target="_blank"
     rel="noopener noreferrer"
-    className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-primary hover:text-white transition-all duration-300"
+    className={`w-9 h-9 rounded-full flex items-center justify-center text-white
+               bg-gradient-to-br ${gradient}
+               shadow-sm hover:shadow-md hover:-translate-y-0.5
+               transition-all duration-300`}
   >
     {icon}
   </a>
 );
 
-// Payment method icon
 const PaymentIcon = ({ src, alt }) => (
   <img
     src={src}
     alt={alt}
-    className="h-7 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
+    className="h-7 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity
+               filter brightness-0 invert"
   />
 );
 

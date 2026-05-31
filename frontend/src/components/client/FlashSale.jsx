@@ -6,16 +6,14 @@ import { Link } from "react-router-dom";
 
 const FlashSale = () => {
   const [products, setProducts] = useState([]);
-  const [endTime, setEndTime] = useState(null); // Lưu thời gian kết thúc thực tế
-  const [timeLeft, setTimeLeft] = useState(0); // Lưu số giây còn lại
+  const [endTime, setEndTime] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
 
-  // 1. Fetch Data
   useEffect(() => {
     const fetchFlashSale = async () => {
       try {
         const res = await userRequest.get("/flash-sales/active");
         if (res.data) {
-          // Map dữ liệu sản phẩm
           const mappedProducts = res.data.products.map((item) => ({
             ...item.product,
             discountedPrice: item.discountPrice,
@@ -23,8 +21,6 @@ const FlashSale = () => {
             quantityLimit: item.quantityLimit,
           }));
           setProducts(mappedProducts);
-
-          // Lưu thời gian kết thúc từ DB
           setEndTime(new Date(res.data.endTime).getTime());
         }
       } catch (err) {
@@ -34,86 +30,68 @@ const FlashSale = () => {
     fetchFlashSale();
   }, []);
 
-  // 2. Logic đếm ngược chính xác
   useEffect(() => {
     if (!endTime) return;
-
     const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = (endTime - now) / 1000; // Chuyển sang giây
-
-      if (distance > 0) {
-        setTimeLeft(distance);
-      } else {
-        // Hết giờ -> Dừng đếm và có thể reload lại data hoặc ẩn đi
-        setTimeLeft(0);
-        clearInterval(interval);
-      }
+      const distance = (endTime - new Date().getTime()) / 1000;
+      if (distance > 0) setTimeLeft(distance);
+      else { setTimeLeft(0); clearInterval(interval); }
     }, 1000);
-
     return () => clearInterval(interval);
   }, [endTime]);
 
-  // 3. Hàm Format hiển thị (HH : MM : SS)
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-
-    // Helper thêm số 0 đằng trước (vd: 05)
-    const pad = (num) => num.toString().padStart(2, "0");
-
+    const pad = (n) => n.toString().padStart(2, "0");
     return { h: pad(h), m: pad(m), s: pad(s) };
   };
 
   const time = formatTime(timeLeft);
-
-  // Nếu không có sản phẩm hoặc đã hết giờ thì ẩn
   if (products.length === 0 || timeLeft <= 0) return null;
 
   return (
-    <div className="rounded-xl shadow-sm mb-8 overflow-hidden border border-primary-light">
-      {/* --- HEADER STYLE FAHASA --- */}
-      {/* Sử dụng Background màu đỏ/cam đặc trưng */}
-      <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between bg-primary text-white">
+    <div className="rounded-2xl overflow-hidden shadow-sm border border-rose-100">
+      {/* ===== HEADER — Vibrant gradient rose → orange → amber ===== */}
+      <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between
+                      bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 text-white">
         <div className="flex items-center gap-6 mb-2 md:mb-0">
-          {/* Title có icon tia sét */}
-          <div className="flex items-center text-2xl font-extrabold italic uppercase tracking-tighter transform -skew-x-10">
-            <FaBolt className="mr-2 text-honey-gold text-3xl animate-bounce" />
-            <span className="text-shadow-sm">Flash Sale</span>
+          {/* Title */}
+          <div className="flex items-center text-2xl font-extrabold italic uppercase tracking-tighter -skew-x-6">
+            <FaBolt className="mr-2 text-yellow-200 text-3xl animate-bounce drop-shadow-sm" />
+            <span className="drop-shadow-sm">Flash Sale</span>
           </div>
 
-          {/* Đồng hồ đếm ngược nổi bật */}
+          {/* Countdown */}
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium opacity-90 hidden sm:inline-block">
+            <FaClock className="text-white/80 text-sm" />
+            <span className="text-sm font-medium text-white/90 hidden sm:inline-block">
               Kết thúc sau
             </span>
-            <div className="flex items-center font-bold text-primary">
-              <div className="bg-white px-2 py-1 rounded-md min-w-[32px] text-center shadow-sm">
-                {time.h}
-              </div>
-              <span className="text-white mx-1 text-xl">:</span>
-              <div className="bg-white px-2 py-1 rounded-md min-w-[32px] text-center shadow-sm">
-                {time.m}
-              </div>
-              <span className="text-white mx-1 text-xl">:</span>
-              <div className="bg-white px-2 py-1 rounded-md min-w-[32px] text-center shadow-sm">
-                {time.s}
-              </div>
+            <div className="flex items-center gap-1 font-bold">
+              <TimeBlock value={time.h} />
+              <span className="text-yellow-200 text-lg font-black">:</span>
+              <TimeBlock value={time.m} />
+              <span className="text-yellow-200 text-lg font-black">:</span>
+              <TimeBlock value={time.s} />
             </div>
           </div>
         </div>
+
         <Link
           to="/flash-sale"
-          className="group bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-full text-sm font-semibold transition-all flex items-center backdrop-blur-sm border border-white/40"
+          className="group bg-white/20 hover:bg-white/35 text-white
+                     px-4 py-1.5 rounded-full text-sm font-semibold
+                     transition-all flex items-center gap-1
+                     backdrop-blur-sm border border-white/40"
         >
-          Xem tất cả{" "}
-          <FaChevronRight className="ml-1 text-xs group-hover:translate-x-1 transition-transform" />
+          Xem tất cả
+          <FaChevronRight className="text-xs group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
 
-      {/* --- PRODUCT LIST --- */}
-      {/* Nền trắng làm nổi bật sản phẩm */}
+      {/* ===== PRODUCT LIST — White canvas ===== */}
       <div className="bg-white p-5">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {products.slice(0, 5).map((item) => (
@@ -125,5 +103,13 @@ const FlashSale = () => {
   );
 };
 
-export default FlashSale;
+// Khối hiển thị số đếm ngược — nền trắng mờ
+const TimeBlock = ({ value }) => (
+  <div className="bg-white/25 backdrop-blur-sm border border-white/30
+                  px-2.5 py-1 rounded-lg min-w-[36px] text-center
+                  text-white font-mono font-black text-lg shadow-sm">
+    {value}
+  </div>
+);
 
+export default FlashSale;
