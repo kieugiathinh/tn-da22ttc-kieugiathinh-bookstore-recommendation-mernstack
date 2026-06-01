@@ -1,8 +1,22 @@
 import mongoose from "mongoose";
 
+// ─── Enum trạng thái đơn hàng ────────────────────────────────────────────────
+/**
+ * Dùng constant thay vì "số ma thuật" (magic number) trong code.
+ * Python Recommendation Service lọc: chỉ lấy đơn DELIVERED (2)
+ * làm tín hiệu "purchase" cho Implicit Collaborative Filtering.
+ */
+export const ORDER_STATUS = Object.freeze({
+  PENDING: 0,     // Chờ xác nhận / Chờ thanh toán
+  PROCESSING: 1,  // Đã thanh toán / Đang xử lý / Đang giao
+  DELIVERED: 2,   // Giao thành công ← dùng làm implicit feedback
+  CANCELLED: 3,   // Đã hủy          ← loại khỏi training data
+});
+
+// ─── Schema ───────────────────────────────────────────────────────────────────
 const OrderSchema = mongoose.Schema(
   {
-    // Thông tin người nhận
+    // Thông tin người nhận (snapshot tại thời điểm đặt hàng)
     name: {
       type: String,
       required: true,
@@ -23,31 +37,40 @@ const OrderSchema = mongoose.Schema(
       required: true,
     },
 
-    // ID của người mua (Liên kết với bảng User)
+    /**
+     * [FIX] userId: String → ObjectId
+     * Bắt buộc phải nhất quán với reviewModel.js để Python service
+     * có thể JOIN hai collection mà không bị type mismatch.
+     * ⚠️ Chạy script `scripts/migrateOrderData.js` trước khi deploy thay đổi này.
+     */
     userId: {
-      type: String, // Có thể giữ String nếu bạn lưu id dạng chuỗi, hoặc dùng ObjectId
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
+      index: true,
     },
 
-    // Danh sách sản phẩm (QUAN TRỌNG: Định nghĩa rõ cấu trúc)
     products: [
       {
+        /**
+         * [FIX] productId: String → ObjectId
+         * Dùng để JOIN với collection products khi Python service
+         * truy vấn "user X đã mua những sản phẩm nào".
+         */
         productId: {
-          type: String,
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
         },
-        title: {
-          type: String, // Lưu tên sách tại thời điểm mua
-        },
-        img: {
-          type: String, // Lưu ảnh sách
-        },
+        // Snapshot tên & ảnh tại thời điểm mua (giá trị lịch sử)
+        title: { type: String },
+        img: { type: String },
         quantity: {
           type: Number,
           default: 1,
+          min: 1,
         },
-        price: {
-          type: Number, // Giá tại thời điểm mua
-        },
+        price: { type: Number },
       },
     ],
 
@@ -62,28 +85,44 @@ const OrderSchema = mongoose.Schema(
       default: "COD",
     },
 
-    // Phí vận chuyển (tính từ GHN API)
     shippingFee: {
       type: Number,
       default: 0,
     },
 
-    // Tổng khối lượng đơn hàng (gram)
     totalWeight: {
       type: Number,
       default: 0,
     },
 
-    // Trạng thái đơn hàng (0: Chờ, 1: Đã thanh toán/Đang xử lý, 2: Đã giao)
+    /**
+     * [FIX] Dùng enum rõ ràng thay vì comment giải thích số.
+     * Sử dụng Object.values(ORDER_STATUS) → [0, 1, 2, 3]
+     */
     status: {
       type: Number,
-      default: 0,
+      default: ORDER_STATUS.PENDING,
+      enum: Object.values(ORDER_STATUS),
     },
   },
   {
     timestamps: true,
   }
 );
+
+// ─── Indexes ──────────────────────────────────────────────────────────────────
+
+/**
+ * Compound index: Python service query "tất cả đơn hàng thành công của user X"
+ * db.orders.find({ userId: <id>, status: 2 })
+ */
+OrderSchema.index({ userId: 1, status: 1 });
+
+/**
+ * Index: Python service query "sản phẩm Y đã được mua bởi những user nào"
+ * (dùng trong Item-Based Collaborative Filtering)
+ */
+OrderSchema.index({ "products.productId": 1 });
 
 const Order = mongoose.model("Order", OrderSchema);
 export default Order;

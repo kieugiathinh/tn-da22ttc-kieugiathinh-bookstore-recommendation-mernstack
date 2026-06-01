@@ -20,6 +20,8 @@ import statsRoute from "./routes/statsRoute.js";
 import chatbotRoute from "./routes/chatbotRoute.js";
 import analyticsRoute from "./routes/analyticsRoute.js";
 import shippingRoute from "./routes/shippingRoute.js";
+import recommendationRoute from "./routes/recommendationRoute.js";
+import recommendationProxyRoute from "./routes/recommendationProxyRoute.js";
 
 const app = express();
 
@@ -82,6 +84,10 @@ app.use("/api/v1/stats", statsRoute);
 app.use("/api/v1/chatbot", chatbotRoute);
 app.use("/api/v1/analytics", analyticsRoute);
 app.use("/api/v1/shipping", shippingRoute);
+// Recommendation System — Data Endpoints (chỉ dành cho Python AI Service)
+app.use("/api/v1/recommend/data", recommendationRoute);
+// Recommendation System — Proxy Endpoints (dành cho Frontend React)
+app.use("/api/v1/recommend", recommendationProxyRoute);
 
 // --- ERROR MIDDLEWARE ---
 app.use(notFound);

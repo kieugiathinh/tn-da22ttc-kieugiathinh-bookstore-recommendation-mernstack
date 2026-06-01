@@ -22,6 +22,7 @@ import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import moment from "moment";
 import RelatedProducts from "../../components/client/RelatedProducts";
+import SimilarProducts from "../../components/client/SimilarProducts";
 
 // --- Star Rating Component ---
 const StarRating = ({ rating, size = "text-sm" }) => {
@@ -462,7 +463,10 @@ const Product = () => {
           </div>
         </div>
 
-        {/* Related Products */}
+        {/* AI Similar Products — Content-Based Filtering */}
+        {product._id && <SimilarProducts productId={product._id} topK={6} />}
+
+        {/* Related Products (same category fallback) */}
         <RelatedProducts
           categoryId={product.category?._id || product.category}
           currentProductId={product._id}

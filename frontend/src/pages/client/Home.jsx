@@ -5,6 +5,7 @@ import BestSeller from "../../components/client/BestSeller";
 import TopRated from "../../components/client/TopRated";
 import CouponList from "../../components/client/CouponList";
 import NewProducts from "../../components/client/NewProducts";
+import RecommendedForYou from "../../components/client/RecommendedForYou";
 
 const Home = () => {
   return (
@@ -23,7 +24,9 @@ const Home = () => {
         <NewProducts />
         {/* 6. Bán chạy — Amber section */}
         <BestSeller />
-        {/* 7. Đánh giá cao — Sky section */}
+        {/* 7. AI Gợi ý cá nhân — Chỉ hiện khi đăng nhập */}
+        <RecommendedForYou topK={6} />
+        {/* 8. Đánh giá cao — Sky section */}
         <TopRated />
       </div>
     </div>
