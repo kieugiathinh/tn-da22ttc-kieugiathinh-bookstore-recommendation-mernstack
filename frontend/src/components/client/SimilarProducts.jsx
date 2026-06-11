@@ -1,50 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaStar, FaRobot, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaStar, FaRobot } from "react-icons/fa";
 import { HiSparkles } from "react-icons/hi2";
 import { publicRequest } from "../../requestMethods";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-
-// ─── Slider Arrows ────────────────────────────────────────────────────────────
-
-const NextArrow = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="absolute top-1/2 -right-4 -translate-y-1/2 z-10
-               bg-white text-slate-500 hover:text-violet-600
-               shadow-lg rounded-full p-3 border border-slate-100
-               hover:border-violet-200 hover:scale-110 hover:shadow-violet-100
-               transition-all duration-200 flex items-center justify-center"
-  >
-    <FaChevronRight size={12} />
-  </button>
-);
-
-const PrevArrow = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="absolute top-1/2 -left-4 -translate-y-1/2 z-10
-               bg-white text-slate-500 hover:text-violet-600
-               shadow-lg rounded-full p-3 border border-slate-100
-               hover:border-violet-200 hover:scale-110 hover:shadow-violet-100
-               transition-all duration-200 flex items-center justify-center"
-  >
-    <FaChevronLeft size={12} />
-  </button>
-);
 
 // ─── Skeleton Card ────────────────────────────────────────────────────────────
 
 const SkeletonCard = () => (
-  <div className="px-2 pb-2 pt-2">
-    <div className="bg-white rounded-2xl border border-slate-100 p-3 animate-pulse">
-      <div className="h-48 bg-slate-100 rounded-xl mb-3" />
-      <div className="h-3 bg-slate-100 rounded-full mb-2" />
-      <div className="h-3 bg-slate-100 rounded-full w-2/3 mb-3" />
-      <div className="h-4 bg-slate-200 rounded-full w-1/2" />
-    </div>
+  <div className="bg-white rounded-2xl border border-slate-100 p-3 animate-pulse">
+    <div className="h-48 bg-slate-100 rounded-xl mb-3" />
+    <div className="h-3 bg-slate-100 rounded-full mb-2" />
+    <div className="h-3 bg-slate-100 rounded-full w-2/3 mb-3" />
+    <div className="h-4 bg-slate-200 rounded-full w-1/2" />
   </div>
 );
 
@@ -131,11 +98,12 @@ const SimilarCard = ({ product, rank }) => {
 
 /**
  * SimilarProducts — Hiển thị cuối trang chi tiết sản phẩm.
+ * Grid layout giống Fahasa.com (không dùng slider).
  * Props:
  *   productId (string) — _id của sản phẩm hiện tại
- *   topK (number)      — Số gợi ý tối đa (default: 6)
+ *   topK (number)      — Số gợi ý tối đa (default: 10)
  */
-const SimilarProducts = ({ productId, topK = 6 }) => {
+const SimilarProducts = ({ productId, topK = 10 }) => {
   const [products, setProducts]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);
@@ -165,26 +133,11 @@ const SimilarProducts = ({ productId, topK = 6 }) => {
     fetchSimilar();
   }, [productId, topK]);
 
-  const sliderSettings = {
-    dots: false,
-    infinite: false,
-    speed: 400,
-    slidesToShow: Math.min(products.length, 5),
-    slidesToScroll: 2,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
-    responsive: [
-      { breakpoint: 1280, settings: { slidesToShow: 4, slidesToScroll: 2 } },
-      { breakpoint: 1024, settings: { slidesToShow: 3, slidesToScroll: 1 } },
-      { breakpoint: 640,  settings: { slidesToShow: 2, slidesToScroll: 1 } },
-    ],
-  };
-
   // Không render khi không có data và không đang loading
   if (!loading && products.length === 0 && !error) return null;
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm mb-8 border border-violet-100 overflow-hidden">
+    <section className="bg-white rounded-2xl shadow-sm mb-8 border border-violet-100 overflow-hidden mt-8">
       {/* Header */}
       <div className="px-6 py-4 border-b border-violet-100 flex items-center justify-between
                       bg-gradient-to-r from-violet-50 via-indigo-50 to-purple-50">
@@ -201,27 +154,29 @@ const SimilarProducts = ({ productId, topK = 6 }) => {
         {!isFallback && (
           <span className="flex items-center gap-1 text-xs text-violet-500 font-semibold
                            bg-violet-50 px-2 py-1 rounded-full border border-violet-100">
-            <FaRobot size={10} /> AI Powered
+            <FaRobot size={10} /> AI Lọc Nội Dung (Content-Based)
           </span>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-5 px-7 relative">
+      {/* Content — Grid Layout (Fahasa-style) */}
+      <div className="p-5 px-6">
         {loading ? (
-          <div className="grid grid-cols-5 gap-2">
-            {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
           <p className="text-center text-sm text-slate-400 py-6">{error}</p>
         ) : (
-          <Slider {...sliderSettings}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {products.map((product, index) => (
-              <div key={product._id} className="px-2 pb-2 pt-2 h-full">
-                <SimilarCard product={product} rank={product._aiMeta?.rank ?? index + 1} />
-              </div>
+              <SimilarCard
+                key={product._id}
+                product={product}
+                rank={product._aiMeta?.rank ?? index + 1}
+              />
             ))}
-          </Slider>
+          </div>
         )}
       </div>
     </section>

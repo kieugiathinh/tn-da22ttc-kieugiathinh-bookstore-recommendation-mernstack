@@ -53,7 +53,7 @@ const getBestSellerFallback = async (limit = 6) => {
  */
 export const getSimilarProducts = asyncHandler(async (req, res) => {
   const { productId } = req.params;
-  const topK = Math.min(parseInt(req.query.top_k, 10) || 6, 12);
+  const topK = Math.min(parseInt(req.query.top_k, 10) || 6, 30);
 
   try {
     const result = await getSimilarProductsData(productId, topK);
@@ -88,7 +88,7 @@ export const getSimilarProducts = asyncHandler(async (req, res) => {
  */
 export const getUserRecommendations = asyncHandler(async (req, res) => {
   const userId = req.user?._id?.toString() ?? req.user?.id?.toString();
-  const topK = Math.min(parseInt(req.query.top_k, 10) || 6, 12);
+  const topK = Math.min(parseInt(req.query.top_k, 10) || 6, 30);
 
   if (!userId) {
     return res.status(401).json({
@@ -141,3 +141,57 @@ export const triggerRetrain = asyncHandler(async (req, res) => {
     });
   }
 });
+
+// ─── Debounce map: userId → lastRefreshTime ───────────────────────────────────
+// Tránh spam Python AI khi user click nhiều sản phẩm liên tiếp trong 1 phiên.
+const _userRefreshMap = new Map();
+const REFRESH_COOLDOWN_MS = 0; // Đặt thành 0 để demo (thực tế nên để 60 * 1000)
+
+/**
+ * POST /api/v1/recommend/refresh
+ *
+ * [User — đã đăng nhập] Trigger retrain CF model để cập nhật gợi ý cá nhân.
+ * Được gọi tự động từ Frontend sau khi user xem chi tiết sản phẩm.
+ *
+ * Debounce: mỗi user chỉ trigger tối đa 1 lần / 60 giây.
+ * Nếu Python đang retrain → trả về status BUSY (không block, không lỗi).
+ */
+export const triggerRetrainForUser = asyncHandler(async (req, res) => {
+  const userId = req.user?._id?.toString();
+
+  // Debounce: kiểm tra xem user này có vừa trigger không
+  const lastRefresh = _userRefreshMap.get(userId) ?? 0;
+  const now = Date.now();
+
+  if (now - lastRefresh < REFRESH_COOLDOWN_MS) {
+    // Còn trong cooldown → không cần retrain lại, trả về OK (gợi ý đã mới đủ)
+    return res.status(200).json({
+      success: true,
+      status: "SKIPPED",
+      message: "Gợi ý đã được làm mới gần đây. Không cần retrain thêm.",
+      cooldownRemainingSeconds: Math.ceil(
+        (REFRESH_COOLDOWN_MS - (now - lastRefresh)) / 1000
+      ),
+    });
+  }
+
+  // Cập nhật timestamp cho user này
+  _userRefreshMap.set(userId, now);
+
+  try {
+    const result = await triggerCFRetrain();
+    res.status(200).json({
+      success: true,
+      triggeredBy: "user-view",
+      ...result,
+    });
+  } catch (aiError) {
+    // AI service không phản hồi → không nên làm hỏng UX
+    res.status(200).json({
+      success: false,
+      status: "AI_UNAVAILABLE",
+      message: "AI Service tạm thời không phản hồi. Gợi ý sẽ dùng dữ liệu cũ.",
+    });
+  }
+});
+

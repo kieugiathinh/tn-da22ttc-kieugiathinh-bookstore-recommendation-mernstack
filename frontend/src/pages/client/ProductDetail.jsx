@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import moment from "moment";
 import RelatedProducts from "../../components/client/RelatedProducts";
 import SimilarProducts from "../../components/client/SimilarProducts";
+import RecommendedForYou from "../../components/client/RecommendedForYou";
 
 // --- Star Rating Component ---
 const StarRating = ({ rating, size = "text-sm" }) => {
@@ -72,6 +73,24 @@ const Product = () => {
     };
     getProduct();
   }, [id]);
+
+  // Trigger CF retrain sau khi user đã đăng nhập xem sản phẩm
+  // → cập nhật danh sách "Dành Riêng Cho Bạn" khi quay lại trang chủ
+  useEffect(() => {
+    if (!user || !id) return;
+
+    // Fire and forget — không await, không hiện loading, không block UX
+    userRequest
+      .post("/recommend/refresh", {}, { withCredentials: true })
+      .then((res) => {
+        if (res.data?.status !== "SKIPPED") {
+          console.log("[CF] Retrain triggered — gợi ý sẽ cập nhật sau vài giây.");
+        }
+      })
+      .catch(() => {
+        // Silent fail — không làm hỏng trải nghiệm xem sản phẩm
+      });
+  }, [id, user?._id]);
 
   // Fetch Reviews
   const fetchReviews = async () => {
@@ -464,13 +483,12 @@ const Product = () => {
         </div>
 
         {/* AI Similar Products — Content-Based Filtering */}
-        {product._id && <SimilarProducts productId={product._id} topK={6} />}
+        {/* Gộp cả SimilarProducts + RelatedProducts thành 1 section duy nhất.
+            SimilarProducts đã có fallback query cùng category khi AI unavailable. */}
+        {product._id && <SimilarProducts productId={product._id} topK={10} />}
 
-        {/* Related Products (same category fallback) */}
-        <RelatedProducts
-          categoryId={product.category?._id || product.category}
-          currentProductId={product._id}
-        />
+        {/* Gợi ý cá nhân hóa — chỉ hiện khi đăng nhập, giống Fahasa */}
+        <RecommendedForYou topK={10} />
       </div>
     </div>
   );

@@ -1,56 +1,23 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { FaStar, FaRobot, FaChevronLeft, FaChevronRight, FaTrophy } from "react-icons/fa";
+import { FaStar, FaRobot, FaTrophy, FaChevronRight } from "react-icons/fa";
 import { HiSparkles } from "react-icons/hi2";
 import { MdAutoAwesome } from "react-icons/md";
 import { userRequest } from "../../requestMethods";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-
-// ─── Slider Arrows ────────────────────────────────────────────────────────────
-
-const NextArrow = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="absolute top-1/2 -right-4 -translate-y-1/2 z-10
-               bg-white text-slate-500 hover:text-indigo-600
-               shadow-lg rounded-full p-3 border border-slate-100
-               hover:border-indigo-200 hover:scale-110 hover:shadow-indigo-100
-               transition-all duration-200 flex items-center justify-center"
-  >
-    <FaChevronRight size={12} />
-  </button>
-);
-
-const PrevArrow = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="absolute top-1/2 -left-4 -translate-y-1/2 z-10
-               bg-white text-slate-500 hover:text-indigo-600
-               shadow-lg rounded-full p-3 border border-slate-100
-               hover:border-indigo-200 hover:scale-110 hover:shadow-indigo-100
-               transition-all duration-200 flex items-center justify-center"
-  >
-    <FaChevronLeft size={12} />
-  </button>
-);
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 const SkeletonCard = () => (
-  <div className="px-2 pb-2 pt-2">
-    <div className="bg-white rounded-2xl border border-slate-100 p-3 animate-pulse">
-      <div className="h-52 bg-gradient-to-b from-slate-100 to-slate-50 rounded-xl mb-3" />
-      <div className="h-3 bg-slate-100 rounded-full mb-2" />
-      <div className="h-3 bg-slate-100 rounded-full w-3/4 mb-3" />
-      <div className="h-4 bg-indigo-50 rounded-full w-1/2" />
-    </div>
+  <div className="bg-white rounded-2xl border border-slate-100 p-3 animate-pulse">
+    <div className="h-52 bg-gradient-to-b from-slate-100 to-slate-50 rounded-xl mb-3" />
+    <div className="h-3 bg-slate-100 rounded-full mb-2" />
+    <div className="h-3 bg-slate-100 rounded-full w-3/4 mb-3" />
+    <div className="h-4 bg-indigo-50 rounded-full w-1/2" />
   </div>
 );
 
-// ─── Recommendation Card ──────────────────────────────────────────────────────
+// ─── Recommendation Card (Fahasa-style) ───────────────────────────────────────
 
 const RecommendCard = ({ product, isColdStart }) => {
   const discountPct = product.originalPrice
@@ -65,14 +32,14 @@ const RecommendCard = ({ product, isColdStart }) => {
       className="block bg-white p-3 rounded-2xl border border-slate-100 cursor-pointer
                  relative group h-full flex flex-col
                  transition-all duration-300
-                 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-indigo-200/50
-                 hover:border-indigo-100"
+                 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-200/50
+                 hover:border-emerald-100"
     >
       {/* Predicted Rating badge (chỉ hiện khi có CF data) */}
       {predictedRating && !isColdStart && (
         <span className="absolute top-2 left-2 z-10 flex items-center gap-1
-                         bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full
-                         shadow-sm shadow-indigo-300/50">
+                         bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full
+                         shadow-sm shadow-emerald-300/50">
           <MdAutoAwesome size={9} />
           {predictedRating.toFixed(1)}★ dự đoán
         </span>
@@ -95,7 +62,7 @@ const RecommendCard = ({ product, isColdStart }) => {
 
       {/* Book cover */}
       <div className="h-52 w-full flex items-center justify-center overflow-hidden
-                      mb-3 rounded-xl bg-gradient-to-b from-slate-50 to-indigo-50/30">
+                      mb-3 rounded-xl bg-gradient-to-b from-slate-50 to-emerald-50/30">
         <img
           src={product.img}
           alt={product.title}
@@ -105,7 +72,7 @@ const RecommendCard = ({ product, isColdStart }) => {
 
       {/* Title */}
       <h3 className="text-sm font-medium text-slate-700 line-clamp-2 mb-1 min-h-[40px]
-                     group-hover:text-indigo-700 transition-colors duration-200">
+                     group-hover:text-emerald-700 transition-colors duration-200">
         {product.title}
       </h3>
 
@@ -143,15 +110,16 @@ const RecommendCard = ({ product, isColdStart }) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 /**
- * RecommendedForYou — Hiển thị trang chủ cho user đã đăng nhập.
- * - Dùng Redux state để lấy thông tin user.
- * - Cold Start: Hiển thị Best Sellers với badge khác nhau.
- * - Chưa đăng nhập: Ẩn component hoàn toàn.
+ * RecommendedForYou — Hiển thị cuối trang chủ cho user đã đăng nhập.
+ * - Grid layout giống Fahasa.com (không dùng slider).
+ * - Có nút "Xem tất cả" dẫn đến trang riêng /daily-suggestion.
+ * - Tự động refetch khi user quay lại từ trang chi tiết sản phẩm.
  * Props:
- *   topK (number) — Số gợi ý (default: 6)
+ *   topK (number) — Số gợi ý (default: 20)
  */
-const RecommendedForYou = ({ topK = 6 }) => {
+const RecommendedForYou = ({ topK = 20 }) => {
   const { currentUser } = useSelector((state) => state.user);
+  const location = useLocation();
 
   const [products, setProducts]     = useState([]);
   const [loading, setLoading]       = useState(false);
@@ -162,9 +130,9 @@ const RecommendedForYou = ({ topK = 6 }) => {
   useEffect(() => {
     if (!currentUser) return; // Không fetch khi chưa đăng nhập
 
-    const fetchForYou = async () => {
-      setLoading(true);
-      setError(null);
+    const fetchForYou = async (isBackground = false) => {
+      if (!isBackground) setLoading(true);
+      if (!isBackground) setError(null);
       try {
         const res = await userRequest.get("/recommend/for-you", {
           params: { top_k: topK },
@@ -174,48 +142,41 @@ const RecommendedForYou = ({ topK = 6 }) => {
         setIsColdStart(res.data.isColdStart ?? false);
         setAlgorithm(res.data.algorithm ?? "");
       } catch (err) {
-        if (err.response?.status !== 401) {
+        if (err.response?.status !== 401 && !isBackground) {
           setError("Không thể tải gợi ý lúc này.");
         }
         console.error("[RecommendedForYou]", err);
       } finally {
-        setLoading(false);
+        if (!isBackground) setLoading(false);
       }
     };
 
+    // Lần 1: Fetch ngay lập tức khi load trang
     fetchForYou();
-  }, [currentUser, topK]);
+
+    // Lần 2: Tự động refetch ngầm sau 5 giây.
+    const timerId = setTimeout(() => {
+      fetchForYou(true);
+    }, 5000);
+
+    return () => clearTimeout(timerId);
+  }, [currentUser, topK, location.key]);
 
   // Ẩn hoàn toàn nếu chưa đăng nhập
   if (!currentUser) return null;
 
-  const sliderSettings = {
-    dots: false,
-    infinite: false,
-    speed: 400,
-    slidesToShow: Math.min(products.length, 5),
-    slidesToScroll: 2,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
-    responsive: [
-      { breakpoint: 1280, settings: { slidesToShow: 4, slidesToScroll: 2 } },
-      { breakpoint: 1024, settings: { slidesToShow: 3, slidesToScroll: 1 } },
-      { breakpoint: 640,  settings: { slidesToShow: 2, slidesToScroll: 1 } },
-    ],
-  };
-
   const isFallback = isColdStart || algorithm === "bestseller-fallback" || algorithm === "category-fallback";
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm mb-8 border border-indigo-100 overflow-hidden">
+    <section className="bg-white rounded-2xl shadow-sm mb-8 border border-emerald-100 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-indigo-100 flex items-center justify-between
-                      bg-gradient-to-r from-indigo-50 via-violet-50 to-purple-50">
+      <div className="px-6 py-4 border-b border-emerald-100 flex items-center justify-between
+                      bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50">
         <div>
           <h2 className="text-xl font-extrabold text-slate-800 flex items-center uppercase tracking-wide
-                         border-l-4 border-indigo-500 pl-3">
-            <HiSparkles className="mr-2 text-indigo-500 text-2xl" />
-            {isFallback ? "Gợi Ý Hôm Nay" : `Dành Riêng Cho ${currentUser.username ?? "Bạn"}`}
+                         border-l-4 border-emerald-500 pl-3">
+            <HiSparkles className="mr-2 text-emerald-500 text-2xl" />
+            {isFallback ? "Gợi Ý Cho Bạn" : `Gợi Ý Cho ${currentUser.fullname ?? currentUser.username ?? "Bạn"}`}
           </h2>
           {isFallback && !loading && (
             <p className="text-xs text-slate-400 mt-1 pl-3">
@@ -224,11 +185,11 @@ const RecommendedForYou = ({ topK = 6 }) => {
           )}
         </div>
 
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex items-center gap-3">
           {!isFallback && !loading && (
-            <span className="flex items-center gap-1 text-xs text-indigo-600 font-semibold
-                             bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
-              <FaRobot size={10} /> Cá nhân hóa bởi AI
+            <span className="flex items-center gap-1 text-xs text-emerald-600 font-semibold
+                             bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
+              <FaRobot size={10} /> AI Lọc Cộng Tác (Collaborative)
             </span>
           )}
           {isFallback && !loading && (
@@ -240,11 +201,11 @@ const RecommendedForYou = ({ topK = 6 }) => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-5 px-7 relative">
+      {/* Content — Grid Layout (Fahasa-style) */}
+      <div className="p-5 px-6">
         {loading ? (
-          <div className="grid grid-cols-5 gap-2">
-            {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
           <p className="text-center text-sm text-slate-400 py-6">{error}</p>
@@ -253,13 +214,31 @@ const RecommendedForYou = ({ topK = 6 }) => {
             Chưa có gợi ý nào. Hãy đọc và đánh giá một vài cuốn sách để bắt đầu!
           </p>
         ) : (
-          <Slider {...sliderSettings}>
-            {products.map((product) => (
-              <div key={product._id} className="px-2 pb-2 pt-2 h-full">
-                <RecommendCard product={product} isColdStart={isColdStart} />
-              </div>
-            ))}
-          </Slider>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {products.map((product) => (
+                <RecommendCard key={product._id} product={product} isColdStart={isColdStart} />
+              ))}
+            </div>
+
+            {/* Nút "Xem tất cả" — dẫn đến trang riêng /recommendations */}
+            <div className="flex justify-center mt-6">
+              <Link
+                to="/recommendations"
+                className="inline-flex items-center gap-2 px-8 py-3 rounded-xl
+                           bg-gradient-to-r from-emerald-500 to-teal-500
+                           text-white font-bold text-sm uppercase tracking-wide
+                           shadow-lg shadow-emerald-300/40
+                           hover:from-emerald-600 hover:to-teal-600
+                           hover:shadow-xl hover:shadow-emerald-400/40
+                           hover:scale-[1.02] active:scale-[0.98]
+                           transition-all duration-200"
+              >
+                Xem tất cả gợi ý
+                <FaChevronRight size={10} />
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </section>

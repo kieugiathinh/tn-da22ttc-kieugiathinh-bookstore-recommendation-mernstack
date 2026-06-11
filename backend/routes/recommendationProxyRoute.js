@@ -17,6 +17,7 @@ import {
   getSimilarProducts,
   getUserRecommendations,
   triggerRetrain,
+  triggerRetrainForUser,
 } from "../controllers/recommendationProxyController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
@@ -30,5 +31,9 @@ router.get("/for-you", protect, getUserRecommendations);
 
 // Admin only — trigger CF model retrain thủ công
 router.post("/retrain", protect, admin, triggerRetrain);
+
+// User (đã đăng nhập) — trigger retrain sau khi xem sản phẩm để cập nhật gợi ý
+// Dùng rate-limit bằng logic debounce trong controller (không spam Python)
+router.post("/refresh", protect, triggerRetrainForUser);
 
 export default router;

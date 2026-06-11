@@ -24,10 +24,10 @@ const Home = () => {
         <NewProducts />
         {/* 6. Bán chạy — Amber section */}
         <BestSeller />
-        {/* 7. AI Gợi ý cá nhân — Chỉ hiện khi đăng nhập */}
-        <RecommendedForYou topK={6} />
-        {/* 8. Đánh giá cao — Sky section */}
+        {/* 7. Đánh giá cao — Sky section */}
         <TopRated />
+        {/* 8. AI Gợi ý cá nhân — Cuối trang, giống Fahasa */}
+        <RecommendedForYou topK={20} />
       </div>
     </div>
   );

@@ -419,17 +419,11 @@ class CollaborativeRecommender:
 
         u_idx = self._user_encoder[user_id]
 
-        # Sản phẩm user đã rate (hoặc có implicit data) → loại trừ
-        rated_items = set(
-            self._df_ratings[self._df_ratings["userId"] == user_id]["productId"]
-            .astype(str)
-            .tolist()
-        )
-
-        # Predict cho unrated items (chỉ items có trong training data)
+        # Predict cho tất cả items có trong training data (không loại trừ items đã xem)
+        # Để sản phẩm user vừa click không bị mất khỏi danh sách gợi ý.
         unrated_known = [
             pid for pid in all_product_ids
-            if pid not in rated_items and pid in self._item_encoder
+            if pid in self._item_encoder
         ]
 
         if not unrated_known:

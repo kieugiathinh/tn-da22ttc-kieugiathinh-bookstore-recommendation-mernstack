@@ -26,6 +26,7 @@ import Contact from "./pages/client/Contact";
 import ForgotPassword from "./pages/client/ForgotPassword";
 import ResetPassword from "./pages/client/ResetPassword";
 import { FAQ, ShippingPolicy, PrivacyPolicy, Terms } from "./pages/client/PolicyPages";
+import Recommendations from "./pages/client/Recommendations";
 
 // ── Admin Pages ───────────────────────────────────────────────────────────────
 import AdminHome from "./pages/admin/Home";
@@ -62,6 +63,7 @@ const router = createBrowserRouter([
       { path: "/shipping", element: <ShippingPolicy /> },
       { path: "/privacy", element: <PrivacyPolicy /> },
       { path: "/terms", element: <Terms /> },
+      { path: "/recommendations", element: <Recommendations /> },
 
       // ── Guest-only routes (đã đăng nhập → redirect về /) ──────────────
       { path: "/login", element: <GuestRoute><Login /></GuestRoute> },
