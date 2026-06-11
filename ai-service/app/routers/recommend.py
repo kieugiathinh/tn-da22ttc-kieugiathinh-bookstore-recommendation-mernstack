@@ -2,12 +2,23 @@
 routers/recommend.py — Recommendation API Endpoints
 =====================================================
 Content-Based (TF-IDF) + Collaborative Filtering (Funk SVD) endpoints.
+
+[v2] Thêm:
+  - POST /recommend/retrain  : Trigger manual retrain CF model
+  - GET  /recommend/status   : Hiện thêm explicit_count / implicit_count
 """
 
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Request, Query, BackgroundTasks
 from typing import List, Dict, Any
+import threading
+
+from app.data_fetcher import fetch_ratings, fetch_interactions, fetch_purchases
+from app.recommenders.collaborative import CollaborativeRecommender
 
 router = APIRouter()
+
+# Lock để tránh 2 retrain chạy song song
+_retrain_lock = threading.Lock()
 
 
 # ─── GET /api/v1/recommend/item/{product_id} ──────────────────────────────────
@@ -209,7 +220,7 @@ def list_known_users(request: Request) -> Dict[str, Any]:
     }
 
 
-# ─── GET /api/v1/recommend/status (updated) ────────────────────────────────────
+# ─── GET /api/v1/recommend/status ────────────────────────────────────────────
 
 @router.get(
     "/recommend/status",
@@ -218,26 +229,119 @@ def list_known_users(request: Request) -> Dict[str, Any]:
 def get_model_status(request: Request) -> Dict[str, Any]:
     """Kiem tra trang thai cac model trong bo nho."""
     cbf_model = getattr(request.app.state, "cbf_model", None)
-    cf_model = getattr(request.app.state, "cf_model", None)
+    cf_model  = getattr(request.app.state, "cf_model", None)
 
     cbf_status = {
-        "fitted": cbf_model is not None and cbf_model.is_fitted,
+        "fitted":        cbf_model is not None and cbf_model.is_fitted,
         "product_count": cbf_model.product_count if cbf_model and cbf_model.is_fitted else 0,
-        "algorithm": "TF-IDF Cosine Similarity",
+        "algorithm":     "TF-IDF Cosine Similarity",
     }
 
     cf_status = {
-        "fitted": cf_model is not None and cf_model.is_fitted,
-        "rating_count": cf_model.rating_count if cf_model and cf_model.is_fitted else 0,
-        "user_count": cf_model.user_count if cf_model and cf_model.is_fitted else 0,
-        "item_count": cf_model.item_count if cf_model and cf_model.is_fitted else 0,
-        "algorithm": "Funk SVD (Matrix Factorization)",
+        "fitted":          cf_model is not None and cf_model.is_fitted,
+        "rating_count":    cf_model.rating_count   if cf_model and cf_model.is_fitted else 0,
+        "explicit_count":  cf_model.explicit_count  if cf_model and cf_model.is_fitted else 0,
+        "implicit_count":  cf_model.implicit_count  if cf_model and cf_model.is_fitted else 0,
+        "user_count":      cf_model.user_count      if cf_model and cf_model.is_fitted else 0,
+        "item_count":      cf_model.item_count      if cf_model and cf_model.is_fitted else 0,
+        "algorithm":       "Funk SVD (Matrix Factorization) + Implicit Signals",
     }
 
     return {
         "success": True,
         "models": {
-            "content_based": cbf_status,
+            "content_based":           cbf_status,
             "collaborative_filtering": cf_status,
         },
+    }
+
+
+# ─── POST /api/v1/recommend/retrain ──────────────────────────────────────────
+
+def _do_retrain(app_state) -> None:
+    """
+    Background task: retrain CF model với toàn bộ data mới nhất.
+    Chạy trong thread riêng để không block HTTP response.
+    """
+    if not _retrain_lock.acquire(blocking=False):
+        print("[Retrain] Mot retrain khac dang chay, bo qua.")
+        return
+
+    try:
+        print("\n[Retrain] >> Bat dau manual retrain CF model...")
+        df_ratings      = fetch_ratings()
+        df_interactions = fetch_interactions(days=90)
+        df_purchases    = fetch_purchases()
+
+        cf = CollaborativeRecommender(n_factors=50, n_epochs=30)
+        cf.fit(
+            df_ratings=df_ratings,
+            df_interactions=df_interactions,
+            df_purchases=df_purchases,
+        )
+        app_state.cf_model = cf
+        print(
+            f"[Retrain] Thanh cong: {cf.rating_count} ratings "
+            f"({cf.explicit_count} explicit + {cf.implicit_count} implicit) | "
+            f"{cf.user_count} users | {cf.item_count} items"
+        )
+    except Exception as e:
+        print(f"[Retrain] That bai: {e}")
+    finally:
+        _retrain_lock.release()
+
+
+@router.post(
+    "/recommend/retrain",
+    summary="[Admin] Trigger retrain CF model ngay lap tuc",
+    response_description="Xac nhan da khoi dong retrain trong background",
+)
+def trigger_retrain(
+    request: Request,
+    background_tasks: BackgroundTasks,
+) -> Dict[str, Any]:
+    """
+    Khởi động retrain Collaborative Filtering model ngay lập tức.
+
+    **Lưu ý**:
+    - Retrain chạy ở background — API trả về ngay, không chờ.
+    - Nếu đã có retrain đang chạy, request này sẽ bị bỏ qua.
+    - Model cũ vẫn phục vụ request trong khi retrain đang chạy.
+    - Sau khi xong, model mới được swap vào ngay lập tức.
+
+    Dùng sau khi:
+    - Thêm nhiều review mới (explicit ratings)
+    - Sau khi nhiều user mua hàng (purchase signals)
+    - Khi muốn force update gợi ý không chờ 6 giờ.
+    """
+    if _retrain_lock.locked():
+        return {
+            "success": False,
+            "message": "Mot retrain khac dang chay. Vui long thu lai sau.",
+            "status": "BUSY",
+        }
+
+    app_state = request.app.state
+    thread = threading.Thread(
+        target=_do_retrain,
+        args=(app_state,),
+        daemon=True,
+        name="CF-Manual-Retrain",
+    )
+    thread.start()
+
+    cf_model = getattr(app_state, "cf_model", None)
+    current_stats = {
+        "rating_count":   cf_model.rating_count  if cf_model and cf_model.is_fitted else 0,
+        "explicit_count": cf_model.explicit_count if cf_model and cf_model.is_fitted else 0,
+        "implicit_count": cf_model.implicit_count if cf_model and cf_model.is_fitted else 0,
+        "user_count":     cf_model.user_count     if cf_model and cf_model.is_fitted else 0,
+    }
+
+    return {
+        "success": True,
+        "message": "Retrain CF model da duoc khoi dong trong background.",
+        "status": "STARTED",
+        "note": "Model cu van hoat dong binh thuong trong khi retrain.",
+        "current_model_stats": current_stats,
     }

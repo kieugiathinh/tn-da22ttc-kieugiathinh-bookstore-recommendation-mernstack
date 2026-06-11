@@ -14,6 +14,7 @@ import asyncHandler from "express-async-handler";
 import {
   getSimilarProductsData,
   getUserRecommendationsData,
+  triggerCFRetrain,
 } from "../services/recommendationProxyService.js";
 import Product from "../models/productModel.js";
 
@@ -115,6 +116,28 @@ export const getUserRecommendations = asyncHandler(async (req, res) => {
       isFallback: true,
       isColdStart: true,
       count: fallback.length,
+    });
+  }
+});
+
+/**
+ * POST /api/v1/recommend/retrain
+ *
+ * [Admin only] Trigger retrain CF model ngay lập tức trên Python AI Service.
+ * Dùng sau khi có nhiều review mới hoặc đơn hàng mới.
+ */
+export const triggerRetrain = asyncHandler(async (req, res) => {
+  try {
+    const result = await triggerCFRetrain();
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (aiError) {
+    res.status(503).json({
+      success: false,
+      message: "Không thể kết nối AI Service để trigger retrain.",
+      error: aiError.message,
     });
   }
 });

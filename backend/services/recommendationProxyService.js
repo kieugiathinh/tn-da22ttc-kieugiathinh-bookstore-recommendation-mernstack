@@ -115,8 +115,9 @@ const getUserRecommendationsData = async (userId, topK = 6) => {
 
   const { recommendations = [], coldStart = false } = aiRes.data;
 
-  // ── Cold Start Handling ───────────────────────────────────────────────────
-  if (coldStart || recommendations.length === 0) {
+  // ── Cold Start Handling ──────────────────────────────────────────
+  // Cold Start thực sự: AI không biết user này (chưa có trong training data)
+  if (coldStart) {
     const fallback = await getBestSellerFallback(topK);
     return {
       products: fallback,
@@ -127,18 +128,58 @@ const getUserRecommendationsData = async (userId, topK = 6) => {
     };
   }
 
-  const products = await enrichAndSort(recommendations);
+  // AI có recommendations → enrich từ MongoDB
+  if (recommendations.length > 0) {
+    const products = await enrichAndSort(recommendations);
 
+    // Nếu enrich trả về rỗng (sản phẩm bị xóa khỏi DB nhưng AI chưa retrain)
+    // → fallback Best Sellers thay vì trả trang rỗng
+    if (products.length === 0) {
+      const fallback = await getBestSellerFallback(topK);
+      return {
+        products: fallback,
+        algorithm: "bestseller-fallback",
+        source: "mongodb",
+        isColdStart: false,   // Không phải cold start — là stale AI data
+        isStaleFallback: true,
+        count: fallback.length,
+      };
+    }
+
+    return {
+      products,
+      algorithm: "collaborative-funk-svd",
+      source: "ai-service",
+      isColdStart: false,
+      count: products.length,
+    };
+  }
+
+  // AI trả về mảng rỗng nhưng không phải cold start
+  // (user đã tương tác với tất cả sản phẩm trong DB) → fallback
+  const fallback = await getBestSellerFallback(topK);
   return {
-    products,
-    algorithm: "collaborative-funk-svd",
-    source: "ai-service",
+    products: fallback,
+    algorithm: "bestseller-fallback",
+    source: "mongodb",
     isColdStart: false,
-    count: products.length,
+    count: fallback.length,
   };
+};
+
+/**
+ * Trigger retrain CF model bên Python AI Service.
+ * Dùng sau khi có nhiều review / purchase mới để không chờ 6 giờ.
+ *
+ * @returns {Promise<{success: boolean, status: string, message: string}>}
+ */
+const triggerCFRetrain = async () => {
+  const aiRes = await aiClient.post("/recommend/retrain");
+  return aiRes.data;
 };
 
 export {
   getSimilarProductsData,
   getUserRecommendationsData,
+  triggerCFRetrain,
 };
