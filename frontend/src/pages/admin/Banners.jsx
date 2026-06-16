@@ -16,7 +16,9 @@ const Banners = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
+  const [type, setType] = useState("main"); // "main" hoặc "sub"
   const [banners, setBanners] = useState([]);
+  const [activeTab, setActiveTab] = useState("main"); // Tab hiện tại đang xem
 
   const [uploadStatus, setUploadStatus] = useState("");
   const [loadingList, setLoadingList] = useState(true);
@@ -63,10 +65,11 @@ const Banners = () => {
         const uploadRes = await axios.post(CLOUDINARY_CONFIG.uploadUrl, data);
         const { url } = uploadRes.data;
 
-        await userRequest.post("/banners", { img: url, title, subtitle });
+        await userRequest.post("/banners", { img: url, title, subtitle, type });
 
         setTitle("");
         setSubtitle("");
+        setType("main");
         setSelectedImage(null);
         setUploadStatus("");
         fetchBanners();
@@ -126,23 +129,37 @@ const Banners = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start max-w-6xl">
         {/* CỘT TRÁI: Danh sách Banner */}
         <Card className="flex flex-col">
-          <div className="border-b border-gray-100 px-6 py-5 flex justify-between items-center bg-gray-50/50">
-            <h2 className="text-base font-bold text-gray-900">Danh sách Banner</h2>
-            <span className="flex h-6 items-center justify-center rounded-full bg-primary-light px-2.5 text-xs font-bold text-primary-hover">
-              {banners.length} banner
-            </span>
+          <div className="flex bg-gray-50/50 border-b border-gray-100">
+            <button
+              onClick={() => setActiveTab("main")}
+              className={`flex-1 py-4 text-sm font-bold text-center transition-colors ${
+                activeTab === "main" ? "text-primary border-b-2 border-primary bg-white" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Banner Chính ({banners.filter((b) => b.type === "main" || !b.type).length})
+            </button>
+            <button
+              onClick={() => setActiveTab("sub")}
+              className={`flex-1 py-4 text-sm font-bold text-center transition-colors ${
+                activeTab === "sub" ? "text-primary border-b-2 border-primary bg-white" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Banner Phụ ({banners.filter((b) => b.type === "sub").length})
+            </button>
           </div>
 
           <div className="p-6">
             {loadingList ? (
               <LoadingSpinner className="py-10" />
-            ) : banners.length === 0 ? (
+            ) : banners.filter((b) => (activeTab === "main" ? b.type === "main" || !b.type : b.type === "sub")).length === 0 ? (
               <div className="py-10 text-center text-sm text-gray-400">
                 Chưa có banner nào. Hãy tạo banner mới bên phải.
               </div>
             ) : (
               <div className="flex max-h-[500px] flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-                {banners.map((banner) => (
+                {banners
+                  .filter((b) => (activeTab === "main" ? b.type === "main" || !b.type : b.type === "sub"))
+                  .map((banner) => (
                   <div
                     key={banner._id}
                     className={`group relative flex items-center justify-between rounded-xl border p-4 transition-all duration-200
@@ -229,6 +246,26 @@ const Banners = () => {
                 value={title} onChange={(e) => setTitle(e.target.value)} />
               <InputField label="3. Mô tả phụ" placeholder="VD: Giảm giá lên đến 50%"
                 value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+            </div>
+
+            {/* Select Type */}
+            <div>
+              <label className="mb-2 block text-xs font-semibold text-gray-600">4. Loại Banner</label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border p-3 transition-colors ${type === "main" ? "border-primary bg-primary-light/20 text-primary" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}>
+                  <input type="radio" name="bannerType" value="main" className="hidden"
+                    checked={type === "main"} onChange={(e) => setType(e.target.value)} />
+                  <span className="text-sm font-bold">Banner Chính</span>
+                </label>
+                <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border p-3 transition-colors ${type === "sub" ? "border-primary bg-primary-light/20 text-primary" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}>
+                  <input type="radio" name="bannerType" value="sub" className="hidden"
+                    checked={type === "sub"} onChange={(e) => setType(e.target.value)} />
+                  <span className="text-sm font-bold">Banner Phụ</span>
+                </label>
+              </div>
+              <p className="mt-2 text-[11px] text-gray-500">
+                {type === "main" ? "Hiển thị trên Slider cột trái (840x320)." : "Hiển thị tĩnh ở cột phải."}
+              </p>
             </div>
 
             {/* Nút Upload */}

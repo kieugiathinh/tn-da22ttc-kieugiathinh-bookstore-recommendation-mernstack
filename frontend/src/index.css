@@ -6,10 +6,10 @@
    Philosophy: 60% Clean Canvas | 30% Brand Gold | 10% Accents
    ========================================================= */
 @theme {
-  /* Primary — Indigo (Interactive elements, links) */
-  --color-primary: #4F46E5;
-  --color-primary-hover: #4338CA;
-  --color-primary-light: #EEF2FF;
+  /* Primary — Orange (Interactive elements, links) */
+  --color-primary: #EE4D2D;
+  --color-primary-hover: #D73F22;
+  --color-primary-light: #FFF0ED;
 
   /* Honey Gold — CTA Brand Color (30% brand identity) */
   --color-honey-gold: #F59E0B;

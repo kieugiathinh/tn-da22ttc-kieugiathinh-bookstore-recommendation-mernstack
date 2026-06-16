@@ -25,7 +25,7 @@ const Footer = () => {
   return (
     <footer className="mt-16">
       {/* ============ TRUST BAR — Vibrant Gradient ============ */}
-      <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600">
+      <div className="bg-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 py-6">
             <TrustItem
@@ -103,7 +103,7 @@ const Footer = () => {
             {/* CỘT 2: DỊCH VỤ */}
             <div>
               <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-1 h-4 bg-gradient-to-b from-violet-500 to-indigo-500 rounded-full inline-block"></span>
+                <span className="w-1 h-4 bg-primary rounded-full inline-block"></span>
                 Dịch vụ
               </h3>
               <ul className="space-y-3 text-sm">
@@ -118,7 +118,7 @@ const Footer = () => {
             {/* CỘT 3: HỖ TRỢ */}
             <div>
               <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-1 h-4 bg-gradient-to-b from-emerald-500 to-teal-500 rounded-full inline-block"></span>
+                <span className="w-1 h-4 bg-primary rounded-full inline-block"></span>
                 Hỗ trợ
               </h3>
               <ul className="space-y-3 text-sm">
@@ -133,7 +133,7 @@ const Footer = () => {
             {/* CỘT 4: LIÊN HỆ + NEWSLETTER */}
             <div>
               <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-1 h-4 bg-gradient-to-b from-amber-400 to-orange-400 rounded-full inline-block"></span>
+                <span className="w-1 h-4 bg-primary rounded-full inline-block"></span>
                 Liên hệ
               </h3>
               <ul className="space-y-3 text-sm text-slate-500 mb-6">
@@ -162,15 +162,14 @@ const Footer = () => {
                     placeholder="Nhập email của bạn..."
                     className="flex-1 px-3 py-2.5 text-sm text-slate-700 bg-slate-50
                                border border-slate-200 rounded-xl
-                               focus:outline-none focus:border-violet-400
-                               focus:ring-1 focus:ring-violet-300/50 transition-all"
+                               focus:outline-none focus:border-primary-light
+                               focus:ring-1 focus:ring-primary-light/50 transition-all"
                   />
                   <button
-                    className="bg-gradient-to-r from-amber-400 to-orange-400
-                               hover:from-amber-500 hover:to-orange-500
+                    className="bg-primary hover:bg-primary-hover
                                text-white px-4 py-2.5 rounded-xl
-                               transition-all shadow-sm shadow-amber-300/40
-                               hover:shadow-md hover:shadow-amber-400/30"
+                               transition-all shadow-sm shadow-primary-light
+                               hover:shadow-md"
                   >
                     <FaPaperPlane size={13} />
                   </button>
@@ -182,7 +181,7 @@ const Footer = () => {
       </div>
 
       {/* ============ BOTTOM BAR — Dark Gradient ============ */}
-      <div className="bg-gradient-to-br from-slate-900 to-indigo-950">
+      <div className="bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-slate-400">
@@ -228,7 +227,7 @@ const FooterLink = ({ to, text }) => (
   <li>
     <Link
       to={to}
-      className="text-slate-500 hover:text-violet-600 hover:translate-x-1 transition-all duration-200 inline-block"
+      className="text-slate-500 hover:text-primary hover:translate-x-1 transition-all duration-200 inline-block"
     >
       {text}
     </Link>
