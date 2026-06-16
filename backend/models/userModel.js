@@ -9,12 +9,6 @@ const userSchema = mongoose.Schema(
       trim: true,
     },
 
-    username: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-
     password: {
       type: String,
       minLength: 6,
@@ -30,11 +24,6 @@ const userSchema = mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-    },
-
-    address: {
-      type: String,
-      default: "",
     },
 
     phone: {

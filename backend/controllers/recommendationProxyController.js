@@ -105,8 +105,8 @@ export const getUserRecommendations = asyncHandler(async (req, res) => {
       ...result,
     });
   } catch (aiError) {
-    console.error(`[ProxyController] Error for user ${userId}:`, aiError.message, aiError.stack);
-    console.warn(`[ProxyController] Fallback to best sellers.`);
+    const errorCode = aiError.code ?? aiError.response?.status ?? "UNKNOWN";
+    console.warn(`[ProxyController] AI unavailable for user ${userId} (${errorCode}). Fallback to best sellers.`);
 
     const fallback = await getBestSellerFallback(topK);
     res.status(200).json({

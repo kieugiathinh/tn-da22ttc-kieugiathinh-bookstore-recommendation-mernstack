@@ -42,19 +42,15 @@ const getAllUsers = async () => {
 };
 
 const createUser = async (userData) => {
-  const { fullname, username, email, password, phone, role } = userData;
+  const { fullname, email, password, phone, role } = userData;
 
   const userExists = await User.findOne({ email }).lean();
   if (userExists) throw new Error("Email đã tồn tại");
 
-  const usernameExists = await User.findOne({ username }).lean();
-  if (usernameExists) throw new Error("Username đã tồn tại");
-
   const user = await User.create({
     fullname,
-    username,
     email,
-    password, 
+    password,
     phone: phone || "",
     role: role || 0,
   });

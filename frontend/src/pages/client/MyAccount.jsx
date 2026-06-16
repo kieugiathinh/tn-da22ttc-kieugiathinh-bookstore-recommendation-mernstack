@@ -6,12 +6,10 @@ import {
   FaUser,
   FaEnvelope,
   FaPhone,
-  FaMapMarkerAlt,
   FaLock,
   FaSignOutAlt,
   FaSave,
   FaCamera,
-  FaIdBadge,
   FaSpinner,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -79,7 +77,6 @@ const MyAccount = () => {
   const [formData, setFormData] = useState({
     fullname: "",
     phone: "",
-    address: "",
     avatar: "",
     currentPassword: "",
     newPassword: "",
@@ -96,7 +93,6 @@ const MyAccount = () => {
         ...prev,
         fullname: currentUser.fullname || "",
         phone: currentUser.phone || "",
-        address: currentUser.address || "",
         avatar: currentUser.avatar || "",
       }));
     }
@@ -131,7 +127,6 @@ const MyAccount = () => {
       const res = await userRequest.put(`/users/${currentUser._id}`, {
         fullname: formData.fullname,
         phone: formData.phone,
-        address: formData.address,
         avatar: avatarUrl,
       });
 
@@ -215,7 +210,7 @@ const MyAccount = () => {
           </h1>
           <div className="flex items-center mt-1 space-x-3">
             <span className="text-gray-500 text-sm">
-              @{currentUser?.username}
+              @{currentUser?.email?.split("@")[0]}
             </span>
             <span className="text-gray-300">•</span>
             <span
@@ -236,12 +231,7 @@ const MyAccount = () => {
             <h2 className="text-lg font-bold text-gray-800 mb-5 flex items-center">
               Thông tin tài khoản
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <DisabledInput
-                label="Tên đăng nhập"
-                value={currentUser?.username}
-                icon={<FaIdBadge />}
-              />
+            <div className="grid grid-cols-1 gap-5">
               <DisabledInput
                 label="Địa chỉ Email"
                 value={currentUser?.email}
@@ -263,7 +253,7 @@ const MyAccount = () => {
                 onChange={handleChange}
                 icon={<FaUser />}
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 gap-5">
                 <EditableInput
                   label="Số điện thoại"
                   name="phone"
@@ -271,14 +261,6 @@ const MyAccount = () => {
                   onChange={handleChange}
                   icon={<FaPhone />}
                   placeholder="Nhập số điện thoại"
-                />
-                <EditableInput
-                  label="Địa chỉ"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  icon={<FaMapMarkerAlt />}
-                  placeholder="Nhập địa chỉ giao hàng"
                 />
               </div>
 

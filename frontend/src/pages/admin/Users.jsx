@@ -21,7 +21,7 @@ const Users = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [formData, setFormData] = useState({
-    fullname: "", username: "", email: "", password: "", phone: "", role: 0,
+    fullname: "", email: "", password: "", phone: "", role: 0,
   });
 
   // ── Fetch ────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ const Users = () => {
 
   // ── Modal helpers ─────────────────────────────────────────────────────────
   const resetForm = () => {
-    setFormData({ fullname: "", username: "", email: "", password: "", phone: "", role: 0 });
+    setFormData({ fullname: "", email: "", password: "", phone: "", role: 0 });
     setEditingUserId(null);
   };
 
@@ -52,7 +52,7 @@ const Users = () => {
 
   const openEdit = (user) => {
     setEditingUserId(user._id);
-    setFormData({ fullname: user.fullname, username: user.username, email: user.email, password: "", phone: user.phone || "", role: user.role });
+    setFormData({ fullname: user.fullname, email: user.email, password: "", phone: user.phone || "", role: user.role });
     setShowModal(true);
   };
 
@@ -127,7 +127,6 @@ const Users = () => {
                 <thead>
                   <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                     <th className="px-5 py-3.5">Người dùng</th>
-                    <th className="px-5 py-3.5">Username</th>
                     <th className="px-5 py-3.5">Email</th>
                     <th className="px-5 py-3.5">SĐT</th>
                     <th className="px-5 py-3.5">Vai trò</th>
@@ -148,7 +147,6 @@ const Users = () => {
                           <span className="font-semibold text-gray-800 truncate max-w-[140px]">{user.fullname}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-gray-600">{user.username}</td>
                       <td className="px-5 py-3.5 text-gray-600 truncate max-w-[160px]">{user.email}</td>
                       <td className="px-5 py-3.5 text-gray-500">{user.phone || "—"}</td>
                       <td className="px-5 py-3.5">
@@ -184,8 +182,6 @@ const Users = () => {
           <InputField label="Họ và Tên" required placeholder="Nguyễn Văn A"
             value={formData.fullname} onChange={handleField("fullname")} />
           <div className="grid grid-cols-2 gap-4">
-            <InputField label="Username" required placeholder="user123"
-              value={formData.username} onChange={handleField("username")} />
             <InputField label="Số điện thoại" placeholder="09xx..."
               value={formData.phone} onChange={handleField("phone")} />
           </div>
