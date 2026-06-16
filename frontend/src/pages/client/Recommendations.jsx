@@ -35,21 +35,9 @@ const RecommendCard = ({ product, isColdStart }) => {
                  hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-200/50
                  hover:border-emerald-100"
     >
-      {predictedRating && !isColdStart && (
-        <span className="absolute top-2 left-2 z-10 flex items-center gap-1
-                         bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full
-                         shadow-sm shadow-emerald-300/50">
-          <MdAutoAwesome size={9} />
-          {predictedRating.toFixed(1)}★ dự đoán
-        </span>
-      )}
 
-      {isColdStart && (
-        <span className="absolute top-2 left-2 z-10 flex items-center gap-1
-                         bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-          <FaTrophy size={8} /> Hot
-        </span>
-      )}
+
+
 
       {discountPct > 0 && (
         <span className="absolute top-2 right-2 z-10 bg-rose-100 text-rose-600
@@ -126,7 +114,7 @@ const Recommendations = () => {
       setError(null);
       try {
         const res = await userRequest.get("/recommend/for-you", {
-          params: { top_k: 30 },
+          params: { top_k: 20 },
           withCredentials: true,
         });
         setProducts(res.data.products ?? []);
@@ -196,33 +184,12 @@ const Recommendations = () => {
           <div className="px-6 py-5 border-b border-emerald-100
                           bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-extrabold text-slate-800 flex items-center uppercase tracking-wide
-                               border-l-4 border-emerald-500 pl-3">
-                  <HiSparkles className="mr-2 text-emerald-500 text-3xl" />
-                  {isFallback ? "Gợi Ý Cho Bạn" : `Dành Riêng Cho ${currentUser.fullname ?? currentUser.username ?? "Bạn"}`}
+              <div className="text-center w-full">
+                <h1 className="text-2xl font-extrabold text-slate-800 uppercase tracking-wide flex justify-center items-center gap-2">
+                  <HiSparkles className="text-emerald-500 text-3xl" />
+                  Gợi ý cho bạn
+                  <HiSparkles className="text-emerald-500 text-3xl" />
                 </h1>
-                <p className="text-sm text-slate-500 mt-1 pl-3">
-                  {isFallback
-                    ? "Những cuốn sách bán chạy nhất — hãy đánh giá thêm để nhận gợi ý cá nhân hóa!"
-                    : "Được cá nhân hóa bởi AI dựa trên hành vi đọc và đánh giá của bạn."
-                  }
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {!isFallback && (
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold
-                                   bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
-                    <FaRobot size={11} /> AI Lọc Cộng Tác (Collaborative)
-                  </span>
-                )}
-                {isFallback && (
-                  <span className="flex items-center gap-1.5 text-xs text-amber-600 font-semibold
-                                   bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
-                    <FaTrophy size={11} /> Bán chạy nhất
-                  </span>
-                )}
               </div>
             </div>
           </div>

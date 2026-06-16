@@ -13,8 +13,8 @@ dotenv.config();
 
 // ─── AI Service Client ────────────────────────────────────────────────────────
 
-const AI_BASE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000/api/v1";
-const AI_TIMEOUT  = 8000; // 8 giây — đủ cho inference, không block UX
+const AI_BASE_URL = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000/api/v1";
+const AI_TIMEOUT = 8000; // 8 giây — đủ cho inference, không block UX
 
 const aiClient = axios.create({
   baseURL: AI_BASE_URL,
@@ -51,9 +51,9 @@ const enrichAndSort = async (aiItems) => {
       return {
         ...product,
         _aiMeta: {
-          rank:            aiItem.rank,
-          score:           aiItem.score            ?? null,
-          predictedRating: aiItem.predictedRating  ?? null,
+          rank: aiItem.rank,
+          score: aiItem.score ?? null,
+          predictedRating: aiItem.predictedRating ?? null,
         },
       };
     })
@@ -178,8 +178,45 @@ const triggerCFRetrain = async () => {
   return aiRes.data;
 };
 
+/**
+ * Lấy Health Status của AI Service (Admin).
+ */
+const getAIHealthStatus = async () => {
+  const aiRes = await aiClient.get("/health");
+  return aiRes.data;
+};
+
+/**
+ * Lấy Mock Recommendations cho 1 User bất kỳ (Admin).
+ * Chỉ gọi AI, không cần parse lại UI context, trả về raw meta.
+ */
+const getUserRecommendationsSimulator = async (userId, topK = 6) => {
+  const aiRes = await aiClient.get(`/recommend/user/${userId}/collaborative`, {
+    params: { top_k: topK },
+  });
+
+  const { recommendations = [], coldStart = false } = aiRes.data;
+  if (coldStart || recommendations.length === 0) {
+    const fallback = await getBestSellerFallback(topK);
+    return {
+      isColdStart: true,
+      algorithm: "bestseller-fallback",
+      products: fallback
+    };
+  }
+
+  const products = await enrichAndSort(recommendations);
+  return {
+    isColdStart: false,
+    algorithm: "collaborative-svd",
+    products
+  };
+};
+
 export {
   getSimilarProductsData,
   getUserRecommendationsData,
   triggerCFRetrain,
+  getAIHealthStatus,
+  getUserRecommendationsSimulator,
 };

@@ -18,6 +18,8 @@ import {
   getUserRecommendations,
   triggerRetrain,
   triggerRetrainForUser,
+  getAIHealth,
+  simulateUserRecommendations
 } from "../controllers/recommendationProxyController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
@@ -35,5 +37,9 @@ router.post("/retrain", protect, admin, triggerRetrain);
 // User (đã đăng nhập) — trigger retrain sau khi xem sản phẩm để cập nhật gợi ý
 // Dùng rate-limit bằng logic debounce trong controller (không spam Python)
 router.post("/refresh", protect, triggerRetrainForUser);
+
+// Admin only — lấy health check và mô phỏng gợi ý
+router.get("/health", protect, admin, getAIHealth);
+router.get("/simulator/:userId", protect, admin, simulateUserRecommendations);
 
 export default router;

@@ -31,18 +31,7 @@ const SimilarCard = ({ product, rank }) => {
                  hover:-translate-y-1.5 hover:shadow-xl hover:shadow-violet-200/50
                  hover:border-violet-100"
     >
-      {/* AI rank badge */}
-      {rank <= 3 && (
-        <span
-          className={`absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full
-            ${rank === 1 ? "bg-violet-100 text-violet-700"
-              : rank === 2 ? "bg-indigo-100 text-indigo-700"
-              : "bg-sky-100 text-sky-700"
-            }`}
-        >
-          #{rank} AI Pick
-        </span>
-      )}
+
 
       {discountPct > 0 && (
         <span className="absolute top-2 right-2 z-10 bg-rose-100 text-rose-600
@@ -145,18 +134,8 @@ const SimilarProducts = ({ productId, topK = 10 }) => {
                        border-l-4 border-violet-500 pl-3">
           <HiSparkles className="mr-2 text-violet-500 text-2xl" />
           Có Thể Bạn Thích
-          {isFallback && (
-            <span className="ml-2 text-xs font-normal normal-case text-slate-400 tracking-normal">
-              (gợi ý theo danh mục)
-            </span>
-          )}
         </h2>
-        {!isFallback && (
-          <span className="flex items-center gap-1 text-xs text-violet-500 font-semibold
-                           bg-violet-50 px-2 py-1 rounded-full border border-violet-100">
-            <FaRobot size={10} /> AI Lọc Nội Dung (Content-Based)
-          </span>
-        )}
+
       </div>
 
       {/* Content — Grid Layout (Fahasa-style) */}

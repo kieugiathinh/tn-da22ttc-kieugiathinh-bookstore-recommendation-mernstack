@@ -35,23 +35,9 @@ const RecommendCard = ({ product, isColdStart }) => {
                  hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-200/50
                  hover:border-emerald-100"
     >
-      {/* Predicted Rating badge (chỉ hiện khi có CF data) */}
-      {predictedRating && !isColdStart && (
-        <span className="absolute top-2 left-2 z-10 flex items-center gap-1
-                         bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full
-                         shadow-sm shadow-emerald-300/50">
-          <MdAutoAwesome size={9} />
-          {predictedRating.toFixed(1)}★ dự đoán
-        </span>
-      )}
 
-      {/* Bestseller badge khi fallback */}
-      {isColdStart && (
-        <span className="absolute top-2 left-2 z-10 flex items-center gap-1
-                         bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-          <FaTrophy size={8} /> Hot
-        </span>
-      )}
+
+
 
       {discountPct > 0 && (
         <span className="absolute top-2 right-2 z-10 bg-rose-100 text-rose-600
@@ -169,36 +155,13 @@ const RecommendedForYou = ({ topK = 20 }) => {
 
   return (
     <section className="bg-white rounded-2xl shadow-sm mb-8 border border-emerald-100 overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-emerald-100 flex items-center justify-between
-                      bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-800 flex items-center uppercase tracking-wide
-                         border-l-4 border-emerald-500 pl-3">
-            <HiSparkles className="mr-2 text-emerald-500 text-2xl" />
-            {isFallback ? "Gợi Ý Cho Bạn" : `Gợi Ý Cho ${currentUser.fullname ?? currentUser.username ?? "Bạn"}`}
-          </h2>
-          {isFallback && !loading && (
-            <p className="text-xs text-slate-400 mt-1 pl-3">
-              Hãy đánh giá thêm sách để nhận gợi ý cá nhân hóa chính xác hơn!
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          {!isFallback && !loading && (
-            <span className="flex items-center gap-1 text-xs text-emerald-600 font-semibold
-                             bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
-              <FaRobot size={10} /> AI Lọc Cộng Tác (Collaborative)
-            </span>
-          )}
-          {isFallback && !loading && (
-            <span className="flex items-center gap-1 text-xs text-amber-600 font-semibold
-                             bg-amber-50 px-2 py-1 rounded-full border border-amber-100">
-              <FaTrophy size={10} /> Bán chạy nhất
-            </span>
-          )}
-        </div>
+      {/* Header (Fahasa style: solid green, white text, centered) */}
+      <div className="px-6 py-4 bg-emerald-500 flex justify-center items-center">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+          <HiSparkles className="text-white text-2xl" />
+          Gợi ý cho bạn
+          <HiSparkles className="text-white text-2xl" />
+        </h2>
       </div>
 
       {/* Content — Grid Layout (Fahasa-style) */}

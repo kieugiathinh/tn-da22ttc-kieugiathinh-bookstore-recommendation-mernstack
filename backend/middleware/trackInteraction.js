@@ -49,24 +49,22 @@ const trackInteraction = (req, res, next) => {
         ? req.query.source
         : "direct";
 
-      // 4. Ghi record — upsert để tránh tạo bản ghi trùng trong 1 session ngắn
-      //    Nếu user đã view cùng product trong vòng 30 phút → update thay vì insert mới
+      // 4. Ghi record (Dành cho DEMO: Bỏ chặn 30 phút để có thể spam click)
+      //    Thực tế: Nên chặn spam click trong 30 phút để không làm hỏng dữ liệu.
+      /*
       const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-
       const existingRecent = await UserInteraction.findOne({
         userId: req.user._id,
         productId: new mongoose.Types.ObjectId(productId),
         interactionType: INTERACTION_TYPE.VIEW,
         source,
         createdAt: { $gte: thirtyMinutesAgo },
-      })
-        .select("_id")
-        .lean();
+      }).select("_id").lean();
 
       if (existingRecent) {
-        // Đã có view gần đây → không insert thêm (tránh inflate data)
         return;
       }
+      */
 
       await UserInteraction.create({
         userId: req.user._id,

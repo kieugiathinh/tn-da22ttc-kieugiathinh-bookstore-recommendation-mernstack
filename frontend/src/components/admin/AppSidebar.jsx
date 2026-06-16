@@ -45,7 +45,8 @@ const menuGroups = [
   {
     label: "Trí tuệ nhân tạo",
     items: [
-      { name: "AI Chat Insights", icon: <FaRobot size={18} />, path: "/admin/chat-analytics" },
+      { name: "AI Gợi ý (Recommendations)", icon: <FaRobot size={18} />, path: "/admin/ai-recommendations" },
+      { name: "AI Chat Insights", icon: <FaComments size={18} />, path: "/admin/chat-analytics" },
     ],
   },
 ];

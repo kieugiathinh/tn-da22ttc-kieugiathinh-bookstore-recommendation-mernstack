@@ -42,10 +42,11 @@ IMPLICIT_WEIGHTS = {
 # Time decay: λ ~ 0.01 → interaction 70 ngày trước ≈ còn 50% giá trị
 DECAY_LAMBDA = 0.01
 
-# Pseudo-rating range: implicit score được chuẩn hóa về [1, 4] để tránh
-# chiếm hết khoảng 4-5 của explicit ratings thực sự
-IMPLICIT_RATING_MIN = 1.0
-IMPLICIT_RATING_MAX = 4.0
+# Pseudo-rating range: implicit score được chuẩn hóa về [4.0, 5.0] để
+# thể hiện sự quan tâm tích cực (view = 4.0, purchase = 5.0).
+# Nếu để min=1.0, việc user click xem (view) sẽ bị quy thành đánh giá 1 sao!
+IMPLICIT_RATING_MIN = 4.0
+IMPLICIT_RATING_MAX = 5.0
 
 
 def _compute_time_decay(created_at_series: pd.Series) -> pd.Series:

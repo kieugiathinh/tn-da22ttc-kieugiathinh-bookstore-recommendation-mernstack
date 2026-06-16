@@ -88,7 +88,7 @@ export const getSimilarProducts = asyncHandler(async (req, res) => {
  */
 export const getUserRecommendations = asyncHandler(async (req, res) => {
   const userId = req.user?._id?.toString() ?? req.user?.id?.toString();
-  const topK = Math.min(parseInt(req.query.top_k, 10) || 6, 30);
+  const topK = Math.min(parseInt(req.query.top_k, 10) || 6, 20);
 
   if (!userId) {
     return res.status(401).json({
@@ -105,7 +105,8 @@ export const getUserRecommendations = asyncHandler(async (req, res) => {
       ...result,
     });
   } catch (aiError) {
-    console.warn(`[ProxyController] AI unavailable for user ${userId}. Fallback to best sellers.`);
+    console.error(`[ProxyController] Error for user ${userId}:`, aiError.message, aiError.stack);
+    console.warn(`[ProxyController] Fallback to best sellers.`);
 
     const fallback = await getBestSellerFallback(topK);
     res.status(200).json({
@@ -186,11 +187,59 @@ export const triggerRetrainForUser = asyncHandler(async (req, res) => {
       ...result,
     });
   } catch (aiError) {
-    // AI service không phản hồi → không nên làm hỏng UX
     res.status(200).json({
       success: false,
       status: "AI_UNAVAILABLE",
       message: "AI Service tạm thời không phản hồi. Gợi ý sẽ dùng dữ liệu cũ.",
+    });
+  }
+});
+
+/**
+ * GET /api/v1/recommend/health
+ * 
+ * [Admin only] Lấy trạng thái Health của AI service
+ */
+export const getAIHealth = asyncHandler(async (req, res) => {
+  try {
+    const { getAIHealthStatus } = await import("../services/recommendationProxyService.js");
+    const healthData = await getAIHealthStatus();
+    res.status(200).json({
+      success: true,
+      ...healthData
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      status: "degraded",
+      node_connected: false,
+      message: "Node.js không thể kết nối tới AI Service (Python đang offline)",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/recommend/simulator/:userId
+ * 
+ * [Admin only] Mô phỏng kết quả gợi ý cá nhân hóa cho một user bất kỳ
+ */
+export const simulateUserRecommendations = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const topK = parseInt(req.query.top_k, 10) || 10;
+
+  try {
+    const { getUserRecommendationsSimulator } = await import("../services/recommendationProxyService.js");
+    const result = await getUserRecommendationsSimulator(userId, topK);
+    res.status(200).json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      message: "Lỗi khi mô phỏng gợi ý từ AI Service.",
+      error: error.message
     });
   }
 });
