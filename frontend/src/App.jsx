@@ -1,33 +1,34 @@
-import {
-  RouterProvider,
-  createBrowserRouter,
-  Outlet,
-  Navigate,
-} from "react-router-dom";
-import { useSelector } from "react-redux";
-import ScrollToTop from "./components/ScrollToTop";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
-//user
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Cart from "./pages/Cart";
-import ProductDetail from "./pages/ProductDetail";
-import MyAccount from "./pages/MyAccount";
-import Order from "./pages/Order";
-import Success from "./pages/Success";
-import Checkout from "./pages/Checkout";
-import ProductList from "./pages/ProductList";
-import FlashSale from "./pages/FlashSale";
-import MyVouchers from "./pages/MyVouchers";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import { FAQ, ShippingPolicy, PrivacyPolicy, Terms } from "./pages/PolicyPages";
+// ── Layouts ───────────────────────────────────────────────────────────────────
+import AdminLayout from "./layouts/AdminLayout";
+import ClientLayout from "./layouts/ClientLayout";
 
-//admin
-import AdminMenu from "./components/admin/Menu";
+// ── Route Guards ──────────────────────────────────────────────────────────────
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import GuestRoute from "./components/common/GuestRoute";
+
+// ── Client Pages ──────────────────────────────────────────────────────────────
+import Home from "./pages/client/Home";
+import Login from "./pages/client/Login";
+import Register from "./pages/client/Register";
+import Cart from "./pages/client/Cart";
+import ProductDetail from "./pages/client/ProductDetail";
+import MyAccount from "./pages/client/MyAccount";
+import Order from "./pages/client/Order";
+import Success from "./pages/client/Success";
+import Checkout from "./pages/client/Checkout";
+import ProductList from "./pages/client/ProductList";
+import FlashSale from "./pages/client/FlashSale";
+import MyVouchers from "./pages/client/MyVouchers";
+import About from "./pages/client/About";
+import Contact from "./pages/client/Contact";
+import ForgotPassword from "./pages/client/ForgotPassword";
+import ResetPassword from "./pages/client/ResetPassword";
+import { FAQ, ShippingPolicy, PrivacyPolicy, Terms } from "./pages/client/PolicyPages";
+import Recommendations from "./pages/client/Recommendations";
+
+// ── Admin Pages ───────────────────────────────────────────────────────────────
 import AdminHome from "./pages/admin/Home";
 import AdminUsers from "./pages/admin/Users";
 import AdminProducts from "./pages/admin/Products";
@@ -39,104 +40,68 @@ import AdminNewProduct from "./pages/admin/NewProduct";
 import AdminCategories from "./pages/admin/Categories";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminCoupon from "./pages/admin/CouponList";
+import AdminChatAnalytics from "./pages/admin/ChatAnalytics";
+import AdminRecommendations from "./pages/admin/AIRecommendations";
+
+// ── Router Configuration ─────────────────────────────────────────────────────
+const router = createBrowserRouter([
+  // ── CLIENT ROUTES (bọc bởi ClientLayout) ─────────────────────────────────
+  {
+    path: "/",
+    element: <ClientLayout />,
+    children: [
+      { path: "/", element: <Home /> },
+      { path: "/cart", element: <Cart /> },
+      { path: "/product/:id", element: <ProductDetail /> },
+      { path: "/products", element: <ProductList /> },
+      { path: "/products/:category", element: <ProductList /> },
+      { path: "/checkout", element: <Checkout /> },
+      { path: "/success", element: <Success /> },
+      { path: "/flash-sale", element: <FlashSale /> },
+      { path: "/about", element: <About /> },
+      { path: "/contact", element: <Contact /> },
+      { path: "/faq", element: <FAQ /> },
+      { path: "/shipping", element: <ShippingPolicy /> },
+      { path: "/privacy", element: <PrivacyPolicy /> },
+      { path: "/terms", element: <Terms /> },
+      { path: "/recommendations", element: <Recommendations /> },
+
+      // ── Guest-only routes (đã đăng nhập → redirect về /) ──────────────
+      { path: "/login", element: <GuestRoute><Login /></GuestRoute> },
+      { path: "/register", element: <GuestRoute><Register /></GuestRoute> },
+      { path: "/forgot-password", element: <GuestRoute><ForgotPassword /></GuestRoute> },
+      { path: "/reset-password/:token", element: <GuestRoute><ResetPassword /></GuestRoute> },
+
+      // ── Protected routes (chưa đăng nhập → redirect về /login) ────────
+      { path: "/myaccount", element: <ProtectedRoute><MyAccount /></ProtectedRoute> },
+      { path: "/myorders", element: <ProtectedRoute><Order /></ProtectedRoute> },
+      { path: "/my-vouchers", element: <ProtectedRoute><MyVouchers /></ProtectedRoute> },
+    ],
+  },
+
+  // ── ADMIN ROUTES (AdminLayout tự kiểm tra quyền role=1) ────────────────
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      { path: "", element: <AdminHome /> },
+      { path: "users", element: <AdminUsers /> },
+      { path: "products", element: <AdminProducts /> },
+      { path: "product/:id", element: <AdminProductEdit /> },
+      { path: "newproduct", element: <AdminNewProduct /> },
+      { path: "orders", element: <AdminOrders /> },
+      { path: "categories", element: <AdminCategories /> },
+      { path: "banners", element: <AdminBanners /> },
+      { path: "flash-sales", element: <AdminFlashSales /> },
+      { path: "reviews", element: <AdminReviews /> },
+      { path: "coupons", element: <AdminCoupon /> },
+      { path: "chat-analytics", element: <AdminChatAnalytics /> },
+      { path: "ai-recommendations", element: <AdminRecommendations /> },
+    ],
+  },
+]);
 
 function App() {
-  const user = useSelector((state) => state.user);
-  const currentUser = user.currentUser;
-
-  //user
-  const ClientLayout = () => {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <ScrollToTop />
-        <Navbar />
-        <div className="flex-1">
-          <Outlet />
-        </div>
-        <Footer />
-      </div>
-    );
-  };
-
-  //admin
-  const AdminLayout = () => {
-    if (!currentUser || currentUser.role !== 1) {
-      return <Navigate to="/" replace />;
-    }
-
-    return (
-      <div className="flex min-h-screen bg-slate-50">
-        <ScrollToTop />
-        <div className="w-64 flex-none border-r bg-white shadow-sm h-screen sticky top-0 overflow-y-auto z-50">
-          <AdminMenu />
-        </div>
-
-        <div className="flex-1 p-4 overflow-x-hidden">
-          <Outlet />
-        </div>
-      </div>
-    );
-  };
-
-  const router = createBrowserRouter([
-    {
-      path: "/",
-      element: <ClientLayout />,
-      children: [
-        { path: "/", element: <Home /> },
-        {
-          path: "/login",
-          element: currentUser ? <Navigate to="/" /> : <Login />,
-        },
-        {
-          path: "/register",
-          element: currentUser ? <Navigate to="/" /> : <Register />,
-        },
-        { path: "/cart", element: <Cart /> },
-        { path: "/product/:id", element: <ProductDetail /> },
-        { path: "/products", element: <ProductList /> },
-        { path: "/products/:category", element: <ProductList /> },
-        {
-          path: "/myaccount",
-          element: currentUser ? <MyAccount /> : <Login />,
-        },
-        { path: "/myorders", element: currentUser ? <Order /> : <Login /> },
-        { path: "/checkout", element: <Checkout /> },
-        { path: "/success", element: <Success /> },
-        { path: "/flash-sale", element: <FlashSale /> },
-        {
-          path: "/my-vouchers",
-          element: currentUser ? <MyVouchers /> : <Login />,
-        },
-        //footer
-        { path: "/about", element: <About /> },
-        { path: "/contact", element: <Contact /> },
-        { path: "/faq", element: <FAQ /> },
-        { path: "/shipping", element: <ShippingPolicy /> },
-        { path: "/privacy", element: <PrivacyPolicy /> },
-        { path: "/terms", element: <Terms /> },
-      ],
-    },
-
-    {
-      path: "/admin",
-      element: <AdminLayout />,
-      children: [
-        { path: "", element: <AdminHome /> },
-        { path: "users", element: <AdminUsers /> },
-        { path: "products", element: <AdminProducts /> },
-        { path: "product/:id", element: <AdminProductEdit /> },
-        { path: "newproduct", element: <AdminNewProduct /> },
-        { path: "orders", element: <AdminOrders /> },
-        { path: "categories", element: <AdminCategories /> },
-        { path: "banners", element: <AdminBanners /> },
-        { path: "flash-sales", element: <AdminFlashSales /> },
-        { path: "reviews", element: <AdminReviews /> },
-        { path: "coupons", element: <AdminCoupon /> },
-      ],
-    },
-  ]);
-
   return <RouterProvider router={router} />;
 }
 

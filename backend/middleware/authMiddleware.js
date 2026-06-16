@@ -35,4 +35,26 @@ const admin = (req, res, next) => {
   }
 };
 
-export { protect, admin };
+/**
+ * Optional Protect – Cố gắng xác thực user nhưng không chặn nếu không có token.
+ * Dùng cho endpoint hỗ trợ cả guest và user đã đăng nhập (ví dụ: Chatbot).
+ */
+const optionalProtect = asyncHandler(async (req, res, next) => {
+  const token = req.cookies.jwt;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SEC);
+      req.user = await User.findById(decoded.userId).select("-password");
+    } catch (error) {
+      // Token không hợp lệ → vẫn cho đi tiếp như guest
+      req.user = null;
+    }
+  } else {
+    req.user = null;
+  }
+
+  next();
+});
+
+export { protect, admin, optionalProtect };

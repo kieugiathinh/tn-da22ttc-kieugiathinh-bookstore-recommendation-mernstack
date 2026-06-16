@@ -44,6 +44,23 @@ const getRelatedProducts = asyncHandler(async (req, res) => {
   res.status(200).json(products);
 });
 
+// Auto Fill: Tra cứu thông tin sách từ Google Books API
+const autoFillBook = asyncHandler(async (req, res) => {
+  const { title } = req.query;
+  if (!title) {
+    res.status(400);
+    throw new Error("Vui lòng nhập tên sách để tra cứu.");
+  }
+
+  const bookInfo = await productService.fetchBookInfoFromGoogle(title);
+  if (!bookInfo) {
+    res.status(404);
+    throw new Error("Không tìm thấy thông tin sách trên Google Books.");
+  }
+
+  res.status(200).json(bookInfo);
+});
+
 export {
   getAllProducts,
   getProduct,
@@ -52,4 +69,5 @@ export {
   deleteProduct,
   getNewProducts,
   getRelatedProducts,
+  autoFillBook,
 };

@@ -1,13 +1,17 @@
-import { FaSave, FaCloudUploadAlt, FaArrowLeft } from "react-icons/fa";
+import { FaSave, FaCloudUploadAlt, FaArrowLeft, FaMagic } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { userRequest } from "../../requestMethods";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { CLOUDINARY_CONFIG } from "../../utils/constants";
+import PageHeader from "../../components/admin/PageHeader";
+import Card from "../../components/common/Card";
+import InputField from "../../components/common/InputField";
+import Button from "../../components/common/Button";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const Product = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -19,6 +23,8 @@ const Product = () => {
 
   const [newSelectedImage, setNewSelectedImage] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [isFetchingData, setIsFetchingData] = useState(false);
+  const [autoFilledImg, setAutoFilledImg] = useState("");
 
   // 1. Tải dữ liệu
   useEffect(() => {
@@ -31,9 +37,7 @@ const Product = () => {
 
         setProduct(productRes.data);
         setCategories(categoriesRes.data);
-
-        const currentCatId =
-          productRes.data.category?._id || productRes.data.category;
+        const currentCatId = productRes.data.category?._id || productRes.data.category;
         setSelectedCat(currentCatId);
 
         setInputs({
@@ -46,10 +50,9 @@ const Product = () => {
           countInStock: productRes.data.countInStock,
           sold: productRes.data.sold || 0,
         });
-
-        setLoading(false);
       } catch (error) {
         console.error("Lỗi:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -60,6 +63,7 @@ const Product = () => {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setNewSelectedImage(e.target.files[0]);
+      setAutoFilledImg("");
       setUploadStatus("Đã chọn ảnh mới");
     }
   };
@@ -68,15 +72,57 @@ const Product = () => {
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleCatChange = (e) => {
-    setSelectedCat(e.target.value);
+  // ✨ Auto Fill: Tra cứu thông tin sách từ Google Books
+  const handleAutoFill = async () => {
+    const title = inputs.title;
+    if (!title || !title.trim()) {
+      Swal.fire("Chưa nhập tên sách", "Vui lòng nhập tên sách trước khi sử dụng Auto Fill.", "warning");
+      return;
+    }
+
+    setIsFetchingData(true);
+    try {
+      const res = await userRequest.get("/products/autofill", {
+        params: { title: title.trim() },
+      });
+
+      const bookData = res.data;
+
+      setInputs((prev) => ({
+        ...prev,
+        title: bookData.title || prev.title,
+        author: bookData.authors || prev.author || "",
+        publisher: bookData.publisher || prev.publisher || "",
+        desc: bookData.description || prev.desc || "",
+      }));
+
+      // Nếu có ảnh bìa từ Google Books
+      if (bookData.thumbnail) {
+        setAutoFilledImg(bookData.thumbnail);
+        setNewSelectedImage(null);
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Đã tự động điền!",
+        text: `Tìm thấy: "${bookData.title}". Hãy kiểm tra lại thông tin và chỉnh sửa nếu cần.`,
+        timer: 3000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("AutoFill Error:", error);
+      const message = error.response?.data?.message || "Không tìm thấy thông tin sách. Vui lòng thử tên khác.";
+      Swal.fire("Không tìm thấy", message, "info");
+    } finally {
+      setIsFetchingData(false);
+    }
   };
 
-  // --- 3. Update Logic (ĐÃ SỬA) ---
+  // --- 3. Update Logic ---
   const handleUpdate = async (e) => {
     e.preventDefault();
     setUploadStatus("Đang xử lý...");
-    let imgUrl = product.img;
+    let imgUrl = autoFilledImg || product.img;
 
     try {
       if (newSelectedImage) {
@@ -89,9 +135,7 @@ const Product = () => {
       }
 
       const updatedProduct = {
-        ...inputs,
-        img: imgUrl,
-        category: selectedCat,
+        ...inputs, img: imgUrl, category: selectedCat,
         countInStock: Number(inputs.countInStock),
         originalPrice: Number(inputs.originalPrice),
         discountedPrice: Number(inputs.discountedPrice),
@@ -99,223 +143,137 @@ const Product = () => {
       };
 
       await userRequest.put("/products/" + id, updatedProduct);
-
-      // --- THAY ĐỔI Ở ĐÂY ---
-      // Không hiện Swal thành công nữa
-      // Chuyển hướng ngay lập tức về trang danh sách sản phẩm
       navigate("/admin/products");
     } catch (error) {
       console.error(error);
-      // Vẫn giữ thông báo lỗi để biết nếu có trục trặc
       Swal.fire("Lỗi", "Cập nhật thất bại. Vui lòng thử lại.", "error");
       setUploadStatus("Lỗi");
     }
   };
 
-  if (loading)
-    return (
-      <div className="p-10 text-center text-purple-600 font-medium">
-        Đang tải dữ liệu...
-      </div>
-    );
+  if (loading) return <LoadingSpinner />;
+
+  const isProcessing = uploadStatus.includes("Đang");
+
+  // Xác định ảnh preview hiển thị
+  const previewImgSrc = newSelectedImage
+    ? URL.createObjectURL(newSelectedImage)
+    : autoFilledImg || product.img || "https://placehold.co/200x300?text=No+Img";
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 h-full overflow-y-auto">
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-          ✏️ Chỉnh sửa sách
-        </h1>
-        <Link
-          to="/admin/products"
-          className="flex items-center text-gray-600 hover:text-purple-600 transition"
-        >
-          <FaArrowLeft className="mr-2" /> Quay lại danh sách
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Chỉnh Sửa Sách"
+        subtitle={`Chỉnh sửa thông tin cho mã sách: ${id.slice(-8)}`}
+        action={
+          <Link to="/admin/products">
+            <Button variant="secondary" icon={<FaArrowLeft size={14} />}>Quay lại</Button>
+          </Link>
+        }
+      />
 
-      {/* FORM */}
-      <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-        <form
-          onSubmit={handleUpdate}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-        >
-          {/* CỘT TRÁI */}
+      <form onSubmit={handleUpdate}>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* CỘT TRÁI: THÔNG TIN CƠ BẢN */}
           <div className="lg:col-span-2 space-y-6">
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Tên Sách
-              </label>
-              <input
-                type="text"
-                name="title"
-                defaultValue={product.title}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-              />
-            </div>
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-5 border-b border-gray-100 pb-3">Thông tin chi tiết</h2>
+              <div className="space-y-5">
+                {/* Tên sách + Nút Auto Fill */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                    Tên Sách <span className="ml-0.5 text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <InputField
+                      name="title"
+                      value={inputs.title || ""}
+                      onChange={handleChange}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="md"
+                      onClick={handleAutoFill}
+                      isLoading={isFetchingData}
+                      disabled={isFetchingData}
+                      icon={!isFetchingData ? <FaMagic size={14} /> : undefined}
+                      style={{
+                        whiteSpace: "nowrap",
+                        background: isFetchingData ? undefined : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        color: isFetchingData ? undefined : "#fff",
+                        border: "none",
+                      }}
+                    >
+                      {isFetchingData ? "Đang tìm..." : "✨ Auto Fill"}
+                    </Button>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">
-                  Tác giả
-                </label>
-                <input
-                  type="text"
-                  name="author"
-                  defaultValue={product.author}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <InputField label="Tác giả" name="author" value={inputs.author || ""} onChange={handleChange} />
+                  <InputField label="Nhà xuất bản" name="publisher" value={inputs.publisher || ""} onChange={handleChange} />
+                </div>
+                <InputField label="Mô tả nội dung" as="textarea" name="desc" rows={6} value={inputs.desc || ""} onChange={handleChange} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <InputField label="Giá Bìa (VND)" required type="number" name="originalPrice" value={inputs.originalPrice || ""} onChange={handleChange} />
+                  <InputField label="Giá Bán (Sau giảm)" type="number" name="discountedPrice" value={inputs.discountedPrice || ""} onChange={handleChange} />
+                </div>
               </div>
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">
-                  Nhà xuất bản
-                </label>
-                <input
-                  type="text"
-                  name="publisher"
-                  defaultValue={product.publisher}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Mô tả nội dung
-              </label>
-              <textarea
-                name="desc"
-                rows="6"
-                defaultValue={product.desc}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">
-                  Giá Bìa (VND)
-                </label>
-                <input
-                  type="number"
-                  name="originalPrice"
-                  defaultValue={product.originalPrice}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-semibold text-gray-700">
-                  Giá Khuyến Mãi
-                </label>
-                <input
-                  type="number"
-                  name="discountedPrice"
-                  defaultValue={product.discountedPrice}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                />
-              </div>
-            </div>
+            </Card>
           </div>
 
-          {/* CỘT PHẢI */}
+          {/* CỘT PHẢI: PHÂN LOẠI & ẢNH */}
           <div className="space-y-6">
-            {/* Ảnh */}
-            <div className="bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300 flex flex-col items-center text-center">
-              <div className="relative w-full h-64 mb-4 bg-white rounded-lg overflow-hidden shadow-sm">
-                <img
-                  src={
-                    newSelectedImage
-                      ? URL.createObjectURL(newSelectedImage)
-                      : product.img
-                  }
-                  alt="Book Cover"
-                  className="w-full h-full object-contain"
-                />
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-5 border-b border-gray-100 pb-3">Phân loại & Hình ảnh</h2>
+              <div className="space-y-5">
+                <InputField label="Thể loại sách" required as="select" value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)}>
+                  <option value="" disabled>-- Chọn thể loại --</option>
+                  {categories.map((c) => (<option key={c._id} value={c._id}>{c.name}</option>))}
+                </InputField>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <InputField label="Tồn kho" type="number" name="countInStock" value={inputs.countInStock ?? ""} onChange={handleChange} min="0" />
+                  <InputField label="Đã bán" type="number" name="sold" value={inputs.sold ?? ""} onChange={handleChange} min="0" />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+                    Ảnh Bìa Sách <span className="text-red-500">*</span>
+                  </label>
+                  <div className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/50 p-6 transition-colors hover:bg-gray-50">
+                    <div className="relative w-full">
+                      <div className="relative mx-auto h-64 w-full max-w-[200px] overflow-hidden rounded-lg bg-white shadow-sm border border-gray-100">
+                        <img
+                          src={previewImgSrc}
+                          alt="Book Cover" className="h-full w-full object-contain"
+                        />
+                      </div>
+                      {autoFilledImg && !newSelectedImage && (
+                        <p className="mt-2 text-center text-xs text-indigo-600 font-medium">📷 Ảnh từ Google Books</p>
+                      )}
+                      <label htmlFor="file" className="absolute bottom-2 right-1/2 translate-x-1/2 flex cursor-pointer items-center gap-1.5 rounded-lg bg-black/70 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-black">
+                        Đổi ảnh
+                      </label>
+                    </div>
+                    <input type="file" id="file" onChange={handleImageChange} className="hidden" accept="image/*" />
+                  </div>
+                  {uploadStatus && <p className="mt-2 text-center text-xs font-medium text-primary">{uploadStatus}</p>}
+                </div>
+
+                <div className="pt-2">
+                  <Button type="submit" className="w-full py-3.5" icon={<FaSave size={16} />}
+                    isLoading={isProcessing} disabled={isProcessing}>
+                    LƯU THAY ĐỔI
+                  </Button>
+                </div>
               </div>
-              <label className="cursor-pointer bg-purple-100 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-200 transition flex items-center">
-                <FaCloudUploadAlt className="mr-2" /> Chọn ảnh mới
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleImageChange}
-                  accept="image/*"
-                />
-              </label>
-              {uploadStatus && (
-                <p className="text-xs text-blue-500 mt-2">{uploadStatus}</p>
-              )}
-            </div>
-
-            {/* Thể loại */}
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Thể loại sách
-              </label>
-              <select
-                value={selectedCat}
-                onChange={handleCatChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white"
-              >
-                <option value="" disabled>
-                  -- Chọn thể loại --
-                </option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Tồn kho */}
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Số lượng tồn kho
-              </label>
-              <input
-                type="number"
-                name="countInStock"
-                defaultValue={product.countInStock}
-                onChange={handleChange}
-                min="0"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-              />
-            </div>
-
-            {/* Đã bán */}
-            <div>
-              <label className="block mb-2 font-semibold text-gray-700">
-                Đã bán
-              </label>
-              <input
-                type="number"
-                name="sold"
-                defaultValue={product.sold || 0}
-                onChange={handleChange}
-                min="0"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                title="Có thể chỉnh sửa số lượng đã bán để tăng độ uy tín"
-              />
-            </div>
-
-            {/* Nút Lưu */}
-            <button
-              type="submit"
-              disabled={uploadStatus.includes("Đang")}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 flex items-center justify-center"
-            >
-              <FaSave className="mr-2 text-xl" />{" "}
-              {uploadStatus.includes("Đang") ? "Đang lưu..." : "Lưu Thay Đổi"}
-            </button>
+            </Card>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 };

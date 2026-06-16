@@ -1,272 +1,185 @@
 import { useState, useEffect } from "react";
-import {
-  FaClock,
-  FaCheckDouble,
-  FaShippingFast,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaChevronLeft,
-  FaChevronRight,
-} from "react-icons/fa";
+import { FaClock, FaShippingFast, FaCheckDouble, FaTimesCircle, FaCheckCircle } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
+import PageHeader from "../../components/admin/PageHeader";
+import Pagination from "../../components/admin/Pagination";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import Badge from "../../components/common/Badge";
+import Button from "../../components/common/Button";
 
 const ROWS_PER_PAGE = 10;
+
+const STATUS_CONFIG = {
+  0: { label: "Chờ xác nhận", icon: FaClock, variant: "warning" },
+  1: { label: "Đang vận chuyển", icon: FaShippingFast, variant: "info" },
+  2: { label: "Đã giao hàng", icon: FaCheckDouble, variant: "success" },
+  3: { label: "Đã hủy", icon: FaTimesCircle, variant: "danger" },
+};
+
+const StatusBadge = ({ status }) => {
+  const cfg = STATUS_CONFIG[status] || { label: "Không xác định", icon: FaClock, variant: "neutral" };
+  const Icon = cfg.icon;
+  return (
+    <Badge variant={cfg.variant} className="gap-1.5 py-1">
+      <Icon size={11} /> {cfg.label}
+    </Badge>
+  );
+};
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterStatus, setFilterStatus] = useState("all");
 
-  // 1. Hàm Tải dữ liệu Đơn hàng
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const res = await userRequest.get("/orders");
-      // Đảm bảo có trường 'id' cho React key
-      setOrders(res.data.map((order) => ({ ...order, id: order._id })));
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Không thể tải dữ liệu đơn hàng.");
+      setOrders(res.data.map((o) => ({ ...o, id: o._id })));
+    } catch {
+      Swal.fire("Lỗi", "Không thể tải dữ liệu đơn hàng.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
 
-  // 2. Hàm Cập nhật trạng thái Đơn hàng
   const handleUpdateOrder = async (id, currentStatus) => {
-    let newStatus;
-    let confirmationTitle;
-
-    // Tùy chỉnh trạng thái dựa trên business logic của bạn (VD: 0=Pending, 1=Processing/Shipping, 2=Delivered)
-    if (currentStatus === 0) {
-      newStatus = 1;
-      confirmationTitle = "Xác nhận XỬ LÝ Đơn hàng?";
-    } else if (currentStatus === 1) {
-      newStatus = 2;
-      confirmationTitle = "Xác nhận ĐÃ GIAO HÀNG (Delivered)?";
-    } else {
-      return;
-    }
-
-    const result = await Swal.fire({
-      title: confirmationTitle,
-      text: "Bạn có chắc chắn muốn thay đổi trạng thái đơn hàng này?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#4c51bf",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Đồng ý",
-      cancelButtonText: "Hủy",
+    if (currentStatus >= 2) return;
+    const newStatus = currentStatus + 1;
+    const titles = { 0: "Xác nhận xử lý đơn hàng?", 1: "Đánh dấu đã giao hàng?" };
+    const { isConfirmed } = await Swal.fire({
+      title: titles[currentStatus], icon: "question",
+      showCancelButton: true, confirmButtonColor: "#7c3aed",
+      confirmButtonText: "Đồng ý", cancelButtonText: "Hủy",
     });
-
-    if (result.isConfirmed) {
+    if (isConfirmed) {
       try {
         await userRequest.put(`/orders/${id}`, { status: newStatus });
-        Swal.fire(
-          "Thành công!",
-          "Trạng thái đơn hàng đã được cập nhật.",
-          "success"
-        );
-        fetchOrders(); // Tải lại dữ liệu
-      } catch (error) {
+        Swal.fire("Thành công!", "Trạng thái đã được cập nhật.", "success");
+        fetchOrders();
+      } catch {
         Swal.fire("Lỗi!", "Cập nhật thất bại.", "error");
       }
     }
   };
 
-  // 3. Hàm hiển thị Trạng thái (đã cải tiến)
-  const renderStatus = (status) => {
-    switch (status) {
-      case 0:
-        return (
-          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-            <FaClock className="mr-1 mt-0.5" /> Chờ xác nhận
-          </span>
-        );
-      case 1:
-        return (
-          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-            <FaShippingFast className="mr-1 mt-0.5" /> Đang vận chuyển
-          </span>
-        );
-      case 2:
-        return (
-          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-            <FaCheckDouble className="mr-1 mt-0.5" /> Đã giao hàng
-          </span>
-        );
-      case 3:
-        return (
-          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-            <FaTimesCircle className="mr-1 mt-0.5" /> Đã hủy
-          </span>
-        );
-      default:
-        return "Không xác định";
-    }
-  };
+  const filtered = filterStatus === "all"
+    ? orders
+    : orders.filter((o) => o.status === Number(filterStatus));
 
-  // 4. Logic Phân trang
-  const totalPages = Math.ceil(orders.length / ROWS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-  const currentOrders = orders.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / ROWS_PER_PAGE);
+  const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
+  const pageData = filtered.slice(startIdx, startIdx + ROWS_PER_PAGE);
 
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
+  // Đếm theo trạng thái cho tabs
+  const counts = { all: orders.length, 0: 0, 1: 0, 2: 0, 3: 0 };
+  orders.forEach((o) => { if (counts[o.status] !== undefined) counts[o.status]++; });
 
-  const handlePrevPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  if (loading)
-    return (
-      <div className="p-8 text-center text-xl text-purple-600">
-        Đang tải danh sách đơn hàng...
-      </div>
-    );
-  if (error)
-    return (
-      <div className="p-8 text-red-500 bg-red-100 border border-red-300 rounded-lg">
-        {error}
-      </div>
-    );
+  const tabs = [
+    { value: "all", label: "Tất cả" },
+    { value: "0", label: "Chờ xác nhận" },
+    { value: "1", label: "Đang giao" },
+    { value: "2", label: "Đã giao" },
+    { value: "3", label: "Đã hủy" },
+  ];
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 h-full overflow-y-auto">
-      {/* HEADER */}
-      <div className="flex items-center justify-between pb-6 border-b border-gray-200 mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
-          🛒 Quản lý Đơn hàng
-        </h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Quản lý Đơn hàng"
+        subtitle={`${orders.length} đơn hàng trong hệ thống`}
+      />
+
+      {/* Status Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {tabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => { setFilterStatus(tab.value); setCurrentPage(1); }}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all border ${
+              filterStatus === tab.value
+                ? "bg-primary text-white border-primary shadow-sm"
+                : "bg-white text-gray-600 border-gray-200 hover:border-primary"
+            }`}
+          >
+            {tab.label}
+            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+              filterStatus === tab.value ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
+            }`}>
+              {counts[tab.value] ?? 0}
+            </span>
+          </button>
+        ))}
       </div>
 
-      {/* BẢNG DỮ LIỆU ĐƠN HÀNG */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          {/* HEADER BẢNG */}
-          <thead className="bg-purple-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Mã đơn hàng
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Khách hàng
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Tổng tiền
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Trạng thái
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-bold text-purple-700 uppercase tracking-wider">
-                Hành động
-              </th>
-            </tr>
-          </thead>
-
-          {/* BODY BẢNG */}
-          <tbody className="divide-y divide-gray-100">
-            {currentOrders.map((order) => (
-              <tr
-                key={order.id}
-                className="hover:bg-gray-50 transition duration-150"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate max-w-xs">
-                  {order._id}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {order.name}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate max-w-xs">
-                    {order.email}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                  {order.total ? order.total.toLocaleString("vi-VN") : 0} VND
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {renderStatus(order.status)}
-                </td>
-
-                {/* CỘT HÀNH ĐỘNG */}
-                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                  {order.status < 2 ? (
-                    <button
-                      onClick={() => handleUpdateOrder(order._id, order.status)}
-                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs leading-4 font-medium rounded-full shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none transition duration-150"
-                      title={
-                        order.status === 0
-                          ? "Xác nhận và Xử lý đơn hàng"
-                          : "Đánh dấu đã giao hàng"
-                      }
-                    >
-                      <FaCheckCircle className="mr-1" />
-                      {order.status === 0 ? "Xử lý đơn" : "Đã giao"}
-                    </button>
-                  ) : (
-                    <span className="text-gray-400">Hoàn tất</span>
+      {/* Bảng đơn hàng */}
+      <Card>
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="px-5 py-3.5">Mã đơn hàng</th>
+                    <th className="px-5 py-3.5">Khách hàng</th>
+                    <th className="px-5 py-3.5">Tổng tiền</th>
+                    <th className="px-5 py-3.5">Trạng thái</th>
+                    <th className="px-5 py-3.5 text-center">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {pageData.map((order) => (
+                    <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <code className="rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-600">
+                          #{order._id.slice(-8).toUpperCase()}
+                        </code>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <p className="font-semibold text-gray-800">{order.name}</p>
+                        <p className="text-xs text-gray-400 truncate max-w-[160px]">{order.email}</p>
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-emerald-600">
+                        {(order.total || 0).toLocaleString("vi-VN")} ₫
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <StatusBadge status={order.status} />
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        {order.status < 2 ? (
+                          <Button size="sm" onClick={() => handleUpdateOrder(order._id, order.status)}
+                            icon={<FaCheckCircle size={11} />}>
+                            {order.status === 0 ? "Xử lý đơn" : "Đã giao"}
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-gray-400">Hoàn tất</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {pageData.length === 0 && (
+                    <tr><td colSpan={5} className="py-12 text-center text-sm text-gray-400">
+                      Không có đơn hàng nào
+                    </td></tr>
                   )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* FOOTER PHÂN TRANG */}
-        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Hiển thị từ{" "}
-                <span className="font-medium">
-                  {Math.min(startIndex + 1, orders.length)}
-                </span>{" "}
-                đến{" "}
-                <span className="font-medium">
-                  {Math.min(startIndex + ROWS_PER_PAGE, orders.length)}
-                </span>{" "}
-                của <span className="font-medium">{orders.length}</span> đơn
-                hàng
-              </p>
+                </tbody>
+              </table>
             </div>
-            <div>
-              <nav
-                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                aria-label="Pagination"
-              >
-                <button
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <FaChevronLeft className="h-5 w-5" aria-hidden="true" />
-                </button>
-
-                <span className="relative inline-flex items-center px-4 py-2 border border-purple-500 bg-purple-50 text-sm font-medium text-purple-700">
-                  Trang {currentPage} / {totalPages}
-                </span>
-
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <FaChevronRight className="h-5 w-5" aria-hidden="true" />
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </div>
+            <Pagination currentPage={currentPage} totalPages={totalPages}
+              total={filtered.length} rowsPerPage={ROWS_PER_PAGE}
+              onPrev={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              unit="đơn hàng" />
+          </>
+        )}
+      </Card>
     </div>
   );
 };

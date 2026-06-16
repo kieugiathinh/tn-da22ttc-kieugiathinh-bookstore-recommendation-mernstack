@@ -75,6 +75,71 @@ const updatePassword = async (userId, currentPassword, newPassword) => {
   }
 };
 
+// ============================================================
+// ADDRESS BOOK (Sổ địa chỉ)
+// ============================================================
+
+const addAddress = async (userId, addressData) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("Không tìm thấy người dùng");
+
+  // Nếu đây là địa chỉ đầu tiên → tự động set mặc định
+  if (user.addresses.length === 0) {
+    addressData.isDefault = true;
+  }
+
+  // Nếu user muốn set mặc định → bỏ mặc định của các address cũ
+  if (addressData.isDefault) {
+    user.addresses.forEach((addr) => (addr.isDefault = false));
+  }
+
+  user.addresses.push(addressData);
+  await user.save();
+
+  return user.toObject({ versionKey: false });
+};
+
+const setDefaultAddress = async (userId, addressId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("Không tìm thấy người dùng");
+
+  let found = false;
+  user.addresses.forEach((addr) => {
+    if (addr._id.toString() === addressId) {
+      addr.isDefault = true;
+      found = true;
+    } else {
+      addr.isDefault = false;
+    }
+  });
+
+  if (!found) throw new Error("Không tìm thấy địa chỉ");
+
+  await user.save();
+  return user.toObject({ versionKey: false });
+};
+
+const deleteAddress = async (userId, addressId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("Không tìm thấy người dùng");
+
+  const index = user.addresses.findIndex(
+    (addr) => addr._id.toString() === addressId
+  );
+  if (index === -1) throw new Error("Không tìm thấy địa chỉ");
+
+  const wasDefault = user.addresses[index].isDefault;
+  user.addresses.splice(index, 1);
+
+  // Nếu xóa address mặc định → set address đầu tiên làm mặc định
+  if (wasDefault && user.addresses.length > 0) {
+    user.addresses[0].isDefault = true;
+  }
+
+  await user.save();
+  return user.toObject({ versionKey: false });
+};
+
 export {
   updateUser,
   deleteUser,
@@ -82,4 +147,7 @@ export {
   getAllUsers,
   createUser,
   updatePassword,
+  addAddress,
+  setDefaultAddress,
+  deleteAddress,
 };
