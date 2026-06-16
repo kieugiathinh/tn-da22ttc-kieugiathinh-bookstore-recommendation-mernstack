@@ -23,6 +23,7 @@ import FlashSale from "./pages/client/FlashSale";
 import MyVouchers from "./pages/client/MyVouchers";
 import About from "./pages/client/About";
 import Contact from "./pages/client/Contact";
+import AllCoupons from "./pages/client/AllCoupons";
 import ForgotPassword from "./pages/client/ForgotPassword";
 import ResetPassword from "./pages/client/ResetPassword";
 import { FAQ, ShippingPolicy, PrivacyPolicy, Terms } from "./pages/client/PolicyPages";
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
       { path: "/privacy", element: <PrivacyPolicy /> },
       { path: "/terms", element: <Terms /> },
       { path: "/recommendations", element: <Recommendations /> },
+      { path: "/coupons", element: <AllCoupons /> },
 
       // ── Guest-only routes (đã đăng nhập → redirect về /) ──────────────
       { path: "/login", element: <GuestRoute><Login /></GuestRoute> },

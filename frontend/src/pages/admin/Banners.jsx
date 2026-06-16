@@ -146,19 +146,27 @@ const Banners = () => {
             >
               Banner Phụ ({banners.filter((b) => b.type === "sub").length})
             </button>
+            <button
+              onClick={() => setActiveTab("top")}
+              className={`flex-1 py-4 text-sm font-bold text-center transition-colors ${
+                activeTab === "top" ? "text-primary border-b-2 border-primary bg-white" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Banner Top ({banners.filter((b) => b.type === "top").length})
+            </button>
           </div>
 
           <div className="p-6">
             {loadingList ? (
               <LoadingSpinner className="py-10" />
-            ) : banners.filter((b) => (activeTab === "main" ? b.type === "main" || !b.type : b.type === "sub")).length === 0 ? (
+            ) : banners.filter((b) => (activeTab === "main" ? (b.type === "main" || !b.type) : b.type === activeTab)).length === 0 ? (
               <div className="py-10 text-center text-sm text-gray-400">
                 Chưa có banner nào. Hãy tạo banner mới bên phải.
               </div>
             ) : (
               <div className="flex max-h-[500px] flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
                 {banners
-                  .filter((b) => (activeTab === "main" ? b.type === "main" || !b.type : b.type === "sub"))
+                  .filter((b) => (activeTab === "main" ? (b.type === "main" || !b.type) : b.type === activeTab))
                   .map((banner) => (
                   <div
                     key={banner._id}
@@ -251,20 +259,27 @@ const Banners = () => {
             {/* Select Type */}
             <div>
               <label className="mb-2 block text-xs font-semibold text-gray-600">4. Loại Banner</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border p-3 transition-colors ${type === "main" ? "border-primary bg-primary-light/20 text-primary" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}>
                   <input type="radio" name="bannerType" value="main" className="hidden"
                     checked={type === "main"} onChange={(e) => setType(e.target.value)} />
-                  <span className="text-sm font-bold">Banner Chính</span>
+                  <span className="text-[11px] lg:text-xs font-bold text-center">Banner Chính</span>
                 </label>
                 <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border p-3 transition-colors ${type === "sub" ? "border-primary bg-primary-light/20 text-primary" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}>
                   <input type="radio" name="bannerType" value="sub" className="hidden"
                     checked={type === "sub"} onChange={(e) => setType(e.target.value)} />
-                  <span className="text-sm font-bold">Banner Phụ</span>
+                  <span className="text-[11px] lg:text-xs font-bold text-center">Banner Phụ</span>
+                </label>
+                <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border p-3 transition-colors ${type === "top" ? "border-primary bg-primary-light/20 text-primary" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}>
+                  <input type="radio" name="bannerType" value="top" className="hidden"
+                    checked={type === "top"} onChange={(e) => setType(e.target.value)} />
+                  <span className="text-[11px] lg:text-xs font-bold text-center">Banner Top</span>
                 </label>
               </div>
               <p className="mt-2 text-[11px] text-gray-500">
-                {type === "main" ? "Hiển thị trên Slider cột trái (840x320)." : "Hiển thị tĩnh ở cột phải."}
+                {type === "main" && "Hiển thị trên Slider cột trái (840x320)."}
+                {type === "sub" && "Hiển thị tĩnh ở cột phải."}
+                {type === "top" && "Hiển thị trên Navbar (1263x60)."}
               </p>
             </div>
 

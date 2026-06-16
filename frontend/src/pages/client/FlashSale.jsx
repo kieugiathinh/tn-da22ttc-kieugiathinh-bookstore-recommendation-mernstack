@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FaBolt, FaClock, FaHome } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { userRequest } from "../../requestMethods";
@@ -51,11 +51,12 @@ const FlashSalePage = () => {
 
   // Format thời gian
   const formatTime = (seconds) => {
-    const h = Math.floor(seconds / 3600);
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
     const pad = (num) => num.toString().padStart(2, "0");
-    return { h: pad(h), m: pad(m), s: pad(s) };
+    return { d: pad(d), h: pad(h), m: pad(m), s: pad(s) };
   };
 
   const time = formatTime(timeLeft);
@@ -77,9 +78,9 @@ const FlashSalePage = () => {
             <FaBolt className="text-5xl text-yellow-300 animate-bounce" />
             <div>
               <h1 className="text-4xl font-extrabold uppercase italic tracking-tighter">
-                Flash Sale
+                Giờ Vàng Ong Thợ
               </h1>
-              <p className="opacity-90">Săn deal sốc - Giá hủy diệt</p>
+              <p className="opacity-90">Ong đang xả kho, nhanh tay săn mã to!</p>
             </div>
           </div>
 
@@ -89,16 +90,24 @@ const FlashSalePage = () => {
               <span className="text-sm uppercase mb-1 font-bold opacity-90">
                 Kết thúc trong
               </span>
-              <div className="flex items-center gap-2 text-red-600 font-bold text-3xl">
-                <div className="bg-white px-3 py-2 rounded-lg shadow-md min-w-[60px] text-center">
+              <div className="flex items-center gap-2 text-white font-bold text-3xl">
+                {time.d !== "00" && (
+                  <>
+                    <div className="bg-black px-3 py-2 rounded-lg shadow-md min-w-[60px] text-center">
+                      {time.d}
+                    </div>
+                    <span className="text-white text-2xl">:</span>
+                  </>
+                )}
+                <div className="bg-black px-3 py-2 rounded-lg shadow-md min-w-[60px] text-center">
                   {time.h}
                 </div>
                 <span className="text-white text-2xl">:</span>
-                <div className="bg-white px-3 py-2 rounded-lg shadow-md min-w-[60px] text-center">
+                <div className="bg-black px-3 py-2 rounded-lg shadow-md min-w-[60px] text-center">
                   {time.m}
                 </div>
                 <span className="text-white text-2xl">:</span>
-                <div className="bg-white px-3 py-2 rounded-lg shadow-md min-w-[60px] text-center">
+                <div className="bg-black px-3 py-2 rounded-lg shadow-md min-w-[60px] text-center">
                   {time.s}
                 </div>
               </div>

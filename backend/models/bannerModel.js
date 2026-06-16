@@ -23,7 +23,7 @@ const BannerSchema = mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["main", "sub"],
+      enum: ["main", "sub", "top"],
       default: "main",
     },
   },
