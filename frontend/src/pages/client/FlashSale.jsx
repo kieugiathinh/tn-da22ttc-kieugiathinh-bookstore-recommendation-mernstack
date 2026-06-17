@@ -20,8 +20,23 @@ const FlashSalePage = () => {
             ...item.product,
             discountedPrice: item.discountPrice,
             sold: item.soldCount,
-            quantityLimit: item.quantityLimit,
+            countInStock: item.product.countInStock,
+            flashSale: {
+              discountPrice: item.discountPrice,
+              quantityLimit: item.quantityLimit,
+              soldCount: item.soldCount,
+              endTime: res.data.endTime,
+            }
           }));
+
+          // Sort: sold out products go to the bottom
+          mappedProducts.sort((a, b) => {
+            const aSoldOut = a.flashSale.soldCount >= a.flashSale.quantityLimit || a.countInStock <= 0;
+            const bSoldOut = b.flashSale.soldCount >= b.flashSale.quantityLimit || b.countInStock <= 0;
+            if (aSoldOut === bSoldOut) return 0;
+            return aSoldOut ? 1 : -1;
+          });
+
           setProducts(mappedProducts);
           setEndTime(new Date(res.data.endTime).getTime());
         }

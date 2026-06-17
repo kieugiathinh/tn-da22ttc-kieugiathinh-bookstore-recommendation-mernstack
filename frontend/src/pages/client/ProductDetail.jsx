@@ -21,6 +21,7 @@ import { addProduct } from "../../redux/cartRedux";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import moment from "moment";
+import "moment/locale/vi"; // Import locale tiếng Việt
 import RelatedProducts from "../../components/client/RelatedProducts";
 import SimilarProducts from "../../components/client/SimilarProducts";
 import RecommendedForYou from "../../components/client/RecommendedForYou";
@@ -56,6 +57,7 @@ const Product = () => {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [timeLeft, setTimeLeft] = useState({ days: "00", hours: "00", minutes: "00", seconds: "00" });
 
   const dispatch = useDispatch();
 
@@ -108,29 +110,78 @@ const Product = () => {
     fetchReviews();
   }, [id]);
 
+  // Countdown timer logic
+  useEffect(() => {
+    if (!product.flashSale?.endTime) return;
+    
+    const interval = setInterval(() => {
+      const now = moment();
+      const end = moment(product.flashSale.endTime);
+      const diff = end.diff(now);
+      
+      if (diff <= 0) {
+        clearInterval(interval);
+        setTimeLeft({ days: "00", hours: "00", minutes: "00", seconds: "00" });
+      } else {
+        const duration = moment.duration(diff);
+        const days = String(Math.floor(duration.asDays())).padStart(2, '0');
+        const hours = String(duration.hours()).padStart(2, '0');
+        const minutes = String(duration.minutes()).padStart(2, '0');
+        const seconds = String(duration.seconds()).padStart(2, '0');
+        setTimeLeft({ days, hours, minutes, seconds });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [product.flashSale?.endTime]);
+
   const flashSaleRemaining = product.flashSale
     ? product.flashSale.quantityLimit - product.flashSale.soldCount
     : 0;
+  const isFsSoldOut = product.flashSale && flashSaleRemaining <= 0;
 
   const handleQuantity = (action) => {
+    let currentQty = quantity === "" ? 1 : quantity;
     if (action === "dec") {
-      setQuantity(quantity === 1 ? 1 : quantity - 1);
+      setQuantity(currentQty === 1 ? 1 : currentQty - 1);
     }
     if (action === "inc") {
-      if (product.countInStock && quantity >= product.countInStock) {
+      if (product.countInStock && currentQty >= product.countInStock) {
         toast.warning(`Kho chỉ còn ${product.countInStock} sản phẩm!`);
         return;
       }
-      if (product.flashSale && quantity >= flashSaleRemaining) {
-        toast.warning(`Bạn chỉ có thể mua tối đa ${flashSaleRemaining} suất giá sốc!`);
-        return;
+      if (product.flashSale && !isFsSoldOut && currentQty === flashSaleRemaining) {
+        toast.info(`Từ sản phẩm thứ ${flashSaleRemaining + 1} sẽ được tính giá gốc!`);
       }
-      setQuantity(quantity + 1);
+      setQuantity(currentQty + 1);
+    }
+  };
+
+  const handleQuantityInputChange = (e) => {
+    const val = e.target.value;
+    if (val === "") {
+      setQuantity("");
+      return;
+    }
+    const num = parseInt(val);
+    if (isNaN(num)) return;
+    
+    if (product.countInStock && num > product.countInStock) {
+      toast.warning(`Kho chỉ còn ${product.countInStock} sản phẩm!`);
+      setQuantity(product.countInStock);
+      return;
+    }
+    setQuantity(num);
+  };
+
+  const handleQuantityBlur = () => {
+    if (quantity === "" || quantity < 1) {
+      setQuantity(1);
     }
   };
 
   const calculatePrice = () => {
-    if (product.flashSale) return product.flashSale.discountPrice;
+    if (product.flashSale && !isFsSoldOut) return product.flashSale.discountPrice;
     if (product.wholesalePrice && quantity >= product.wholesaleMinimumQuantity)
       return product.wholesalePrice;
     if (product.discountedPrice > 0) return product.discountedPrice;
@@ -152,41 +203,50 @@ const Product = () => {
       ? product.flashSale.quantityLimit - product.flashSale.soldCount
       : 0;
 
+    const finalQty = quantity === "" ? 1 : quantity;
+
     if (!product.flashSale || remainingFS <= 0) {
-      dispatch(addProduct({ ...product, price: product.originalPrice, quantity, isFlashSale: false }));
-      toast.success(`Đã thêm ${quantity} cuốn vào giỏ`);
+      dispatch(addProduct({ ...product, price: finalPrice, regularPrice: product.originalPrice, quantity: finalQty, isFlashSale: false }));
+      toast.success(`Đã thêm ${finalQty} cuốn vào giỏ`);
       return;
     }
 
-    if (quantity <= remainingFS) {
+    if (finalQty <= remainingFS) {
       dispatch(
         addProduct({
           ...product,
           price: product.flashSale.discountPrice,
-          regularPrice: product.originalPrice,
-          quantity,
+          regularPrice: calculateNormalPrice(),
+          quantity: finalQty,
           isFlashSale: true,
           flashSaleQuantityLimit: product.flashSale.quantityLimit,
           flashSaleSoldCount: product.flashSale.soldCount,
         })
       );
-      toast.success(`Đã thêm ${quantity} cuốn giá Flash Sale`);
+      toast.success(`Đã thêm ${finalQty} cuốn giá Flash Sale`);
     } else {
-      const normalQty = quantity - remainingFS;
+      const normalQty = finalQty - remainingFS;
       dispatch(
         addProduct({
           ...product,
           price: product.flashSale.discountPrice,
-          regularPrice: product.originalPrice,
+          regularPrice: calculateNormalPrice(),
           quantity: remainingFS,
           isFlashSale: true,
           flashSaleQuantityLimit: product.flashSale.quantityLimit,
           flashSaleSoldCount: product.flashSale.soldCount,
         })
       );
-      dispatch(addProduct({ ...product, price: product.originalPrice, quantity: normalQty, isFlashSale: false }));
+      dispatch(addProduct({ ...product, price: calculateNormalPrice(), regularPrice: product.originalPrice, quantity: normalQty, isFlashSale: false }));
       toast.info("Đã tách đơn hàng do vượt quá suất Flash Sale");
     }
+  };
+
+  const calculateNormalPrice = () => {
+    if (product.wholesalePrice && quantity >= product.wholesaleMinimumQuantity)
+      return product.wholesalePrice;
+    if (product.discountedPrice > 0) return product.discountedPrice;
+    return product.originalPrice;
   };
 
   // Loading skeleton
@@ -220,12 +280,11 @@ const Product = () => {
                             shadow-lg border border-slate-100 bg-slate-50">
               {/* Flash Sale badge overlay */}
               {product.flashSale && (
-                <div className="absolute top-3 left-3 z-10
-                               bg-gradient-to-r from-rose-500 to-orange-500
+                <div className={`absolute top-3 left-3 z-10
                                text-white px-3 py-1.5 rounded-full
                                font-bold text-xs flex items-center gap-1.5
-                               shadow-lg shadow-rose-300/40 animate-pulse">
-                  <FaBolt className="text-yellow-200" /> FLASH SALE
+                               shadow-lg ${isFsSoldOut ? 'bg-slate-400' : 'bg-gradient-to-r from-rose-500 to-orange-500 shadow-rose-300/40 animate-pulse'}`}>
+                  <FaBolt className="text-yellow-200" /> {isFsSoldOut ? "ĐÃ HẾT SUẤT" : "FLASH SALE"}
                 </div>
               )}
               {/* Discount badge */}
@@ -291,15 +350,39 @@ const Product = () => {
             {/* ===== KHU VỰC GIÁ ===== */}
             <div
               className={`rounded-2xl p-5 mb-6 ${
-                product.flashSale
+                product.flashSale && !isFsSoldOut
                   ? "bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200"
                   : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100"
               }`}
             >
-              {product.flashSale && (
-                <div className="flex items-center gap-2 text-rose-600 font-bold mb-3 text-sm uppercase tracking-wide">
-                  <FaClock className="animate-pulse" />
-                  <span>Kết thúc sớm — Số lượng có hạn</span>
+              {product.flashSale && !isFsSoldOut && (
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 text-rose-600 font-bold text-sm uppercase tracking-wide">
+                    <FaClock className="animate-pulse" />
+                    <span>Kết thúc sau</span>
+                  </div>
+                  {/* Countdown Timer */}
+                  <div className="flex items-center gap-1.5 font-bold text-white text-base">
+                    {timeLeft.days !== "00" && (
+                      <>
+                        <div className="bg-black px-2 py-1 rounded shadow-md min-w-[36px] text-center">
+                          {timeLeft.days}
+                        </div>
+                        <span className="text-black">:</span>
+                      </>
+                    )}
+                    <div className="bg-black px-2 py-1 rounded shadow-md min-w-[36px] text-center">
+                      {timeLeft.hours}
+                    </div>
+                    <span className="text-black">:</span>
+                    <div className="bg-black px-2 py-1 rounded shadow-md min-w-[36px] text-center">
+                      {timeLeft.minutes}
+                    </div>
+                    <span className="text-black">:</span>
+                    <div className="bg-black px-2 py-1 rounded shadow-md min-w-[36px] text-center">
+                      {timeLeft.seconds}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -327,14 +410,22 @@ const Product = () => {
               {product.flashSale && (
                 <div className="mt-4">
                   <div className="flex justify-between text-xs font-bold text-rose-500 mb-1.5">
-                    <span className="flex items-center gap-1">
-                      <FaFire /> Đã bán {product.flashSale.soldCount}
-                    </span>
-                    <span>Chỉ còn {flashSaleRemaining} suất</span>
+                    {isFsSoldOut ? (
+                      <span className="flex items-center gap-1 text-slate-500">
+                        <FaFire /> Đã hết suất Flash Sale
+                      </span>
+                    ) : (
+                      <>
+                        <span className="flex items-center gap-1">
+                          <FaFire /> Đã bán {product.flashSale.soldCount}
+                        </span>
+                        <span>Chỉ còn {flashSaleRemaining} suất</span>
+                      </>
+                    )}
                   </div>
-                  <div className="w-full bg-rose-100 rounded-full h-3 overflow-hidden">
+                  <div className={`w-full ${isFsSoldOut ? 'bg-slate-200' : 'bg-rose-100'} rounded-full h-3 overflow-hidden`}>
                     <div
-                      className="bg-gradient-to-r from-rose-400 to-orange-500 h-3 rounded-full transition-all duration-1000"
+                      className={`${isFsSoldOut ? 'bg-slate-400' : 'bg-gradient-to-r from-rose-400 to-orange-500'} h-3 rounded-full transition-all duration-1000`}
                       style={{
                         width: `${Math.min(
                           (product.flashSale.soldCount / product.flashSale.quantityLimit) * 100,
@@ -371,9 +462,13 @@ const Product = () => {
                 >
                   <FaMinus size={11} />
                 </button>
-                <span className="px-5 py-3 font-bold text-slate-800 min-w-[48px] text-center">
-                  {quantity}
-                </span>
+                <input
+                  type="text"
+                  value={quantity}
+                  onChange={handleQuantityInputChange}
+                  onBlur={handleQuantityBlur}
+                  className="px-2 py-3 font-bold text-slate-800 w-16 text-center outline-none focus:bg-slate-50"
+                />
                 <button
                   onClick={() => handleQuantity("inc")}
                   className="px-4 py-3 hover:bg-slate-50 transition-colors text-slate-600

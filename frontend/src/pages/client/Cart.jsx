@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaMinus, FaPlus, FaTrashAlt, FaArrowLeft } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { clearCart, removeProduct, updateQuantity } from "../../redux/cartRedux";
+import { clearCart, removeProduct, updateQuantity, addProduct } from "../../redux/cartRedux";
 import { userRequest } from "../../requestMethods";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
@@ -37,9 +37,10 @@ const Cart = () => {
         .filter((p) => {
           if (!p.isFlashSale) return true;
           if (!activeFlashSale) return false;
-          return activeFlashSale.products.some((fsP) => 
-            (fsP.product._id || fsP.product) === p._id
-          );
+          return activeFlashSale.products.some((fsP) => {
+            const isMatch = (fsP.product._id || fsP.product) === p._id;
+            return isMatch && fsP.soldCount < fsP.quantityLimit;
+          });
         })
         .map((p) => p.cartItemId);
       setSelectedIds(validIds);
@@ -54,9 +55,10 @@ const Cart = () => {
         .filter((p) => {
           if (!p.isFlashSale) return true;
           if (!activeFlashSale) return false;
-          return activeFlashSale.products.some((fsP) => 
-            (fsP.product._id || fsP.product) === p._id
-          );
+          return activeFlashSale.products.some((fsP) => {
+            const isMatch = (fsP.product._id || fsP.product) === p._id;
+            return isMatch && fsP.soldCount < fsP.quantityLimit;
+          });
         })
         .map((p) => p.cartItemId);
       setSelectedIds(validIds);
@@ -82,6 +84,19 @@ const Cart = () => {
     // Xóa khỏi danh sách đã chọn nếu đang chọn
     setSelectedIds((prev) => prev.filter((id) => id !== cartItemId));
     toast.info("Đã xóa sản phẩm khỏi giỏ hàng");
+  };
+
+  const handleSwitchToNormalPrice = (product) => {
+    dispatch(removeProduct(product.cartItemId));
+    setSelectedIds((prev) => prev.filter((id) => id !== product.cartItemId));
+    dispatch(
+      addProduct({
+        ...product,
+        isFlashSale: false,
+        price: product.regularPrice || product.price, 
+      })
+    );
+    toast.success("Đã chuyển sang mua với giá gốc!");
   };
 
   const handleClearCart = () => {
@@ -121,7 +136,7 @@ const Cart = () => {
   );
 
   const subtotal = selectedProducts.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+    (acc, item) => acc + item.price * (item.quantity || 0),
     0
   );
 
@@ -209,7 +224,10 @@ const Cart = () => {
               <div className="divide-y divide-gray-100">
                 {cart.products?.map((product) => {
                   const isFsExpired = product.isFlashSale && (!activeFlashSale || !activeFlashSale.products.some(
-                    (fsP) => (fsP.product._id || fsP.product) === product._id
+                    (fsP) => {
+                      const isMatch = (fsP.product._id || fsP.product) === product._id;
+                      return isMatch && fsP.soldCount < fsP.quantityLimit;
+                    }
                   ));
 
                   return (
@@ -262,16 +280,26 @@ const Cart = () => {
                         )}
                         {isFsExpired && (
                           <p className="text-xs text-red-500 font-bold mb-1 italic">
-                            Đợt Flash Sale đã kết thúc
+                            Đợt Flash Sale đã kết thúc hoặc hết suất
                           </p>
                         )}
 
-                        <button
-                          onClick={() => handleRemoveProduct(product.cartItemId)}
-                          className="text-sm text-red-500 hover:text-red-700 flex items-center mt-1 transition"
-                        >
-                          <FaTrashAlt className="mr-1" /> Xóa
-                        </button>
+                        <div className="flex items-center gap-4 mt-1">
+                          <button
+                            onClick={() => handleRemoveProduct(product.cartItemId)}
+                            className="text-sm text-red-500 hover:text-red-700 flex items-center transition"
+                          >
+                            <FaTrashAlt className="mr-1" /> Xóa
+                          </button>
+                          {isFsExpired && (
+                            <button
+                              onClick={() => handleSwitchToNormalPrice(product)}
+                              className="text-sm text-primary hover:text-primary-hover font-bold flex items-center transition"
+                            >
+                              Mua giá gốc
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -305,9 +333,32 @@ const Cart = () => {
                           <FaMinus size={10} />
                         </button>
 
-                        <span className="px-3 py-1 font-semibold text-gray-700 border-l border-r border-gray-300 min-w-[40px] text-center">
-                          {product.quantity}
-                        </span>
+                        <input
+                          type="text"
+                          value={product.quantity}
+                          disabled={isFsExpired}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "") {
+                              dispatch(updateQuantity({ cartItemId: product.cartItemId, quantity: "" }));
+                              return;
+                            }
+                            const num = parseInt(val);
+                            if (isNaN(num)) return;
+                            if (product.countInStock !== undefined && num > product.countInStock) {
+                              toast.warning(`Kho chỉ còn ${product.countInStock} cuốn!`);
+                              dispatch(updateQuantity({ cartItemId: product.cartItemId, quantity: product.countInStock }));
+                              return;
+                            }
+                            dispatch(updateQuantity({ cartItemId: product.cartItemId, quantity: num }));
+                          }}
+                          onBlur={() => {
+                            if (product.quantity === "" || product.quantity < 1) {
+                              dispatch(updateQuantity({ cartItemId: product.cartItemId, quantity: 1 }));
+                            }
+                          }}
+                          className={`px-1 py-1 font-semibold text-gray-700 border-l border-r border-gray-300 w-12 text-center outline-none ${isFsExpired ? 'bg-gray-200' : 'bg-white focus:bg-gray-50'}`}
+                        />
 
                         <button
                           onClick={() =>
@@ -337,7 +388,7 @@ const Cart = () => {
 
                     {/* Cột 4: Thành tiền */}
                     <div className="col-span-2 text-right font-bold text-primary text-lg mt-4 sm:mt-0">
-                      {(product.price * product.quantity).toLocaleString(
+                      {(product.price * (product.quantity || 0)).toLocaleString(
                         "vi-VN"
                       )}{" "}
                       ₫
