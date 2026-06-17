@@ -65,6 +65,7 @@ const OrderSchema = mongoose.Schema(
         // Snapshot tên & ảnh tại thời điểm mua (giá trị lịch sử)
         title: { type: String },
         img: { type: String },
+        isFlashSale: { type: Boolean, default: false },
         quantity: {
           type: Number,
           default: 1,

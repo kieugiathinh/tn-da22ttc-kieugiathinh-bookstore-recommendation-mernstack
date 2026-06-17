@@ -2,6 +2,7 @@ import Product from "../models/productModel.js";
 import mongoose from "mongoose";
 import axios from "axios";
 import dotenv from "dotenv";
+import * as flashsaleService from "./flashsaleService.js";
 
 dotenv.config();
 
@@ -88,7 +89,7 @@ const deleteProduct = async (id) => {
 const getProductById = async (id) => {
   const product = await Product.findById(id).populate("category").lean();
   if (!product) throw new Error("Sản phẩm không tồn tại");
-  return product;
+  return await flashsaleService.attachFlashSaleToProducts(product);
 };
 
 const getAllProducts = async (queryParms) => {
@@ -100,7 +101,7 @@ const getAllProducts = async (queryParms) => {
   } 
   
   if (qTopRated) {
-    return await Product.find({
+    const products = await Product.find({
       rating: { $gte: 4.0 },
       numReviews: { $gt: 0 },
     })
@@ -108,7 +109,8 @@ const getAllProducts = async (queryParms) => {
       .limit(10)
       .populate("category")
       .lean();
-  } 
+    return await flashsaleService.attachFlashSaleToProducts(products);
+  }
   
   let filter = {};
   if (qCategory) filter.category = qCategory;
@@ -123,15 +125,17 @@ const getAllProducts = async (queryParms) => {
   } else {
     query = query.sort({ createdAt: -1 });
   }
-  return await query;
+  const products = await query;
+  return await flashsaleService.attachFlashSaleToProducts(products);
 };
 
 const getNewProducts = async () => {
-  return await Product.find()
+  const products = await Product.find()
     .sort({ createdAt: -1 })
     .limit(10)
     .populate("category")
     .lean();
+  return await flashsaleService.attachFlashSaleToProducts(products);
 };
 
 const getRelatedProducts = async (categoryId, productId) => {
@@ -149,7 +153,8 @@ const getRelatedProducts = async (categoryId, productId) => {
     { $sample: { size: 5 } },
   ]);
 
-  return await Product.populate(products, { path: "category" });
+  const populatedProducts = await Product.populate(products, { path: "category" });
+  return await flashsaleService.attachFlashSaleToProducts(populatedProducts);
 };
 
 export {

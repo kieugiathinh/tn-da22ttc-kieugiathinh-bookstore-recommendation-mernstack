@@ -3,16 +3,39 @@ import Product from "../models/productModel.js";
 import Review from "../models/reviewModel.js";
 import Coupon from "../models/couponModel.js";
 import User from "../models/userModel.js";
+import FlashSale from "../models/flashsaleModel.js";
 
 const createOrder = async (orderData, userId) => {
   const { products, couponCode } = orderData;
 
-  // 1. KIỂM TRA TỒN KHO
+  // 1. KIỂM TRA TỒN KHO VÀ FLASH SALE
+  const now = new Date();
+  const activeSale = await FlashSale.findOne({
+    isActive: true,
+    startTime: { $lte: now },
+    endTime: { $gte: now },
+  });
+
   for (const item of products) {
     const product = await Product.findById(item.productId).lean();
     if (!product) throw new Error(`Sản phẩm ${item.title} không tồn tại`);
     if (product.countInStock < item.quantity) {
       throw new Error(`Sản phẩm "${product.title}" không đủ hàng`);
+    }
+
+    if (item.isFlashSale) {
+      if (!activeSale) {
+        throw new Error(`Đợt Flash Sale đã kết thúc. Vui lòng cập nhật giỏ hàng.`);
+      }
+      const fsItem = activeSale.products.find(
+        (p) => p.product.toString() === item.productId.toString()
+      );
+      if (!fsItem) {
+        throw new Error(`Sản phẩm "${product.title}" không nằm trong đợt Flash Sale.`);
+      }
+      if (fsItem.soldCount + item.quantity > fsItem.quantityLimit) {
+        throw new Error(`Số lượng mua giá Flash Sale cho "${product.title}" đã vượt giới hạn.`);
+      }
     }
   }
 
@@ -27,6 +50,13 @@ const createOrder = async (orderData, userId) => {
     await Product.findByIdAndUpdate(item.productId, {
       $inc: { countInStock: -item.quantity, sold: item.quantity },
     });
+
+    if (item.isFlashSale && activeSale) {
+      await FlashSale.updateOne(
+        { _id: activeSale._id, "products.product": item.productId },
+        { $inc: { "products.$.soldCount": item.quantity } }
+      );
+    }
   }
 
   if (couponCode) {
@@ -78,6 +108,13 @@ const cancelOrder = async (id, userId) => {
     await Product.findByIdAndUpdate(item.productId, {
       $inc: { countInStock: item.quantity, sold: -item.quantity },
     });
+
+    if (item.isFlashSale) {
+      await FlashSale.updateOne(
+        { "products.product": item.productId },
+        { $inc: { "products.$.soldCount": -item.quantity } }
+      );
+    }
   }
   
   order.status = 3;

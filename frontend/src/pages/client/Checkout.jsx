@@ -295,6 +295,7 @@ const Checkout = () => {
         productId: item._id || item.productId,
         title: item.title, img: item.img,
         quantity: item.quantity, price: item.price,
+        isFlashSale: item.isFlashSale,
       })),
       total: grandTotal, shippingFee, totalWeight,
       couponCode: discountAmount > 0 ? couponCode : null,

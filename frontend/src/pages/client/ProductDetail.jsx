@@ -108,8 +108,8 @@ const Product = () => {
     fetchReviews();
   }, [id]);
 
-  const flashSaleRemaining = product.isFlashSale
-    ? product.flashSaleLimit - product.flashSaleSold
+  const flashSaleRemaining = product.flashSale
+    ? product.flashSale.quantityLimit - product.flashSale.soldCount
     : 0;
 
   const handleQuantity = (action) => {
@@ -121,7 +121,7 @@ const Product = () => {
         toast.warning(`Kho chỉ còn ${product.countInStock} sản phẩm!`);
         return;
       }
-      if (product.isFlashSale && quantity >= flashSaleRemaining) {
+      if (product.flashSale && quantity >= flashSaleRemaining) {
         toast.warning(`Bạn chỉ có thể mua tối đa ${flashSaleRemaining} suất giá sốc!`);
         return;
       }
@@ -130,7 +130,7 @@ const Product = () => {
   };
 
   const calculatePrice = () => {
-    if (product.isFlashSale) return product.discountedPrice;
+    if (product.flashSale) return product.flashSale.discountPrice;
     if (product.wholesalePrice && quantity >= product.wholesaleMinimumQuantity)
       return product.wholesalePrice;
     if (product.discountedPrice > 0) return product.discountedPrice;
@@ -148,22 +148,42 @@ const Product = () => {
       return;
     }
 
-    const remainingFS = product.isFlashSale
-      ? product.flashSaleLimit - product.flashSaleSold
+    const remainingFS = product.flashSale
+      ? product.flashSale.quantityLimit - product.flashSale.soldCount
       : 0;
 
-    if (!product.isFlashSale || remainingFS <= 0) {
+    if (!product.flashSale || remainingFS <= 0) {
       dispatch(addProduct({ ...product, price: product.originalPrice, quantity, isFlashSale: false }));
       toast.success(`Đã thêm ${quantity} cuốn vào giỏ`);
       return;
     }
 
     if (quantity <= remainingFS) {
-      dispatch(addProduct({ ...product, price: product.discountedPrice, quantity, isFlashSale: true }));
+      dispatch(
+        addProduct({
+          ...product,
+          price: product.flashSale.discountPrice,
+          regularPrice: product.originalPrice,
+          quantity,
+          isFlashSale: true,
+          flashSaleQuantityLimit: product.flashSale.quantityLimit,
+          flashSaleSoldCount: product.flashSale.soldCount,
+        })
+      );
       toast.success(`Đã thêm ${quantity} cuốn giá Flash Sale`);
     } else {
       const normalQty = quantity - remainingFS;
-      dispatch(addProduct({ ...product, price: product.discountedPrice, quantity: remainingFS, isFlashSale: true }));
+      dispatch(
+        addProduct({
+          ...product,
+          price: product.flashSale.discountPrice,
+          regularPrice: product.originalPrice,
+          quantity: remainingFS,
+          isFlashSale: true,
+          flashSaleQuantityLimit: product.flashSale.quantityLimit,
+          flashSaleSoldCount: product.flashSale.soldCount,
+        })
+      );
       dispatch(addProduct({ ...product, price: product.originalPrice, quantity: normalQty, isFlashSale: false }));
       toast.info("Đã tách đơn hàng do vượt quá suất Flash Sale");
     }
@@ -199,7 +219,7 @@ const Product = () => {
             <div className="relative w-full max-w-sm aspect-[3/4] rounded-2xl overflow-hidden
                             shadow-lg border border-slate-100 bg-slate-50">
               {/* Flash Sale badge overlay */}
-              {product.isFlashSale && (
+              {product.flashSale && (
                 <div className="absolute top-3 left-3 z-10
                                bg-gradient-to-r from-rose-500 to-orange-500
                                text-white px-3 py-1.5 rounded-full
@@ -209,7 +229,7 @@ const Product = () => {
                 </div>
               )}
               {/* Discount badge */}
-              {discountPercent > 0 && !product.isFlashSale && (
+              {discountPercent > 0 && !product.flashSale && (
                 <div className="absolute top-3 right-3 z-10
                                bg-rose-100 text-rose-600 font-bold
                                text-sm px-2.5 py-1 rounded-full shadow-sm">
@@ -271,12 +291,12 @@ const Product = () => {
             {/* ===== KHU VỰC GIÁ ===== */}
             <div
               className={`rounded-2xl p-5 mb-6 ${
-                product.isFlashSale
+                product.flashSale
                   ? "bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200"
                   : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100"
               }`}
             >
-              {product.isFlashSale && (
+              {product.flashSale && (
                 <div className="flex items-center gap-2 text-rose-600 font-bold mb-3 text-sm uppercase tracking-wide">
                   <FaClock className="animate-pulse" />
                   <span>Kết thúc sớm — Số lượng có hạn</span>
@@ -286,7 +306,7 @@ const Product = () => {
               <div className="flex items-end gap-3 mb-1">
                 <span
                   className={`text-4xl font-black ${
-                    product.isFlashSale ? "text-rose-600" : "text-amber-600"
+                    product.flashSale ? "text-rose-600" : "text-amber-600"
                   }`}
                 >
                   {finalPrice?.toLocaleString("vi-VN")} ₫
@@ -304,11 +324,11 @@ const Product = () => {
               </div>
 
               {/* Flash Sale progress bar */}
-              {product.isFlashSale && (
+              {product.flashSale && (
                 <div className="mt-4">
                   <div className="flex justify-between text-xs font-bold text-rose-500 mb-1.5">
                     <span className="flex items-center gap-1">
-                      <FaFire /> Đã bán {product.flashSaleSold}
+                      <FaFire /> Đã bán {product.flashSale.soldCount}
                     </span>
                     <span>Chỉ còn {flashSaleRemaining} suất</span>
                   </div>
@@ -317,7 +337,7 @@ const Product = () => {
                       className="bg-gradient-to-r from-rose-400 to-orange-500 h-3 rounded-full transition-all duration-1000"
                       style={{
                         width: `${Math.min(
-                          (product.flashSaleSold / product.flashSaleLimit) * 100,
+                          (product.flashSale.soldCount / product.flashSale.quantityLimit) * 100,
                           100
                         )}%`,
                       }}

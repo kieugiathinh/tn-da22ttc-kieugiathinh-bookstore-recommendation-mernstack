@@ -31,8 +31,10 @@
 
 @layer base {
   body {
-    background-color: #f8fafc; /* slate-50 — Clean Canvas */
-    color: #1e293b; /* slate-800 — Sophisticated dark text */
+    background-color: #f8fafc;
+    /* slate-50 — Clean Canvas */
+    color: #1e293b;
+    /* slate-800 — Sophisticated dark text */
     font-family: 'Inter', system-ui, sans-serif;
   }
 }
@@ -53,6 +55,11 @@
 
 /* Smooth card lift animation */
 @keyframes cardLift {
-  from { transform: translateY(0); }
-  to   { transform: translateY(-6px); }
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-6px);
+  }
 }

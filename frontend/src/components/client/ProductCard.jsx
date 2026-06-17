@@ -2,10 +2,16 @@ import { Link } from "react-router-dom";
 import { FaFire, FaStar, FaLeaf, FaBolt } from "react-icons/fa";
 
 const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller = false }) => {
+  // Ưu tiên dữ liệu flash sale từ API
+  const hasFlashSale = Boolean(product.flashSale) || isFlashSale;
+  const displayPrice = product.flashSale ? product.flashSale.discountPrice : product.discountedPrice;
+  const fsSoldCount = product.flashSale ? product.flashSale.soldCount : product.sold;
+  const fsQuantityLimit = product.flashSale ? product.flashSale.quantityLimit : (product.countInStock || 1);
+
   // Tính phần trăm giảm giá
   const discountPercent = product.originalPrice
     ? Math.round(
-        ((product.originalPrice - product.discountedPrice) /
+        ((product.originalPrice - displayPrice) /
           product.originalPrice) *
           100
       )
@@ -20,17 +26,17 @@ const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller
     >
       {/* ===== BADGES LAYER ===== */}
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-        {isFlashSale && (
+        {hasFlashSale && (
           <span className="inline-flex items-center gap-1 bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm shadow-rose-300/50">
             <FaBolt className="text-[8px]" /> Flash
           </span>
         )}
-        {isNew && !isFlashSale && (
+        {isNew && !hasFlashSale && (
           <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
             <FaLeaf className="text-[8px]" /> Mới
           </span>
         )}
-        {isBestSeller && !isFlashSale && (
+        {isBestSeller && !hasFlashSale && (
           <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
             🏆 Hot
           </span>
@@ -63,7 +69,7 @@ const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller
         <div className="mt-auto">
           <div className="flex items-end gap-2">
             <span className="text-amber-600 font-bold text-lg leading-none">
-              {product.discountedPrice?.toLocaleString("vi-VN")}đ
+              {displayPrice?.toLocaleString("vi-VN")}đ
             </span>
             {product.originalPrice > 0 && discountPercent > 0 && (
               <span className="text-slate-400 text-xs line-through mb-0.5">
@@ -73,20 +79,20 @@ const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller
           </div>
 
           {/* Flash Sale Progress Bar */}
-          {isFlashSale ? (
+          {hasFlashSale ? (
             <div className="mt-3 relative">
               <div className="w-full bg-rose-100 rounded-full h-4 relative overflow-hidden">
                 <div
                   className="bg-gradient-to-r from-rose-400 to-orange-500 h-full absolute top-0 left-0"
                   style={{
                     width: `${Math.min(
-                      (product.sold / (product.sold + product.countInStock)) * 100,
+                      (fsSoldCount / Math.max(fsQuantityLimit, 1)) * 100,
                       100
                     )}%`,
                   }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white z-10 uppercase tracking-wide gap-1">
-                  <FaFire className="text-[8px]" /> Đã bán {product.sold || 0}
+                  <FaFire className="text-[8px]" /> Đã bán {fsSoldCount}
                 </div>
               </div>
             </div>

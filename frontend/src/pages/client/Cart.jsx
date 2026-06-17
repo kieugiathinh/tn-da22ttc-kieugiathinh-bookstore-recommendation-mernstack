@@ -5,6 +5,7 @@ import { clearCart, removeProduct, updateQuantity } from "../../redux/cartRedux"
 import { userRequest } from "../../requestMethods";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
+import { FaBolt } from "react-icons/fa";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart);
@@ -14,43 +15,72 @@ const Cart = () => {
 
   // --- STATE QUẢN LÝ SẢN PHẨM ĐƯỢC CHỌN ---
   const [selectedIds, setSelectedIds] = useState([]);
+  const [activeFlashSale, setActiveFlashSale] = useState(null);
+
+  useEffect(() => {
+    const fetchActiveFS = async () => {
+      try {
+        const res = await userRequest.get("/flash-sales/active");
+        setActiveFlashSale(res.data);
+      } catch (err) {
+        setActiveFlashSale(null);
+      }
+    };
+    fetchActiveFS();
+  }, []);
 
   // Tự động chọn tất cả khi mới vào giỏ hàng (UX phổ biến)
-  // Bạn có thể bỏ useEffect này nếu muốn mặc định là không chọn gì
+  // Chỉ chọn những sản phẩm hợp lệ
   useEffect(() => {
     if (cart.products && cart.products.length > 0) {
-      // Mặc định chọn hết
-      setSelectedIds(cart.products.map((p) => p._id));
+      const validIds = cart.products
+        .filter((p) => {
+          if (!p.isFlashSale) return true;
+          if (!activeFlashSale) return false;
+          return activeFlashSale.products.some((fsP) => 
+            (fsP.product._id || fsP.product) === p._id
+          );
+        })
+        .map((p) => p.cartItemId);
+      setSelectedIds(validIds);
     }
-  }, [cart.products.length]); // Chỉ chạy lại khi số lượng sp thay đổi
+  }, [cart.products.length, activeFlashSale]); 
 
   // --- LOGIC CHỌN SẢN PHẨM ---
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      // Chọn tất cả
-      const allIds = cart.products.map((p) => p._id);
-      setSelectedIds(allIds);
+      // Chọn tất cả sản phẩm hợp lệ
+      const validIds = cart.products
+        .filter((p) => {
+          if (!p.isFlashSale) return true;
+          if (!activeFlashSale) return false;
+          return activeFlashSale.products.some((fsP) => 
+            (fsP.product._id || fsP.product) === p._id
+          );
+        })
+        .map((p) => p.cartItemId);
+      setSelectedIds(validIds);
     } else {
       // Bỏ chọn tất cả
       setSelectedIds([]);
     }
   };
 
-  const handleSelectProduct = (id) => {
-    if (selectedIds.includes(id)) {
+  const handleSelectProduct = (cartItemId) => {
+    if (selectedIds.includes(cartItemId)) {
       // Nếu đã có -> Bỏ chọn
-      setSelectedIds(selectedIds.filter((itemId) => itemId !== id));
+      setSelectedIds(selectedIds.filter((id) => id !== cartItemId));
     } else {
       // Nếu chưa có -> Thêm vào
-      setSelectedIds([...selectedIds, id]);
+      setSelectedIds([...selectedIds, cartItemId]);
     }
   };
 
   // --- HANDLERS CŨ ---
-  const handleRemoveProduct = (productId) => {
-    dispatch(removeProduct(productId));
+  const handleRemoveProduct = (cartItemId) => {
+    dispatch(removeProduct(cartItemId));
     // Xóa khỏi danh sách đã chọn nếu đang chọn
-    setSelectedIds((prev) => prev.filter((id) => id !== productId));
+    setSelectedIds((prev) => prev.filter((id) => id !== cartItemId));
     toast.info("Đã xóa sản phẩm khỏi giỏ hàng");
   };
 
@@ -63,7 +93,7 @@ const Cart = () => {
   };
 
   const handleQuantityChange = (
-    productId,
+    cartItemId,
     currentQuantity,
     change,
     countInStock
@@ -72,7 +102,7 @@ const Cart = () => {
 
     if (newQuantity < 1) {
       if (window.confirm("Bạn muốn xóa sản phẩm này?")) {
-        handleRemoveProduct(productId);
+        handleRemoveProduct(cartItemId);
       }
       return;
     }
@@ -82,12 +112,12 @@ const Cart = () => {
       return;
     }
 
-    dispatch(updateQuantity({ _id: productId, quantity: newQuantity }));
+    dispatch(updateQuantity({ cartItemId, quantity: newQuantity }));
   };
 
   // --- LOGIC TÍNH TIỀN (CHỈ TÍNH SP ĐƯỢC CHỌN) ---
   const selectedProducts = cart.products.filter((p) =>
-    selectedIds.includes(p._id)
+    selectedIds.includes(p.cartItemId)
   );
 
   const subtotal = selectedProducts.reduce(
@@ -177,11 +207,18 @@ const Cart = () => {
 
               {/* Danh sách sản phẩm */}
               <div className="divide-y divide-gray-100">
-                {cart.products?.map((product) => (
+                {cart.products?.map((product) => {
+                  const isFsExpired = product.isFlashSale && (!activeFlashSale || !activeFlashSale.products.some(
+                    (fsP) => (fsP.product._id || fsP.product) === product._id
+                  ));
+
+                  return (
                   <div
-                    key={product._id}
+                    key={product.cartItemId}
                     className={`p-4 sm:grid sm:grid-cols-12 gap-4 items-center transition ${
-                      selectedIds.includes(product._id)
+                      isFsExpired
+                        ? "bg-gray-100 opacity-60"
+                        : selectedIds.includes(product.cartItemId)
                         ? "bg-primary-light/30"
                         : "hover:bg-gray-50"
                     }`}
@@ -190,36 +227,47 @@ const Cart = () => {
                     <div className="col-span-1 flex justify-center mb-4 sm:mb-0">
                       <input
                         type="checkbox"
-                        checked={selectedIds.includes(product._id)}
-                        onChange={() => handleSelectProduct(product._id)}
-                        className="w-5 h-5 accent-primary cursor-pointer"
+                        checked={selectedIds.includes(product.cartItemId)}
+                        onChange={() => handleSelectProduct(product.cartItemId)}
+                        disabled={isFsExpired}
+                        className="w-5 h-5 accent-primary cursor-pointer disabled:cursor-not-allowed"
                       />
                     </div>
 
                     {/* Cột 1: Ảnh & Tên */}
-                    <div className="col-span-5 flex items-center space-x-4 mb-4 sm:mb-0">
+                    <div className="col-span-5 flex items-center space-x-4 mb-4 sm:mb-0 relative">
                       <img
                         src={product.img}
                         alt={product.title}
-                        className="w-20 h-24 object-cover rounded-md shadow-sm border border-gray-200"
+                        className={`w-20 h-24 object-cover rounded-md shadow-sm border border-gray-200 ${isFsExpired ? 'grayscale' : ''}`}
                       />
                       <div>
+                        {product.isFlashSale && (
+                           <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 ${isFsExpired ? 'bg-gray-300 text-gray-500' : 'bg-rose-500 text-white'}`}>
+                             <FaBolt className="text-[8px]" /> Flash
+                           </span>
+                        )}
                         <h3 className="text-base font-bold text-gray-800 line-clamp-2 mb-1">
                           <Link
                             to={`/product/${product._id}`}
-                            className="hover:text-primary transition"
+                            className={`transition ${isFsExpired ? 'pointer-events-none' : 'hover:text-primary'}`}
                           >
                             {product.title}
                           </Link>
                         </h3>
-                        {product.countInStock < 5 && (
+                        {product.countInStock < 5 && !isFsExpired && (
                           <p className="text-xs text-red-500 font-medium mb-1">
                             Chỉ còn {product.countInStock} sản phẩm
                           </p>
                         )}
+                        {isFsExpired && (
+                          <p className="text-xs text-red-500 font-bold mb-1 italic">
+                            Đợt Flash Sale đã kết thúc
+                          </p>
+                        )}
 
                         <button
-                          onClick={() => handleRemoveProduct(product._id)}
+                          onClick={() => handleRemoveProduct(product.cartItemId)}
                           className="text-sm text-red-500 hover:text-red-700 flex items-center mt-1 transition"
                         >
                           <FaTrashAlt className="mr-1" /> Xóa
@@ -228,23 +276,31 @@ const Cart = () => {
                     </div>
 
                     {/* Cột 2: Đơn giá */}
-                    <div className="col-span-2 text-center text-gray-600 font-medium hidden sm:block">
-                      {product.price?.toLocaleString("vi-VN")} ₫
+                    <div className="col-span-2 text-center text-gray-600 font-medium hidden sm:block flex flex-col items-center">
+                      <span className={product.isFlashSale ? "text-rose-600 font-bold" : ""}>
+                        {product.price?.toLocaleString("vi-VN")} ₫
+                      </span>
+                      {product.isFlashSale && product.regularPrice > product.price && (
+                        <span className="text-xs line-through text-gray-400 block">
+                          {product.regularPrice.toLocaleString("vi-VN")} ₫
+                        </span>
+                      )}
                     </div>
 
                     {/* Cột 3: Số lượng */}
                     <div className="col-span-2 flex justify-center items-center">
-                      <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+                      <div className={`flex items-center border border-gray-300 rounded-lg ${isFsExpired ? 'bg-gray-200' : 'bg-white'}`}>
                         <button
                           onClick={() =>
                             handleQuantityChange(
-                              product._id,
+                              product.cartItemId,
                               product.quantity,
                               -1,
                               product.countInStock
                             )
                           }
-                          className="px-3 py-1 hover:bg-gray-100 text-gray-600 transition rounded-l-lg"
+                          disabled={isFsExpired}
+                          className="px-3 py-1 hover:bg-gray-100 text-gray-600 transition rounded-l-lg disabled:cursor-not-allowed"
                         >
                           <FaMinus size={10} />
                         </button>
@@ -256,18 +312,20 @@ const Cart = () => {
                         <button
                           onClick={() =>
                             handleQuantityChange(
-                              product._id,
+                              product.cartItemId,
                               product.quantity,
                               1,
                               product.countInStock
                             )
                           }
                           disabled={
-                            product.countInStock !== undefined &&
-                            product.quantity >= product.countInStock
+                            isFsExpired ||
+                            (product.countInStock !== undefined &&
+                            product.quantity >= product.countInStock) ||
+                            (product.isFlashSale && product.quantity >= product.flashSaleQuantityLimit - product.flashSaleSoldCount)
                           }
                           className={`px-3 py-1 transition rounded-r-lg ${
-                            product.quantity >= product.countInStock
+                            isFsExpired || (product.countInStock !== undefined && product.quantity >= product.countInStock) || (product.isFlashSale && product.quantity >= product.flashSaleQuantityLimit - product.flashSaleSoldCount)
                               ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                               : "hover:bg-gray-100 text-gray-600"
                           }`}
@@ -285,7 +343,8 @@ const Cart = () => {
                       ₫
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             </div>
 
