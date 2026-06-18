@@ -1,22 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { userRequest } from "../../requestMethods";
-import { FaBookOpen, FaListAlt } from "react-icons/fa";
+import { FaBookOpen, FaListAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { Link } from "react-router-dom";
-
-// Hệ màu pastel đa sắc cho từng thể loại — đủ để phân biệt rõ ràng
-const CATEGORY_COLORS = [
-  { bg: "bg-violet-100",  border: "border-violet-200",  text: "text-violet-700",  icon: "text-violet-500",  hover: "group-hover:border-violet-400 group-hover:bg-violet-50"  },
-  { bg: "bg-rose-100",    border: "border-rose-200",    text: "text-rose-700",    icon: "text-rose-500",    hover: "group-hover:border-rose-400 group-hover:bg-rose-50"      },
-  { bg: "bg-emerald-100", border: "border-emerald-200", text: "text-emerald-700", icon: "text-emerald-500", hover: "group-hover:border-emerald-400 group-hover:bg-emerald-50" },
-  { bg: "bg-amber-100",   border: "border-amber-200",   text: "text-amber-700",   icon: "text-amber-500",   hover: "group-hover:border-amber-400 group-hover:bg-amber-50"    },
-  { bg: "bg-sky-100",     border: "border-sky-200",     text: "text-sky-700",     icon: "text-sky-500",     hover: "group-hover:border-sky-400 group-hover:bg-sky-50"        },
-  { bg: "bg-fuchsia-100", border: "border-fuchsia-200", text: "text-fuchsia-700", icon: "text-fuchsia-500", hover: "group-hover:border-fuchsia-400 group-hover:bg-fuchsia-50" },
-  { bg: "bg-teal-100",    border: "border-teal-200",    text: "text-teal-700",    icon: "text-teal-500",    hover: "group-hover:border-teal-400 group-hover:bg-teal-50"      },
-  { bg: "bg-orange-100",  border: "border-orange-200",  text: "text-orange-700",  icon: "text-orange-500",  hover: "group-hover:border-orange-400 group-hover:bg-orange-50"  },
-];
 
 const Category = () => {
   const [categories, setCategories] = useState([]);
+  const sliderRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const getCats = async () => {
@@ -28,61 +18,106 @@ const Category = () => {
     getCats();
   }, []);
 
+  // Logic tự động trượt (Auto-play)
+  useEffect(() => {
+    if (categories.length === 0 || isHovered) return;
+
+    const interval = setInterval(() => {
+      if (sliderRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+        const maxScroll = scrollWidth - clientWidth;
+
+        // Nếu đã trượt đến cuối cùng, quay lại từ đầu
+        if (scrollLeft >= maxScroll - 10) {
+          sliderRef.current.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          // Trượt sang phải 1 khoảng tương đương chiều rộng 1 thẻ (khoảng 160px)
+          sliderRef.current.scrollBy({ left: 166, behavior: "smooth" });
+        }
+      }
+    }, 3000); // Tự động trượt mỗi 3 giây
+
+    return () => clearInterval(interval);
+  }, [categories.length, isHovered]);
+
+  const slideLeft = () => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: -332, behavior: "smooth" }); // Lùi 2 thẻ
+    }
+  };
+
+  const slideRight = () => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: 332, behavior: "smooth" }); // Tiến 2 thẻ
+    }
+  };
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-slate-100">
+    <div className="bg-white rounded-3xl shadow-sm p-6 mb-8 border border-slate-100">
       {/* Section Header */}
-      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-        <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-sm shadow-violet-300/40">
-          <FaListAlt className="text-white text-sm" />
+      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-orange-100">
+        <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-300/40">
+          <FaListAlt className="text-white text-lg" />
         </div>
-        <h2 className="text-xl font-extrabold text-slate-800 uppercase tracking-wide">
-          Thể Loại Sách
+        <h2 className="text-2xl font-extrabold text-slate-800 uppercase tracking-tight">
+          Danh Mục Sản Phẩm
         </h2>
-        <div className="flex-1 h-px bg-gradient-to-r from-violet-100 to-transparent ml-2" />
+        <div className="flex-1 h-px bg-gradient-to-r from-orange-200 to-transparent ml-4" />
       </div>
 
-      {/* Category Grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-        {categories.map((cat, index) => {
-          const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
-          return (
-            <Link to={`/products/${cat._id}`} key={cat._id}>
-              <div className="group cursor-pointer flex flex-col items-center transition-all duration-300 hover:-translate-y-2">
-                {/* Khung ảnh — màu pastel theo index */}
-                <div
-                  className={`w-full aspect-[2/3] rounded-xl
-                              ${color.bg} ${color.border} border
-                              ${color.hover}
-                              flex items-center justify-center mb-2.5
-                              shadow-sm group-hover:shadow-lg
-                              transition-all duration-300 overflow-hidden relative`}
-                >
+      {/* Horizontal Slider Danh Mục */}
+      <div 
+        className="relative group px-1"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Nút điều hướng */}
+        {categories.length > 0 && (
+          <>
+            <button 
+              onClick={slideLeft}
+              className="absolute left-0 top-1/2 -translate-y-1/2 -ml-3 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white text-orange-500 shadow-md border border-orange-100 opacity-0 group-hover:opacity-100 hover:bg-orange-500 hover:text-white transition-all duration-300"
+            >
+              <FaChevronLeft size={14} className="mr-0.5" />
+            </button>
+            <button 
+              onClick={slideRight}
+              className="absolute right-0 top-1/2 -translate-y-1/2 -mr-3 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white text-orange-500 shadow-md border border-orange-100 opacity-0 group-hover:opacity-100 hover:bg-orange-500 hover:text-white transition-all duration-300"
+            >
+              <FaChevronRight size={14} className="ml-0.5" />
+            </button>
+          </>
+        )}
+
+        <div 
+          ref={sliderRef}
+          className="flex overflow-x-auto gap-4 py-3 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
+        >
+          {categories.map((cat) => (
+            <Link to={`/products/${cat._id}`} key={cat._id} className="w-[130px] sm:w-[150px] flex-shrink-0 snap-start">
+              <div className="group cursor-pointer flex flex-col items-center bg-white border border-slate-100 rounded-2xl p-3 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange-500/10 hover:border-orange-300 h-full">
+                
+                {/* Image Container (Rounded Rectangle) */}
+                <div className="w-full aspect-square bg-orange-50/60 rounded-xl flex items-center justify-center mb-3 overflow-hidden p-2">
                   {cat.img ? (
                     <img
                       src={cat.img}
                       alt={cat.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-contain drop-shadow-sm"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center">
-                      <FaBookOpen className={`text-2xl mb-1 ${color.icon} transition-transform duration-300 group-hover:scale-125`} />
-                      <span className={`text-[9px] uppercase font-bold ${color.text}`}>
-                        Sách
-                      </span>
-                    </div>
+                    <FaBookOpen className="text-4xl text-orange-300" />
                   )}
-
-                  {/* Shimmer overlay */}
-                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
                 </div>
 
-                <span className={`text-xs font-bold text-slate-700 text-center group-hover:${color.text} transition-colors duration-200 line-clamp-2 px-1 leading-tight`}>
+                {/* Text */}
+                <span className="text-sm font-semibold text-slate-700 text-center leading-snug group-hover:text-orange-600 transition-colors duration-200 line-clamp-2 mt-auto">
                   {cat.name}
                 </span>
               </div>
             </Link>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );

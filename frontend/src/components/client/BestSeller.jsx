@@ -33,20 +33,21 @@ const PrevArrow = ({ onClick }) => (
   </div>
 );
 
-const BestSeller = () => {
+const ShoppingTrends = () => {
   const [products, setProducts] = useState([]);
+  const [period, setPeriod] = useState("week"); // Mặc định: Tuần này
 
   useEffect(() => {
-    const fetchBestSellers = async () => {
+    const fetchTrends = async () => {
       try {
-        const res = await userRequest.get("/products?bestseller=true");
-        setProducts(res.data.slice(0, 10));
+        const res = await userRequest.get(`/products/trends?period=${period}`);
+        setProducts(res.data);
       } catch (err) {
         console.error(err);
       }
     };
-    fetchBestSellers();
-  }, []);
+    fetchTrends();
+  }, [period]);
 
   const settings = {
     dots: false,
@@ -65,18 +66,39 @@ const BestSeller = () => {
   if (products.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm mb-8 border border-amber-100 overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-amber-100 flex items-center justify-between
-                      bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 honeycomb-bg">
-        <h2 className="text-xl font-extrabold text-slate-800 flex items-center uppercase tracking-wide
-                       border-l-4 border-amber-400 pl-3">
-          <FaTrophy className="mr-3 text-amber-500 text-2xl" />
-          Bảng Xếp Hạng Bán Chạy
-        </h2>
-        <span className="text-sm font-semibold text-amber-600 cursor-pointer hover:text-amber-700 hover:underline transition-colors">
-          Xem tất cả &gt;
-        </span>
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-orange-100 mb-8">
+      {/* Header & Tabs */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-orange-100">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-300/40">
+            <FaTrophy className="text-white text-lg" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-800 uppercase tracking-tight">
+            Xu Hướng Mua Sắm
+          </h2>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-2 bg-orange-50 p-1 rounded-xl">
+          {[
+            { id: "day", label: "Hôm nay" },
+            { id: "week", label: "Tuần này" },
+            { id: "month", label: "Tháng này" },
+            { id: "all", label: "Mọi thời đại" }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setPeriod(tab.id)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                period === tab.id
+                  ? "bg-white text-orange-600 shadow-sm"
+                  : "text-slate-500 hover:text-orange-500"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Slider Content */}
@@ -109,4 +131,4 @@ const BestSeller = () => {
   );
 };
 
-export default BestSeller;
+export default ShoppingTrends;

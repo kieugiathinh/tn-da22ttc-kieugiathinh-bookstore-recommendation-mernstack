@@ -1,4 +1,5 @@
 import Product from "../models/productModel.js";
+import Order from "../models/orderModel.js";
 import mongoose from "mongoose";
 import axios from "axios";
 import dotenv from "dotenv";
@@ -113,7 +114,10 @@ const getAllProducts = async (queryParms) => {
   }
   
   let filter = {};
-  if (qCategory) filter.category = qCategory;
+  if (qCategory) {
+    const categories = qCategory.split(",");
+    filter.category = { $in: categories };
+  }
   if (qSearch) filter.title = { $regex: qSearch, $options: "i" };
 
   let query = Product.find(filter).populate("category").lean();
@@ -157,6 +161,56 @@ const getRelatedProducts = async (categoryId, productId) => {
   return await flashsaleService.attachFlashSaleToProducts(populatedProducts);
 };
 
+const getTrendingProducts = async (period) => {
+  // Trạng thái đơn hàng: 1 (PROCESSING), 2 (DELIVERED)
+  let matchStage = { status: { $in: [1, 2] } };
+  
+  if (period && period !== "all") {
+    const now = new Date();
+    let startDate = new Date();
+    if (period === "day") startDate.setDate(now.getDate() - 1);
+    else if (period === "week") startDate.setDate(now.getDate() - 7);
+    else if (period === "month") startDate.setMonth(now.getMonth() - 1);
+    
+    matchStage.createdAt = { $gte: startDate };
+  }
+
+  const trendingAggregation = await Order.aggregate([
+    { $match: matchStage },
+    { $unwind: "$products" },
+    {
+      $group: {
+        _id: "$products.productId",
+        totalSold: { $sum: "$products.quantity" }
+      }
+    },
+    { $sort: { totalSold: -1 } },
+    { $limit: 10 }
+  ]);
+
+  // Fallback: Nếu không có đơn hàng nào trong khoảng thời gian đó, lấy best seller mặc định
+  if (trendingAggregation.length === 0) {
+    const fallbackProducts = await Product.find()
+      .sort({ sold: -1 })
+      .limit(10)
+      .populate("category")
+      .lean();
+    return await flashsaleService.attachFlashSaleToProducts(fallbackProducts);
+  }
+
+  const productIds = trendingAggregation.map(item => item._id);
+  const products = await Product.find({ _id: { $in: productIds } })
+    .populate("category")
+    .lean();
+
+  // Map lại mảng theo đúng thứ tự đã sort
+  const sortedProducts = trendingAggregation.map(item => {
+    return products.find(p => p._id.toString() === item._id.toString());
+  }).filter(p => p != null);
+
+  return await flashsaleService.attachFlashSaleToProducts(sortedProducts);
+};
+
 export {
   createProduct,
   updateProduct,
@@ -166,4 +220,5 @@ export {
   getNewProducts,
   getRelatedProducts,
   fetchBookInfoFromGoogle,
+  getTrendingProducts,
 };

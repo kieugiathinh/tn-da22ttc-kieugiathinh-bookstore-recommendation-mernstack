@@ -44,6 +44,12 @@ const getRelatedProducts = asyncHandler(async (req, res) => {
   res.status(200).json(products);
 });
 
+const getTrendingProducts = asyncHandler(async (req, res) => {
+  const period = req.query.period || "all";
+  const products = await productService.getTrendingProducts(period);
+  res.status(200).json(products);
+});
+
 // Auto Fill: Tra cứu thông tin sách từ Google Books API
 const autoFillBook = asyncHandler(async (req, res) => {
   const { title } = req.query;
@@ -70,4 +76,5 @@ export {
   getNewProducts,
   getRelatedProducts,
   autoFillBook,
+  getTrendingProducts,
 };
