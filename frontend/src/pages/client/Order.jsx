@@ -160,16 +160,13 @@ const Order = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2 uppercase tracking-tight">
-            Lịch Sử Đơn Hàng
-          </h1>
-          <p className="text-gray-500 font-medium">
-            Quản lý trạng thái và đánh giá sản phẩm đã mua
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-7xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-6">
+                <div className="w-1 h-6 bg-gradient-to-b from-orange-500 to-amber-500 rounded-full" />
+                <h1 className="text-xl font-extrabold text-slate-800">Lịch Sử Đơn Hàng</h1>
+              </div>
 
         {/* --- TABS --- */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-8 flex flex-wrap justify-center gap-2 sticky top-20 z-10">
@@ -506,6 +503,7 @@ const Order = () => {
             </button>
           </Link>
         </div>
+            </div>
       </div>
     </div>
   );
