@@ -171,6 +171,7 @@ const getTrendingProducts = async (period) => {
     if (period === "day") startDate.setDate(now.getDate() - 1);
     else if (period === "week") startDate.setDate(now.getDate() - 7);
     else if (period === "month") startDate.setMonth(now.getMonth() - 1);
+    else if (period === "year") startDate.setFullYear(now.getFullYear() - 1);
     
     matchStage.createdAt = { $gte: startDate };
   }
@@ -205,7 +206,12 @@ const getTrendingProducts = async (period) => {
 
   // Map lại mảng theo đúng thứ tự đã sort
   const sortedProducts = trendingAggregation.map(item => {
-    return products.find(p => p._id.toString() === item._id.toString());
+    const p = products.find(p => p._id.toString() === item._id.toString());
+    if (p) {
+      // Clone object to avoid modifying the original if it's cached, though lean() makes it a plain object
+      return { ...p, periodSold: item.totalSold };
+    }
+    return null;
   }).filter(p => p != null);
 
   return await flashsaleService.attachFlashSaleToProducts(sortedProducts);

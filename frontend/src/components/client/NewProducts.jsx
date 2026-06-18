@@ -45,7 +45,7 @@ const NewProducts = () => {
       {/* Button Xem Thêm */}
       <div className="mt-8 flex justify-center">
         <Link 
-          to="/products?sort=newest" 
+          to="/products?sort=newest"
           className="group flex items-center gap-2 px-8 py-2.5 rounded-full font-bold text-sm border-2 border-white text-white hover:bg-white hover:text-orange-600 transition-all duration-300 shadow-sm"
         >
           Khám phá thêm sách mới 

@@ -33,7 +33,7 @@ const CheckoutStep = ({ step, label, active, done }) => (
         ${done
           ? "bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-md shadow-emerald-300/40"
           : active
-          ? "bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-violet-300/40"
+          ? "bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-300/40"
           : "bg-slate-100 text-slate-400"
         }`}
     >
@@ -53,14 +53,14 @@ const CheckoutProgressBar = ({ currentStep }) => {
       {/* Connector */}
       <div className="flex-1 max-w-[80px] mx-2 h-1 rounded-full overflow-hidden bg-slate-100 mx-3">
         <div
-          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-400 to-violet-500"
+          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-400 to-orange-500"
           style={{ width: currentStep > 1 ? "100%" : "0%" }}
         />
       </div>
       <CheckoutStep step={2} label="Thanh toán" active={currentStep === 2} done={currentStep > 2} />
       <div className="flex-1 max-w-[80px] mx-2 h-1 rounded-full overflow-hidden bg-slate-100 mx-3">
         <div
-          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-400 to-violet-500"
+          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-400 to-orange-500"
           style={{ width: currentStep > 2 ? "100%" : "0%" }}
         />
       </div>
@@ -328,12 +328,12 @@ const Checkout = () => {
   };
 
   // ── Select styles helper ──
-  const selectCls = "w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-300/50 appearance-none bg-white disabled:bg-slate-50 pr-8 text-sm text-slate-700 transition-all";
-  const inputCls  = "w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-300/50 text-sm text-slate-700 transition-all";
+  const selectCls = "w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-300/50 appearance-none bg-white disabled:bg-slate-50 pr-8 text-sm text-slate-700 transition-all";
+  const inputCls  = "w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-300/50 text-sm text-slate-700 transition-all";
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
 
         {/* ── Page Header ── */}
         <div className="text-center mb-8">
@@ -352,8 +352,8 @@ const Checkout = () => {
             {/* ── SMART ADDRESS CARD ── */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
               <h2 className="text-lg font-extrabold text-slate-800 mb-4 flex items-center gap-2.5">
-                <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-indigo-500 rounded-lg
-                               flex items-center justify-center shadow-sm shadow-violet-300/40">
+                <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg
+                               flex items-center justify-center shadow-sm shadow-orange-300/40">
                   <FaMapMarkerAlt className="text-white text-xs" />
                 </div>
                 Địa chỉ nhận hàng
@@ -361,7 +361,7 @@ const Checkout = () => {
 
               {/* Đã chọn địa chỉ */}
               {selectedAddress && !showInlineForm && (
-                <div className="p-4 rounded-xl border-2 border-violet-300 bg-violet-50/50
+                <div className="p-4 rounded-xl border-2 border-orange-300 bg-orange-50/50
                                flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -369,8 +369,8 @@ const Checkout = () => {
                       <span className="text-slate-300">|</span>
                       <span className="text-slate-600 text-sm">{selectedAddress.phone}</span>
                       {selectedAddress.isDefault && (
-                        <span className="text-[10px] font-bold text-violet-700 bg-violet-100
-                                        px-2 py-0.5 rounded-full border border-violet-200">
+                        <span className="text-[10px] font-bold text-orange-700 bg-orange-100
+                                        px-2 py-0.5 rounded-full border border-orange-200">
                           Mặc định
                         </span>
                       )}
@@ -391,7 +391,7 @@ const Checkout = () => {
                   </div>
                   <button
                     onClick={() => setShowAddressModal(true)}
-                    className="text-violet-600 font-bold text-sm hover:text-violet-700
+                    className="text-orange-600 font-bold text-sm hover:text-orange-700
                                hover:underline cursor-pointer ml-4 shrink-0 transition-colors"
                   >
                     Thay đổi
@@ -403,7 +403,7 @@ const Checkout = () => {
               {showInlineForm && (
                 <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50/50 space-y-3.5">
                   <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                    <FaPlus className="text-violet-500" /> Thêm địa chỉ giao hàng
+                    <FaPlus className="text-orange-500" /> Thêm địa chỉ giao hàng
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <input type="text" value={inlineName}
@@ -475,9 +475,9 @@ const Checkout = () => {
                     <button type="button" onClick={handleSaveInlineAddress}
                       className="px-5 py-2 text-sm font-bold text-white rounded-xl cursor-pointer
                                  flex items-center gap-2
-                                 bg-gradient-to-r from-violet-500 to-indigo-600
-                                 hover:from-violet-600 hover:to-indigo-700
-                                 shadow-sm shadow-violet-300/40 transition-all">
+                                 bg-gradient-to-r from-orange-500 to-amber-600
+                                 hover:from-orange-600 hover:to-amber-700
+                                 shadow-sm shadow-orange-300/40 transition-all">
                       <FaCheck /> Lưu & chọn địa chỉ
                     </button>
                   </div>
@@ -493,7 +493,7 @@ const Checkout = () => {
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
                   onClick={(e) => e.stopPropagation()}>
                   <div className="p-5 border-b border-slate-100 flex items-center justify-between
-                                 bg-gradient-to-r from-violet-50 to-indigo-50">
+                                 bg-gradient-to-r from-orange-50 to-amber-50">
                     <h3 className="text-lg font-extrabold text-slate-800">Chọn địa chỉ giao hàng</h3>
                     <button onClick={() => setShowAddressModal(false)}
                       className="text-slate-400 hover:text-slate-600 cursor-pointer
@@ -507,20 +507,20 @@ const Checkout = () => {
                         onClick={() => { setSelectedAddress(addr); setShowInlineForm(false); setShowAddressModal(false); }}
                         className={`p-4 rounded-xl border-2 cursor-pointer transition-all
                           ${selectedAddress?._id === addr._id
-                            ? "border-violet-400 bg-violet-50 shadow-sm"
-                            : "border-slate-100 hover:border-violet-200 hover:bg-violet-50/30"
+                            ? "border-orange-400 bg-orange-50 shadow-sm"
+                            : "border-slate-100 hover:border-orange-200 hover:bg-orange-50/30"
                           }`}>
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="font-bold text-slate-800 text-sm">{addr.name}</span>
                           <span className="text-slate-300">|</span>
                           <span className="text-slate-600 text-sm">{addr.phone}</span>
                           {addr.isDefault && (
-                            <span className="text-[10px] font-bold text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
                               Mặc định
                             </span>
                           )}
                           {selectedAddress?._id === addr._id && (
-                            <FaCheck className="text-violet-600 text-xs ml-auto" />
+                            <FaCheck className="text-orange-600 text-xs ml-auto" />
                           )}
                         </div>
                         <p className="text-sm text-slate-500">
@@ -532,8 +532,8 @@ const Checkout = () => {
                   <div className="p-5 border-t border-slate-100">
                     <button
                       onClick={() => { setShowAddressModal(false); setShowInlineForm(true); setSelectedAddress(null); }}
-                      className="w-full py-2.5 border-2 border-dashed border-violet-300 text-violet-600
-                                 rounded-xl font-bold text-sm hover:bg-violet-50 transition-colors
+                      className="w-full py-2.5 border-2 border-dashed border-orange-300 text-orange-600
+                                 rounded-xl font-bold text-sm hover:bg-orange-50 transition-colors
                                  cursor-pointer flex items-center justify-center gap-2">
                       <FaPlus /> Thêm địa chỉ mới
                     </button>
@@ -582,17 +582,17 @@ const Checkout = () => {
                 <label
                   className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all
                     ${paymentMethod === "Stripe"
-                      ? "border-indigo-400 bg-indigo-50/60 shadow-sm"
+                      ? "border-amber-400 bg-amber-50/60 shadow-sm"
                       : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
                     }`}
                 >
                   <input type="radio" name="payment" value="Stripe"
                     checked={paymentMethod === "Stripe"}
                     onChange={() => setPaymentMethod("Stripe")}
-                    className="w-4 h-4 accent-indigo-500" />
+                    className="w-4 h-4 accent-amber-500" />
                   <div className="ml-4 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                      <FaCreditCard className="text-indigo-600 text-xl" />
+                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                      <FaCreditCard className="text-amber-600 text-xl" />
                     </div>
                     <div>
                       <span className="block font-bold text-slate-800 text-sm">Thanh toán Online (Stripe)</span>
@@ -600,7 +600,7 @@ const Checkout = () => {
                     </div>
                   </div>
                   {paymentMethod === "Stripe" && (
-                    <FaCheck className="ml-auto text-indigo-500" />
+                    <FaCheck className="ml-auto text-amber-500" />
                   )}
                 </label>
               </div>
@@ -611,7 +611,7 @@ const Checkout = () => {
           <div>
             <div className="bg-white p-6 rounded-2xl shadow-sm sticky top-24 border border-slate-100">
               <h2 className="text-lg font-extrabold text-slate-800 mb-4 pb-3 border-b border-slate-100 flex items-center gap-2">
-                <span className="w-1 h-5 bg-gradient-to-b from-violet-500 to-indigo-500 rounded-full inline-block" />
+                <span className="w-1 h-5 bg-gradient-to-b from-orange-500 to-amber-500 rounded-full inline-block" />
                 Đơn hàng ({checkoutItems.length} sản phẩm)
               </h2>
 
@@ -623,7 +623,7 @@ const Checkout = () => {
                       <div className="relative flex-shrink-0">
                         <img src={item.img} alt=""
                           className="w-10 h-14 object-cover rounded-lg border border-slate-100" />
-                        <span className="absolute -top-1.5 -right-1.5 bg-violet-500 text-white
+                        <span className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white
                                         text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
                           {item.quantity}
                         </span>
@@ -643,11 +643,11 @@ const Checkout = () => {
               <div className="border-t border-dashed border-slate-200 pt-4 pb-4">
                 <div className="flex justify-between items-center mb-2.5">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <FaTicketAlt className="text-violet-500" /> Voucher giảm giá
+                    <FaTicketAlt className="text-orange-500" /> Voucher giảm giá
                   </label>
                   {availableVouchers.length > 0 && (
                     <button onClick={() => setShowVoucherList(!showVoucherList)}
-                      className="text-xs text-violet-600 font-bold hover:underline"
+                      className="text-xs text-orange-600 font-bold hover:underline"
                       disabled={discountAmount > 0}>
                       {showVoucherList ? "Đóng" : "Chọn mã"}
                     </button>
@@ -659,7 +659,7 @@ const Checkout = () => {
                     placeholder="Nhập mã giảm giá..."
                     disabled={discountAmount > 0}
                     className="w-full p-2.5 border border-slate-200 rounded-xl text-sm uppercase
-                               outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-300/50
+                               outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-300/50
                                disabled:bg-slate-50 text-slate-700 transition-all" />
                   {discountAmount > 0 ? (
                     <button onClick={handleRemoveCoupon}
@@ -670,11 +670,11 @@ const Checkout = () => {
                   ) : (
                     <button onClick={() => handleApplyCoupon()}
                       disabled={!couponCode || isCheckingCode}
-                      className="bg-gradient-to-r from-violet-500 to-indigo-600 text-white
+                      className="bg-gradient-to-r from-orange-500 to-amber-600 text-white
                                  px-4 rounded-xl text-sm font-bold
-                                 hover:from-violet-600 hover:to-indigo-700
+                                 hover:from-orange-600 hover:to-amber-700
                                  disabled:opacity-50 disabled:cursor-not-allowed transition-all
-                                 whitespace-nowrap shadow-sm shadow-violet-300/30">
+                                 whitespace-nowrap shadow-sm shadow-orange-300/30">
                       {isCheckingCode ? <FaSpinner className="animate-spin" /> : "Áp dụng"}
                     </button>
                   )}
@@ -687,13 +687,13 @@ const Checkout = () => {
                       <div key={item._id}
                         onClick={() => { setCouponCode(item.coupon.code); handleApplyCoupon(item.coupon.code); }}
                         className="bg-white p-2.5 rounded-lg border border-slate-100
-                                   hover:border-violet-300 hover:bg-violet-50/50
+                                   hover:border-orange-300 hover:bg-orange-50/50
                                    cursor-pointer flex justify-between items-center transition-all">
                         <div>
-                          <p className="font-bold text-xs text-violet-700">{item.coupon.code}</p>
+                          <p className="font-bold text-xs text-orange-700">{item.coupon.code}</p>
                           <p className="text-[10px] text-slate-500">{item.coupon.description}</p>
                         </div>
-                        <span className="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-bold">
+                        <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
                           Dùng
                         </span>
                       </div>
@@ -714,7 +714,7 @@ const Checkout = () => {
                   </span>
                   <span>
                     {isCalculatingFee ? (
-                      <FaSpinner className="animate-spin inline text-violet-500" />
+                      <FaSpinner className="animate-spin inline text-orange-500" />
                     ) : shippingFee > 0 ? (
                       `${shippingFee.toLocaleString()} ₫`
                     ) : (

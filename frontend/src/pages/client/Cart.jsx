@@ -452,13 +452,12 @@ const Cart = () => {
                 </span>
               </div>
 
-              {/* NÚT THANH TOÁN */}
               <button
                 onClick={handleCheckout}
                 disabled={selectedIds.length === 0}
                 className={`w-full font-bold py-3.5 rounded-lg shadow-lg transition transform active:scale-95 ${
                   selectedIds.length > 0
-                    ? "bg-gradient-to-r from-primary to-pink-600 text-white hover:from-primary-hover hover:to-pink-700 hover:-translate-y-0.5"
+                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:from-amber-500 hover:to-orange-600 hover:-translate-y-0.5 shadow-amber-300/40"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >

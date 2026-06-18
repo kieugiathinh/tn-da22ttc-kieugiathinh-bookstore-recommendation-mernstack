@@ -22,9 +22,6 @@ import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import moment from "moment";
 import "moment/locale/vi"; // Import locale tiếng Việt
-import RelatedProducts from "../../components/client/RelatedProducts";
-import SimilarProducts from "../../components/client/SimilarProducts";
-import RecommendedForYou from "../../components/client/RecommendedForYou";
 
 // --- Star Rating Component ---
 const StarRating = ({ rating, size = "text-sm" }) => {
@@ -59,6 +56,10 @@ const Product = () => {
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [timeLeft, setTimeLeft] = useState({ days: "00", hours: "00", minutes: "00", seconds: "00" });
 
+  // UI States
+  const [showFullDesc, setShowFullDesc] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
   const dispatch = useDispatch();
 
   // Fetch Product
@@ -77,20 +78,17 @@ const Product = () => {
   }, [id]);
 
   // Trigger CF retrain sau khi user đã đăng nhập xem sản phẩm
-  // → cập nhật danh sách "Dành Riêng Cho Bạn" khi quay lại trang chủ
   useEffect(() => {
     if (!user || !id) return;
 
-    // Fire and forget — không await, không hiện loading, không block UX
     userRequest
       .post("/recommend/refresh", {}, { withCredentials: true })
       .then((res) => {
         if (res.data?.status !== "SKIPPED") {
-          console.log("[CF] Retrain triggered — gợi ý sẽ cập nhật sau vài giây.");
+          console.log("[CF] Retrain triggered.");
         }
       })
       .catch(() => {
-        // Silent fail — không làm hỏng trải nghiệm xem sản phẩm
       });
   }, [id, user?._id]);
 
@@ -253,7 +251,7 @@ const Product = () => {
   if (loading)
     return (
       <div className="bg-slate-50 min-h-screen py-10">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-sm p-10 flex gap-10 animate-pulse">
             <div className="w-2/5 aspect-[3/4] bg-slate-100 rounded-xl" />
             <div className="w-3/5 space-y-4">
@@ -269,7 +267,7 @@ const Product = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ===== MAIN CARD ===== */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10 flex flex-col md:flex-row gap-10">
@@ -315,14 +313,14 @@ const Product = () => {
             <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 mb-4">
               <span>
                 Tác giả:{" "}
-                <span className="text-violet-600 font-semibold">
+                <span className="text-orange-600 font-semibold">
                   {product.author || "Đang cập nhật"}
                 </span>
               </span>
               <span className="text-slate-300">|</span>
               <span>
                 NXB:{" "}
-                <span className="text-violet-600 font-semibold">
+                <span className="text-orange-600 font-semibold">
                   {product.publisher || "Đang cập nhật"}
                 </span>
               </span>
@@ -336,7 +334,7 @@ const Product = () => {
               </span>
               <span
                 className="text-sm text-slate-500 underline underline-offset-2 cursor-pointer
-                            hover:text-violet-600 transition-colors"
+                            hover:text-orange-600 transition-colors"
               >
                 ({product.numReviews || 0} đánh giá)
               </span>
@@ -514,12 +512,36 @@ const Product = () => {
           {/* Mô tả sản phẩm */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10">
             <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
-              <div className="w-1 h-6 bg-gradient-to-b from-violet-500 to-indigo-500 rounded-full" />
+              <div className="w-1 h-6 bg-gradient-to-b from-orange-500 to-amber-500 rounded-full" />
               <h2 className="text-xl font-extrabold text-slate-800">Mô tả sản phẩm</h2>
             </div>
-            <div className="text-slate-700 leading-loose whitespace-pre-line text-sm">
-              {product.desc || "Chưa có mô tả chi tiết."}
+            
+            <div className={`relative transition-all duration-500 ease-in-out ${!showFullDesc ? "max-h-[300px] overflow-hidden" : ""}`}>
+              <div className="text-slate-700 text-justify leading-loose whitespace-pre-line text-sm pb-4">
+                {product.desc ? (
+                  <div dangerouslySetInnerHTML={{ __html: product.desc }} />
+                ) : (
+                  "Chưa có mô tả chi tiết."
+                )}
+              </div>
+              
+              {/* Lớp gradient che phủ khi bị thu gọn */}
+              {!showFullDesc && product.desc && (
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+              )}
             </div>
+
+            {/* Nút Xem thêm */}
+            {product.desc && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => setShowFullDesc(!showFullDesc)}
+                  className="px-8 py-2.5 rounded-full border-2 border-orange-200 text-orange-600 hover:bg-orange-50 font-bold text-sm transition-colors shadow-sm"
+                >
+                  {showFullDesc ? "Thu gọn mô tả" : "Xem thêm nội dung"}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Đánh giá */}
@@ -550,11 +572,11 @@ const Product = () => {
               </div>
             ) : reviews.length > 0 ? (
               <div className="space-y-6">
-                {reviews.map((rev) => (
+                {(showAllReviews ? reviews : reviews.slice(0, 3)).map((rev) => (
                   <div key={rev._id} className="flex gap-4 pb-6 border-b border-slate-100 last:border-0">
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0
-                                   bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center">
+                                   bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
                       {rev.user?.avatar ? (
                         <img src={rev.user.avatar} alt="Ava" className="w-full h-full object-cover" />
                       ) : (
@@ -572,12 +594,12 @@ const Product = () => {
                       <div className="mb-2.5">
                         <StarRating rating={rev.rating} size="text-xs" />
                       </div>
-                      <p className="text-slate-600 text-sm bg-slate-50 p-3.5 rounded-xl leading-relaxed">
+                      <p className="text-slate-600 text-sm bg-slate-50 p-3.5 rounded-xl leading-relaxed text-justify">
                         {rev.comment}
                       </p>
                       {rev.reply && (
-                        <div className="mt-3 ml-4 bg-violet-50 p-3.5 rounded-xl border-l-4 border-violet-400">
-                          <p className="text-xs font-bold text-violet-700 mb-1">
+                        <div className="mt-3 ml-4 bg-orange-50 p-3.5 rounded-xl border-l-4 border-orange-400">
+                          <p className="text-xs font-bold text-orange-700 mb-1">
                             💬 Phản hồi của Nhà sách:
                           </p>
                           <p className="text-sm text-slate-700">{rev.reply}</p>
@@ -586,6 +608,18 @@ const Product = () => {
                     </div>
                   </div>
                 ))}
+
+                {/* Nút Xem tất cả đánh giá */}
+                {reviews.length > 3 && (
+                  <div className="flex justify-center pt-4">
+                    <button
+                      onClick={() => setShowAllReviews(!showAllReviews)}
+                      className="px-8 py-2.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 font-bold text-sm transition-colors border border-orange-200"
+                    >
+                      {showAllReviews ? "Thu gọn đánh giá" : `Xem tất cả ${reviews.length} đánh giá`}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-14 text-slate-400">
@@ -597,13 +631,12 @@ const Product = () => {
           </div>
         </div>
 
-        {/* AI Similar Products — Content-Based Filtering */}
-        {/* Gộp cả SimilarProducts + RelatedProducts thành 1 section duy nhất.
-            SimilarProducts đã có fallback query cùng category khi AI unavailable. */}
-        {product._id && <SimilarProducts productId={product._id} topK={10} />}
-
-        {/* Gợi ý cá nhân hóa — chỉ hiện khi đăng nhập, giống Fahasa */}
+        {/* --- ĐÃ ẨN GỢI Ý SÁCH THEO YÊU CẦU --- */}
+        {/*
+        <SimilarProducts productId={product._id} topK={10} />
         <RecommendedForYou topK={10} />
+        */}
+
       </div>
     </div>
   );

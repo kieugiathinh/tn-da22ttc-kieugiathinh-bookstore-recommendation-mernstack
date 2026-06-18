@@ -9,24 +9,27 @@ import RecommendedForYou from "../../components/client/RecommendedForYou";
 
 const Home = () => {
   return (
-    <div className="bg-slate-50 min-h-screen pb-16">
-      {/* Wrapper giới hạn chiều rộng nội dung để căn giữa đẹp mắt */}
-      <div className="max-w-7xl mx-auto px-4 space-y-2 pt-6">
+    <div className="min-h-screen pb-16">
+      <div className="max-w-7xl mx-auto px-4 pt-6 space-y-6 mb-8">
         {/* 1. Hero Banner Slider */}
         <Banner />
         {/* 2. Coupon Showcase */}
         <CouponList />
-        {/* 3. Flash Sale — Hot deals */}
-        <FlashSale />
+      </div>
+
+      {/* 3. Flash Sale — Full width background */}
+      <FlashSale />
+
+      <div className="max-w-7xl mx-auto px-4 space-y-10 mt-10">
         {/* 4. Thể loại sách đa sắc */}
         <Category />
         {/* 5. Sách mới — Emerald section */}
         <NewProducts />
         {/* 6. Bán chạy — Amber section */}
         <BestSeller />
-        {/* 7. Đánh giá cao — Sky section */}
+        {/* 7. Đánh giá cao — Mật Vàng 5 Sao */}
         <TopRated />
-        {/* 8. AI Gợi ý cá nhân — Cuối trang, giống Fahasa */}
+        {/* 8. AI Gợi ý cá nhân — Cuối trang */}
         <RecommendedForYou topK={20} />
       </div>
     </div>
@@ -34,4 +37,3 @@ const Home = () => {
 };
 
 export default Home;
-

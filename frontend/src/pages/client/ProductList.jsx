@@ -130,6 +130,7 @@ const ProductList = () => {
     if (sort === "asc") return (a.discountedPrice || a.price) - (b.discountedPrice || b.price);
     if (sort === "desc") return (b.discountedPrice || b.price) - (a.discountedPrice || a.price);
     if (sort === "toprated") return (b.rating || 0) - (a.rating || 0) || (b.numReviews || 0) - (a.numReviews || 0);
+    if (sort === "bestseller") return (b.sold || 0) - (a.sold || 0);
     return 0;
   });
 
@@ -221,6 +222,7 @@ const ProductList = () => {
                   className="border border-orange-200 rounded-lg p-1.5 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-orange-500/50 outline-none bg-white cursor-pointer hover:border-orange-400 transition-colors"
                 >
                   <option value="newest">Mới nhất</option>
+                  <option value="bestseller">Bán chạy nhất</option>
                   <option value="toprated">Mật Vàng 5 Sao</option>
                   <option value="asc">Giá: Thấp đến Cao</option>
                   <option value="desc">Giá: Cao đến Thấp</option>

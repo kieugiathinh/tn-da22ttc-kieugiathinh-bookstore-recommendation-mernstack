@@ -96,71 +96,75 @@ const FlashSale = () => {
   };
 
   return (
-    <div className="bg-primary p-4 md:p-6 rounded-2xl mb-8 shadow-sm">
-      {/* ===== HEADER — White bar ===== */}
-      <div className="bg-white rounded-full px-6 py-3 flex flex-col md:flex-row items-center justify-between mb-4 shadow-sm">
-        <div className="flex items-center gap-6 mb-2 md:mb-0">
-          {/* Title */}
-          <div className="flex flex-col">
-            <div className="flex items-center text-2xl font-extrabold italic uppercase tracking-tighter">
-              <FaBolt className="mr-1 text-primary text-2xl animate-bounce" />
-              <span className="text-primary">Giờ Vàng Ong Thợ</span>
+    <div className="bg-primary py-12 shadow-sm w-full">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* ===== HEADER — White bar ===== */}
+        <div className="bg-white rounded-full px-6 py-4 flex flex-col md:flex-row items-center justify-between mb-6 shadow-md">
+          <div className="flex items-center gap-6 mb-2 md:mb-0">
+            {/* Title */}
+            <div className="flex flex-col">
+              <div className="flex items-center text-2xl font-extrabold italic uppercase tracking-tighter">
+                <FaBolt className="mr-1 text-primary text-2xl animate-bounce" />
+                <span className="text-primary">Giờ Vàng Ong Thợ</span>
+              </div>
+              <p className="text-gray-500 text-[11px] font-medium ml-7 mt-0.5">Ong đang xả kho, nhanh tay săn mã to!</p>
             </div>
-            <p className="text-gray-500 text-[11px] font-medium ml-7 mt-0.5">Ong đang xả kho, nhanh tay săn mã to!</p>
+
+            {/* Countdown */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-gray-700 hidden sm:inline-block">
+                Kết thúc trong
+              </span>
+              <div className="flex items-center gap-1 font-bold">
+                {time.d !== "00" && (
+                  <>
+                    <TimeBlock value={time.d} />
+                    <span className="text-gray-700 font-bold">:</span>
+                  </>
+                )}
+                <TimeBlock value={time.h} />
+                <span className="text-gray-700 font-bold">:</span>
+                <TimeBlock value={time.m} />
+                <span className="text-gray-700 font-bold">:</span>
+                <TimeBlock value={time.s} />
+              </div>
+            </div>
           </div>
 
-          {/* Countdown */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-gray-700 hidden sm:inline-block">
-              Kết thúc trong
-            </span>
-            <div className="flex items-center gap-1 font-bold">
-              {time.d !== "00" && (
-                <>
-                  <TimeBlock value={time.d} />
-                  <span className="text-gray-700 font-bold">:</span>
-                </>
-              )}
-              <TimeBlock value={time.h} />
-              <span className="text-gray-700 font-bold">:</span>
-              <TimeBlock value={time.m} />
-              <span className="text-gray-700 font-bold">:</span>
-              <TimeBlock value={time.s} />
-            </div>
-          </div>
+          <Link
+            to="/flash-sale"
+            className="group text-primary hover:text-orange-700
+                       text-sm font-bold transition-all flex items-center gap-1"
+          >
+            Xem tất cả
+            <FaChevronRight className="text-xs group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
 
-        <Link
-          to="/flash-sale"
-          className="group text-primary hover:text-orange-700
-                     text-sm font-bold transition-all flex items-center gap-1"
-        >
-          Xem tất cả
-          <FaChevronRight className="text-xs group-hover:translate-x-1 transition-transform" />
-        </Link>
-      </div>
-
-      {/* ===== PRODUCT LIST — Slider ===== */}
-      <div className="px-2">
-        {products.length > 5 ? (
-          <Slider {...sliderSettings} className="flash-sale-slider pb-2">
-            {products.map((item) => (
-              <div key={item._id} className="px-1.5">
-                <div className="bg-white rounded-lg p-1 h-full">
-                  <ProductCard product={item} isFlashSale={true} />
+        {/* ===== PRODUCT LIST — Slider ===== */}
+        <div className="px-2">
+          {products.length > 5 ? (
+            <Slider {...sliderSettings} className="flash-sale-slider pb-2">
+              {products.map((item) => (
+                <div key={item._id} className="px-1.5 h-full">
+                  <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all h-full overflow-hidden border border-white hover:border-orange-200">
+                    <ProductCard product={item} isFlashSale={true} />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </Slider>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {products.map((item) => (
-              <div key={item._id} className="bg-white rounded-lg p-1 h-full">
-                <ProductCard product={item} isFlashSale={true} />
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </Slider>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {products.map((item) => (
+                <div key={item._id} className="h-full">
+                  <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all h-full overflow-hidden border border-white hover:border-orange-200">
+                    <ProductCard product={item} isFlashSale={true} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
