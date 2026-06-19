@@ -4,6 +4,7 @@ import Review from "../models/reviewModel.js";
 import Coupon from "../models/couponModel.js";
 import User from "../models/userModel.js";
 import FlashSale from "../models/flashsaleModel.js";
+import { sendOrderConfirmationEmail } from "./emailService.js";
 
 const createOrder = async (orderData, userId) => {
   const { products, couponCode } = orderData;
@@ -69,6 +70,12 @@ const createOrder = async (orderData, userId) => {
       );
     }
   }
+
+  // 4. GỬI EMAIL XÁC NHẬN
+  // Chạy bất đồng bộ, không đợi để tránh làm chậm response
+  sendOrderConfirmationEmail(savedOrder.email, savedOrder).catch((err) => {
+    console.error("❌ Lỗi gửi email xác nhận đơn hàng:", err.message);
+  });
 
   return savedOrder;
 };

@@ -20,6 +20,8 @@ const registerUser = asyncHandler(async (req, res) => {
     fullname: user.fullname,
     email: user.email,
     role: user.role,
+    addresses: user.addresses || [],
+    wallet: user.wallet || [],
   });
 });
 
@@ -38,6 +40,8 @@ const loginUser = asyncHandler(async (req, res) => {
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,
+    addresses: user.addresses || [],
+    wallet: user.wallet || [],
   });
 });
 
@@ -72,6 +76,8 @@ const loginWithGoogle = asyncHandler(async (req, res) => {
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,
+    addresses: user.addresses || [],
+    wallet: user.wallet || [],
   });
 });
 

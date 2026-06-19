@@ -22,6 +22,7 @@ import analyticsRoute from "./routes/analyticsRoute.js";
 import shippingRoute from "./routes/shippingRoute.js";
 import recommendationRoute from "./routes/recommendationRoute.js";
 import recommendationProxyRoute from "./routes/recommendationProxyRoute.js";
+import newsletterRoutes from "./routes/newsletterRoutes.js";
 
 const app = express();
 
@@ -88,6 +89,7 @@ app.use("/api/v1/shipping", shippingRoute);
 app.use("/api/v1/recommend/data", recommendationRoute);
 // Recommendation System — Proxy Endpoints (dành cho Frontend React)
 app.use("/api/v1/recommend", recommendationProxyRoute);
+app.use("/api/v1/newsletter", newsletterRoutes);
 
 // --- ERROR MIDDLEWARE ---
 app.use(notFound);

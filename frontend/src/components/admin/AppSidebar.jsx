@@ -13,6 +13,7 @@ import {
   FaElementor,
   FaGlobe,
   FaRobot,
+  FaEnvelope,
 } from "react-icons/fa";
 import BookBeeLogo from "../shared/BookBeeLogo";
 
@@ -40,6 +41,7 @@ const menuGroups = [
       { name: "Flash Sale", icon: <FaBolt size={18} />, path: "/admin/flash-sales" },
       { name: "Mã giảm giá", icon: <FaTicketAlt size={18} />, path: "/admin/coupons" },
       { name: "Banner", icon: <FaElementor size={18} />, path: "/admin/banners" },
+      { name: "Email Marketing", icon: <FaEnvelope size={18} />, path: "/admin/email-marketing" },
     ],
   },
   {

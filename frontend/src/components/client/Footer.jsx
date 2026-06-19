@@ -13,6 +13,9 @@ import {
   FaHeadset,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { publicRequest } from "../../requestMethods";
+import { toast } from "react-toastify";
 
 /**
  * Footer — BookBee Professional Edition v2
@@ -23,6 +26,28 @@ import { Link } from "react-router-dom";
  * - Tầng 5: Bottom bar (dark slate)
  */
 const Footer = () => {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Vui lòng nhập email của bạn");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const res = await publicRequest.post("/newsletter/subscribe", { email });
+      toast.success(res.data.message || "Đăng ký thành công!");
+      setEmail("");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Đăng ký thất bại");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <footer className="mt-16 font-sans border-t border-slate-100">
       
@@ -38,19 +63,28 @@ const Footer = () => {
             </div>
 
             {/* Cột phải: Form nhập */}
-            <div className="w-full md:w-2/3 flex bg-white p-1 rounded-2xl shadow-lg border border-orange-200/50">
+            <form onSubmit={handleSubscribe} className="w-full md:w-2/3 flex bg-white p-1 rounded-2xl shadow-lg border border-orange-200/50">
               <input
                 type="email"
                 placeholder="Nhập địa chỉ email của bạn..."
                 className="flex-1 px-5 py-3 text-sm text-slate-700 bg-transparent focus:outline-none font-medium rounded-l-2xl"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                required
               />
               <button
-                className="bg-slate-800 hover:bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-sm uppercase tracking-wide cursor-pointer hover:shadow-md active:scale-95 flex items-center justify-center"
+                type="submit"
+                disabled={isLoading}
+                className={`px-8 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-sm uppercase tracking-wide flex items-center justify-center ${
+                  isLoading 
+                    ? "bg-slate-400 text-white cursor-not-allowed" 
+                    : "bg-slate-800 hover:bg-slate-900 text-white cursor-pointer hover:shadow-md active:scale-95"
+                }`}
               >
-                Đăng ký
+                {isLoading ? "Đang xử lý..." : "Đăng ký"}
               </button>
-            </div>
-
+            </form>
           </div>
         </div>
       </div>

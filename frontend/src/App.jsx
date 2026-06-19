@@ -43,6 +43,7 @@ import AdminReviews from "./pages/admin/Reviews";
 import AdminCoupon from "./pages/admin/CouponList";
 import AdminChatAnalytics from "./pages/admin/ChatAnalytics";
 import AdminRecommendations from "./pages/admin/AIRecommendations";
+import AdminEmailCampaign from "./pages/admin/EmailCampaign";
 
 // ── Router Configuration ─────────────────────────────────────────────────────
 const router = createBrowserRouter([
@@ -99,6 +100,7 @@ const router = createBrowserRouter([
       { path: "coupons", element: <AdminCoupon /> },
       { path: "chat-analytics", element: <AdminChatAnalytics /> },
       { path: "ai-recommendations", element: <AdminRecommendations /> },
+      { path: "email-marketing", element: <AdminEmailCampaign /> },
     ],
   },
 ]);
