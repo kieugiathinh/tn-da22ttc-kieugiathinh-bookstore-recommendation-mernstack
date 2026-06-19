@@ -373,19 +373,28 @@ const sendMarketingEmail = async (emails, subject, htmlContent) => {
   `;
 
   // Gửi riêng rẽ cho từng người để đảm bảo tính riêng tư (không dùng BCC để tránh bị vào mục Spam)
-  const sendPromises = emails.map(email => {
-    const mailOptions = {
-      from: `"BookBee 🐝" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: subject,
-      html: getEmailWrapper(content),
-      attachments: [logoAttachment]
-    };
-    return transporter.sendMail(mailOptions);
-  });
+  // DÙNG VÒNG LẶP TUẦN TỰ (thay vì Promise.all) ĐỂ TRÁNH BỊ GMAIL CHẶN VÌ GỬI QUÁ NHIỀU CÙNG LÚC
+  let successCount = 0;
+  for (const recipient of emails) {
+    try {
+      const mailOptions = {
+        from: `"BookBee 🐝" <${process.env.EMAIL_USER}>`,
+        to: recipient,
+        subject: subject,
+        html: getEmailWrapper(content),
+        attachments: [logoAttachment]
+      };
+      await transporter.sendMail(mailOptions);
+      successCount++;
+      
+      // Delay 150ms giữa mỗi mail để tránh rate-limit của Google SMTP
+      await new Promise(resolve => setTimeout(resolve, 150));
+    } catch (err) {
+      console.error(`❌ Lỗi gửi email tới ${recipient}:`, err.message);
+    }
+  }
 
-  await Promise.all(sendPromises);
-  console.log(`✅ Đã gửi chiến dịch Email Marketing tới ${emails.length} người dùng.`);
+  console.log(`✅ Đã gửi chiến dịch Email Marketing thành công tới ${successCount}/${emails.length} người dùng.`);
 };
 
 export {

@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Subscriber from "../models/subscriberModel.js";
+import User from "../models/userModel.js";
 import { sendNewsletterWelcomeEmail, sendMarketingEmail } from "../services/emailService.js";
 
 // @desc    Subscribe to newsletter
@@ -65,8 +66,12 @@ export const sendCampaign = asyncHandler(async (req, res) => {
 
   let emailsToSend = [];
 
-  if (target === "all") {
-    // Lấy tất cả subscribers
+  if (target === "all_users") {
+    // Lấy tất cả người dùng có tài khoản
+    const users = await User.find({}).select("email").lean();
+    emailsToSend = users.map(u => u.email).filter(e => e);
+  } else if (target === "subscribers" || target === "all") {
+    // Lấy tất cả người đã đăng ký bản tin (subscribers)
     const subscribers = await Subscriber.find({ isSubscribed: true });
     emailsToSend = subscribers.map(s => s.email);
   } else if (target === "specific") {
