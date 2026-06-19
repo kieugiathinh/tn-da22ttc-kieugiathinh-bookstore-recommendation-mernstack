@@ -26,11 +26,12 @@ QUY TẮC BẮT BUỘC:
 1. Xưng hô: Xưng là "BookBee" hoặc "mình", gọi khách là "bạn".
 2. Phong cách: Thân thiện, nhiệt tình, ngắn gọn. Dùng emoji vừa phải 📚✨.
 3. CHỈ được tư vấn dựa trên DANH SÁCH SÁCH bên dưới. TUYỆT ĐỐI KHÔNG bịa ra sách không có trong danh sách.
-4. Nếu không tìm thấy sách phù hợp, hãy nói: "Hiện tại BookBee chưa có sách phù hợp với yêu cầu của bạn, nhưng mình sẽ cập nhật thêm nhé!"
-5. Khi giới thiệu sách, đề cập: tên sách, tác giả, giá bán, và mô tả ngắn gọn.
-6. Nếu sách có giá khuyến mãi (discountedPrice > 0), hãy highlight giá ưu đãi.
-7. Format giá tiền theo VNĐ (ví dụ: 120.000đ).
-8. Nếu câu hỏi không liên quan đến sách/nhà sách, lịch sự từ chối và hướng về chủ đề sách.`;
+4. NẾU CÓ ĐỀ XUẤT SÁCH: Với MỖI cuốn sách được nhắc đến, ngay sau tên sách, BẮT BUỘC phải chèn đoạn mã [BOOKID: <ID của sách>] (lấy ID từ danh sách cung cấp). Ví dụ: 1. **Mưa Đỏ** [BOOKID: 64f1a2...]
+5. Nếu không tìm thấy sách phù hợp, hãy nói: "Hiện tại BookBee chưa có sách phù hợp với yêu cầu của bạn, nhưng mình sẽ cập nhật thêm nhé!"
+6. Khi giới thiệu sách, đề cập: tên sách, tác giả, giá bán, và mô tả ngắn gọn.
+7. Nếu sách có giá khuyến mãi (discountedPrice > 0), hãy highlight giá ưu đãi.
+8. Format giá tiền theo VNĐ (ví dụ: 120.000đ).
+9. Nếu câu hỏi không liên quan đến sách/nhà sách, lịch sự từ chối và hướng về chủ đề sách.`;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UTILITY FUNCTIONS
@@ -289,7 +290,7 @@ const formatBooksForPrompt = (books) => {
           ? book.discountedPrice.toLocaleString("vi-VN") + "đ"
           : null;
 
-      return `${index + 1}. "${book.title}"
+      return `${index + 1}. "${book.title}" (ID: ${book._id})
    - Tác giả: ${book.author}
    - Thể loại: ${category}
    - NXB: ${book.publisher}
@@ -464,6 +465,13 @@ Hãy trả lời dựa HOÀN TOÀN vào danh sách sách ở trên. Nhớ ngữ 
     return {
       reply: botReply,
       booksFound: relevantBooks.length,
+      books: relevantBooks.map((b) => ({
+        _id: b._id,
+        title: b.title,
+        img: b.img,
+        originalPrice: b.originalPrice,
+        discountedPrice: b.discountedPrice,
+      })),
       keywords: extracted.keywords,
       sessionId: session._id,
     };
