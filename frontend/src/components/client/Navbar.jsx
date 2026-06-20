@@ -1,13 +1,13 @@
 import {
-  FaSearch,
-  FaShoppingCart,
-  FaUser,
-  FaSignOutAlt,
-  FaClipboardList,
-  FaUserCog,
-  FaBars,
-  FaTicketAlt,
-} from "react-icons/fa";
+  FiSearch,
+  FiShoppingCart,
+  FiUser,
+  FiLogOut,
+  FiClipboard,
+  FiSettings,
+  FiTag,
+  FiMenu
+} from "react-icons/fi";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -53,8 +53,8 @@ const Navbar = () => {
   return (
     <div
       className={`h-[72px] bg-white sticky top-0 z-50 transition-all duration-300 ${isScrolled
-          ? "shadow-md border-b border-slate-100"
-          : "shadow-sm border-b border-slate-50"
+        ? "shadow-md border-b border-slate-100"
+        : "shadow-sm border-b border-slate-50"
         }`}
     >
       <div className="max-w-7xl mx-auto px-4 md:px-8 h-full flex items-center justify-between gap-4">
@@ -65,13 +65,13 @@ const Navbar = () => {
 
         {/* SEARCH BAR */}
         <div className="flex-1 hidden md:flex items-center justify-center">
-          <div className="relative w-full max-w-[520px]">
+          <div className="relative w-full max-w-[520px] group">
             <input
               type="text"
               placeholder="Tìm kiếm sách yêu thích của bạn..."
               value={search}
-              className="w-full py-2.5 pl-5 pr-14 border-2 border-primary rounded-sm outline-none
-                         focus:ring-0
+              className="w-full py-2.5 pl-6 pr-14 border-2 border-primary rounded-full outline-none
+                         focus:ring-0 focus:shadow-md focus:border-orange-500
                          text-sm text-slate-700 placeholder:text-slate-400
                          bg-white transition-all duration-300"
               onChange={(e) => setSearch(e.target.value)}
@@ -79,12 +79,12 @@ const Navbar = () => {
             />
             <button
               onClick={handleSearch}
-              className="absolute right-1 top-1/2 -translate-y-1/2
+              className="absolute right-1.5 top-1/2 -translate-y-1/2
                          bg-primary hover:bg-primary-hover
-                         text-white rounded-sm w-12 h-[80%] flex items-center justify-center
-                         transition-all duration-200"
+                         text-white rounded-full w-10 h-[80%] flex items-center justify-center
+                         transition-all duration-200 cursor-pointer"
             >
-              <FaSearch className="text-sm" />
+              <FiSearch className="text-lg" />
             </button>
           </div>
         </div>
@@ -93,17 +93,17 @@ const Navbar = () => {
         <div className="flex items-center gap-5">
           {/* Cart */}
           <Link to="/cart">
-            <div className="relative cursor-pointer group">
-              <FaShoppingCart
-                className="text-2xl text-slate-500 group-hover:text-primary transition-colors duration-200"
+            <div className="relative cursor-pointer group p-2">
+              <FiShoppingCart
+                className="text-2xl text-slate-600 group-hover:text-primary transition-colors duration-200"
               />
               {cart.quantity > 0 && (
                 <span
-                  className="absolute -top-2 -right-2 w-5 h-5
-                             bg-primary text-white text-[10px] font-bold rounded-full
+                  className="absolute top-0 right-0 w-5 h-5
+                             bg-red-500 text-white text-[10px] font-bold rounded-full
                              flex items-center justify-center
-                             shadow-sm border-2 border-white
-                             animate-bounce"
+                             shadow-sm ring-2 ring-white
+                             transform group-hover:scale-110 transition-transform"
                 >
                   {cart.quantity}
                 </span>
@@ -118,7 +118,7 @@ const Navbar = () => {
               onMouseEnter={() => setIsDropdownOpen(true)}
               onMouseLeave={() => setIsDropdownOpen(false)}
             >
-              <div className="flex items-center gap-2 cursor-pointer py-2 group">
+              <div className="flex items-center gap-2 cursor-pointer py-1.5 px-2 rounded-full hover:bg-slate-100 transition-colors group">
                 {currentUser.avatar ? (
                   <img
                     src={currentUser.avatar}
@@ -136,7 +136,7 @@ const Navbar = () => {
                     {currentUser.fullname ? currentUser.fullname.charAt(0).toUpperCase() : "U"}
                   </div>
                 )}
-                <span className="font-semibold text-slate-700 text-sm hidden lg:block max-w-[100px] truncate select-none hover:text-primary transition-colors">
+                <span className="font-semibold text-slate-700 text-sm hidden lg:block max-w-[100px] truncate select-none group-hover:text-primary transition-colors">
                   {currentUser.fullname}
                 </span>
               </div>
@@ -148,7 +148,7 @@ const Navbar = () => {
                              border border-slate-100 animate-fadeIn min-w-[220px]"
                 >
                   {/* Header */}
-                  <div className="px-4 py-3 border-b border-slate-100 bg-primary-light/50 rounded-t-2xl">
+                  <div className="px-4 py-3 border-b border-slate-100 bg-orange-50/50 rounded-t-2xl">
                     <p className="text-xs text-slate-500">Xin chào,</p>
                     <p className="font-bold text-primary truncate">{currentUser.fullname}</p>
                   </div>
@@ -157,40 +157,40 @@ const Navbar = () => {
                     <Link
                       to="/admin"
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700
-                                 hover:bg-primary-light hover:text-primary font-semibold transition-colors"
+                                 hover:bg-orange-50 hover:text-primary font-semibold transition-colors"
                     >
-                      <FaUserCog /> Trang quản trị
+                      <FiSettings className="text-lg" /> Trang quản trị
                     </Link>
                   )}
                   <Link
                     to="/myaccount"
                     className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700
-                               hover:bg-primary-light hover:text-primary transition-colors"
+                               hover:bg-orange-50 hover:text-primary transition-colors"
                   >
-                    <FaUser /> Tài khoản của tôi
+                    <FiUser className="text-lg" /> Tài khoản của tôi
                   </Link>
                   <Link
                     to="/my-vouchers"
                     className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700
-                               hover:bg-primary-light hover:text-primary transition-colors"
+                               hover:bg-orange-50 hover:text-primary transition-colors"
                   >
-                    <FaTicketAlt /> Mã giảm giá của tôi
+                    <FiTag className="text-lg" /> Mã giảm giá
                   </Link>
                   <Link
                     to="/myorders"
                     className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700
-                               hover:bg-primary-light hover:text-primary transition-colors"
+                               hover:bg-orange-50 hover:text-primary transition-colors"
                   >
-                    <FaClipboardList /> Đơn mua
+                    <FiClipboard className="text-lg" /> Đơn mua
                   </Link>
                   <div className="border-t border-slate-100 mt-1 pt-1">
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2.5 text-sm text-slate-600
-                                 hover:bg-rose-50 hover:text-rose-600 transition-colors
-                                 flex items-center gap-2"
+                      className="w-full text-left px-4 py-2.5 text-sm font-semibold text-rose-600
+                                 hover:bg-rose-50 transition-colors
+                                 flex items-center gap-2 rounded-b-2xl"
                     >
-                      <FaSignOutAlt /> Đăng xuất
+                      <FiLogOut className="text-lg" /> Đăng xuất
                     </button>
                   </div>
                 </div>
@@ -199,15 +199,14 @@ const Navbar = () => {
           ) : (
             <div className="flex items-center gap-4">
               <Link to="/login">
-                <button className="text-slate-600 font-semibold hover:text-primary transition-colors text-sm">
+                <button className="text-slate-600 font-bold hover:text-orange-500 transition-colors text-sm px-2 cursor-pointer">
                   Đăng nhập
                 </button>
               </Link>
-              <div className="w-px h-4 bg-slate-300"></div>
               <Link to="/register">
-                <button className="px-5 py-2 rounded-sm font-semibold text-sm text-white
-                             bg-primary hover:bg-primary-hover
-                             shadow-sm transition-all duration-200 hover:-translate-y-0.5">
+                <button className="px-6 py-2.5 rounded-full font-bold text-sm text-white
+                             bg-gradient-to-r from-orange-500 to-[#EE4D2D] hover:from-[#EE4D2D] hover:to-orange-600
+                             shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer">
                   Đăng ký
                 </button>
               </Link>

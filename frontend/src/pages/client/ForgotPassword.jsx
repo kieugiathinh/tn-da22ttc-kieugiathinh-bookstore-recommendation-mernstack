@@ -46,8 +46,16 @@ const ForgotPassword = () => {
 
       <div className="max-w-5xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[550px] z-10 relative">
         {/* --- CỘT TRÁI: TYPOGRAPHY --- */}
-        <div className="hidden md:flex w-1/2 bg-gradient-to-br from-indigo-950 via-primary-hover to-violet-950 relative overflow-hidden justify-center items-center text-white p-12">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+        <div className="hidden md:flex w-1/2 bg-gradient-to-br from-orange-500 via-[#EE4D2D] to-rose-600 relative overflow-hidden justify-center items-center text-white p-12">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+
+          {/* Logo BookBee Glassmorphism */}
+          <div className="absolute top-8 left-8 z-20">
+            <Link to="/" className="bg-white/20 backdrop-blur-md px-3 py-2 rounded-xl shadow-lg border border-white/30 flex items-center gap-2 hover:bg-white/30 transition-all cursor-pointer">
+              <img src="/logobookbee.jpg" alt="BookBee" className="h-8 w-auto rounded-lg object-contain bg-white" />
+              <span className="text-white font-extrabold tracking-wider text-xl drop-shadow-md">BookBee</span>
+            </Link>
+          </div>
 
           <div className="relative z-10 text-center flex flex-col items-center w-full">
             <div className="mb-8 p-4 bg-white/10 rounded-full backdrop-blur-sm border border-white/20 shadow-inner">
@@ -107,7 +115,7 @@ const ForgotPassword = () => {
                     <input
                       type="email"
                       required
-                      className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-primary outline-none transition-all text-sm font-semibold bg-gray-50/50"
+                      className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-orange-500 outline-none transition-all text-sm font-semibold bg-gray-50/50"
                       placeholder="your-email@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -118,7 +126,7 @@ const ForgotPassword = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-primary hover:bg-primary-hover transition-all duration-300 shadow-xl hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+                  className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-orange-500 to-[#EE4D2D] hover:from-[#EE4D2D] hover:to-orange-600 transition-all duration-300 shadow-lg shadow-orange-500/30 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">
@@ -145,7 +153,7 @@ const ForgotPassword = () => {
                       ĐANG GỬI...
                     </span>
                   ) : (
-                    <span className="flex items-center gap-2 tracking-widest uppercase">
+                    <span className="flex items-center gap-2 tracking-widest uppercase cursor-pointer">
                       Gửi link khôi phục <FaPaperPlane className="text-xs" />
                     </span>
                   )}
@@ -156,7 +164,7 @@ const ForgotPassword = () => {
               <div className="text-center pt-6 border-t border-gray-50 mt-8">
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 text-sm font-bold text-honey-gold hover:text-primary transition-colors"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-orange-500 hover:text-orange-600 transition-colors"
                 >
                   <FaArrowLeft className="text-xs" />
                   Quay lại đăng nhập
@@ -205,7 +213,7 @@ const ForgotPassword = () => {
                 </button>
                 <Link
                   to="/login"
-                  className="block w-full py-3 px-4 text-sm font-bold rounded-2xl text-honey-gold hover:text-primary-hover transition-colors text-center"
+                  className="block w-full py-3 px-4 text-sm font-bold rounded-2xl text-orange-500 hover:text-orange-600 transition-colors text-center"
                 >
                   ← Quay lại đăng nhập
                 </Link>
