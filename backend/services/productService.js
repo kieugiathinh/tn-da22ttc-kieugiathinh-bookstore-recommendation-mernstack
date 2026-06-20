@@ -162,8 +162,8 @@ const getRelatedProducts = async (categoryId, productId) => {
 };
 
 const getTrendingProducts = async (period) => {
-  // Trạng thái đơn hàng: 1 (PROCESSING), 2 (DELIVERED)
-  let matchStage = { status: { $in: [1, 2] } };
+  // Trạng thái đơn hàng: 1 (CONFIRMED), 2 (PREPARING), 3 (DELIVERING), 4 (DELIVERED)
+  let matchStage = { status: { $in: [1, 2, 3, 4] } };
   
   if (period && period !== "all") {
     const now = new Date();

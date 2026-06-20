@@ -1,4 +1,4 @@
-import Order from "../models/orderModel.js";
+import Order, { ORDER_STATUS } from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import Review from "../models/reviewModel.js";
 import Coupon from "../models/couponModel.js";
@@ -109,7 +109,7 @@ const cancelOrder = async (id, userId) => {
   const order = await Order.findById(id);
   if (!order) throw new Error("Không tìm thấy đơn hàng");
   if (order.userId.toString() !== userId.toString()) throw new Error("Không có quyền");
-  if (order.status !== 0) throw new Error("Không thể hủy");
+  if (order.status !== ORDER_STATUS.PENDING) throw new Error("Không thể hủy");
 
   for (const item of order.products) {
     await Product.findByIdAndUpdate(item.productId, {
@@ -124,7 +124,7 @@ const cancelOrder = async (id, userId) => {
     }
   }
   
-  order.status = 3;
+  order.status = ORDER_STATUS.CANCELLED;
   return await order.save();
 };
 
