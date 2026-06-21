@@ -8,6 +8,7 @@ import {
   deleteFlashSale,
   updateFlashSale,
   removeProductFromFlashSale,
+  updateProductInFlashSale,
 } from "../controllers/flashsaleController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
@@ -28,6 +29,12 @@ router.delete(
   protect,
   admin,
   removeProductFromFlashSale
+);
+router.put(
+  "/:id/update-product/:productId",
+  protect,
+  admin,
+  updateProductInFlashSale
 );
 
 export default router;

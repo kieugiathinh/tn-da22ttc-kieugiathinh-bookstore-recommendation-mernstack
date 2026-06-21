@@ -15,7 +15,8 @@ import {
   FaSync,
   FaBoxOpen,
   FaChartPie,
-  FaLayerGroup
+  FaLayerGroup,
+  FaClipboardList
 } from "react-icons/fa";
 
 // ─── COMPONENT ──────────────────────────────────────────────────────────────
@@ -78,6 +79,7 @@ const Dashboard = () => {
   const [statusData, setStatusData]     = useState([]);
   const [prodStats, setProdStats]       = useState({ lowStock: [], topSelling: [] });
   const [customers, setCustomers]       = useState([]);
+  const [latestOrders, setLatestOrders] = useState([]);
   const [loading, setLoading]           = useState(true);
   const [isCompare, setIsCompare]       = useState(false);
   const [year1, setYear1]               = useState(new Date().getFullYear());
@@ -98,12 +100,13 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [resRev, resCat, resStatus, resProd, resCus] = await Promise.all([
+        const [resRev, resCat, resStatus, resProd, resCus, resLatest] = await Promise.all([
           userRequest.get("/stats/revenue-chart"),
           userRequest.get("/stats/categories"),
           userRequest.get("/stats/order-status"),
           userRequest.get("/stats/products-analytics"),
           userRequest.get("/stats/top-customers"),
+          userRequest.get("/stats/latest-orders"),
         ]);
 
         setRevenueChart(resRev.data.map(item => ({
@@ -127,6 +130,7 @@ const Dashboard = () => {
 
         setProdStats(resProd.data);
         setCustomers(resCus.data);
+        setLatestOrders(resLatest.data);
       } catch (err) {
         console.error("Lỗi tải dữ liệu chi tiết:", err);
       } finally {
@@ -533,6 +537,53 @@ const Dashboard = () => {
             </div>
           </div>
 
+        </div>
+    </div>
+
+      {/* ── ĐƠN HÀNG GẦN ĐÂY ── */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-amber-50 to-white px-6 py-4">
+          <div className="flex items-center gap-2">
+            <div className="bg-amber-100 p-2 rounded-lg"><FaClipboardList className="text-amber-600 text-lg" /></div>
+            <h3 className="font-extrabold text-gray-900">Đơn hàng gần đây</h3>
+          </div>
+          <Badge color="orange">Mới nhất</Badge>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                <th className="px-6 py-3">Mã đơn</th>
+                <th className="px-4 py-3">Khách hàng</th>
+                <th className="px-4 py-3 text-right">Tổng tiền</th>
+                <th className="px-4 py-3 text-center">Trạng thái</th>
+                <th className="px-4 py-3 text-right">Thời gian</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {latestOrders.length > 0 ? latestOrders.map((order, i) => {
+                const statusLabels = ["Chờ xác nhận", "Đã xác nhận", "Đang chuẩn bị", "Đang giao", "Đã giao", "Đã hủy"];
+                const statusColors = ["bg-amber-100 text-amber-700", "bg-blue-100 text-blue-700", "bg-violet-100 text-violet-700", "bg-indigo-100 text-indigo-700", "bg-emerald-100 text-emerald-700", "bg-red-100 text-red-700"];
+                return (
+                  <tr key={i} className="hover:bg-orange-50/30 transition-colors">
+                    <td className="px-6 py-3 font-mono text-xs font-bold text-gray-500">#{order._id?.slice(-6).toUpperCase()}</td>
+                    <td className="px-4 py-3 font-semibold text-gray-800">{order.name || "Khách"}</td>
+                    <td className="px-4 py-3 text-right font-bold text-orange-600">{formatCurrency(order.total || 0)} ₫</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black ${statusColors[order.status] || statusColors[0]}`}>
+                        {statusLabels[order.status] || "Không rõ"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs text-gray-400 font-medium">
+                      {new Date(order.createdAt).toLocaleDateString("vi-VN")} {new Date(order.createdAt).toLocaleTimeString("vi-VN", {hour: '2-digit', minute: '2-digit'})}
+                    </td>
+                  </tr>
+                );
+              }) : (
+                <tr><td colSpan={5} className="py-10 text-center text-sm font-medium text-gray-400">Chưa có đơn hàng</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

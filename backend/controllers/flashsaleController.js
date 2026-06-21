@@ -60,6 +60,13 @@ const removeProductFromFlashSale = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Removed product from flash sale" });
 });
 
+// 8. Cập nhật Sách trong Flash Sale
+// PUT /api/v1/flash-sales/:id/update-product/:productId
+const updateProductInFlashSale = asyncHandler(async (req, res) => {
+  const flashSale = await flashsaleService.updateProductInFlashSale(req.params.id, req.params.productId, req.body);
+  res.status(200).json(flashSale);
+});
+
 export {
   createFlashSale,
   addProductToFlashSale,
@@ -69,4 +76,5 @@ export {
   deleteFlashSale,
   updateFlashSale,
   removeProductFromFlashSale,
+  updateProductInFlashSale,
 };

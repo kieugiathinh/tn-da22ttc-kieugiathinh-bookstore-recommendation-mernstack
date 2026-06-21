@@ -192,20 +192,24 @@ const getLatestOrders = async () => {
 const getUserAnalytics = async (type) => {
   const { start, end } = getTimeRange(type || "month");
 
-  // 1. Tổng số khách hàng
-  const totalUsers = await User.countDocuments({ role: 0 });
+  // 1. Lấy danh sách tất cả khách hàng (role: 0) hiện tại
+  const allUsers = await User.find({ role: 0 }).select("_id createdAt").lean();
+  const totalUsers = allUsers.length;
+  const allUserIdsSet = new Set(allUsers.map(u => u._id.toString()));
 
-  // 2. Khách hàng mới trong kỳ
-  const newUsers = await User.countDocuments({
-    role: 0,
-    createdAt: { $gte: start, $lte: end },
-  });
+  // 2. Khách hàng mới trong kỳ (lọc từ allUsers)
+  const newUsers = allUsers.filter(
+    u => u.createdAt >= start && u.createdAt <= end
+  ).length;
 
   // 3. Khách hàng đã từng mua (có đơn hàng không bị hủy)
-  const buyerIds = await Order.distinct("userId", { status: { $ne: 5 } });
-  const totalBuyers = buyerIds.length;
+  const allBuyerIdsFromOrders = await Order.distinct("userId", { status: { $ne: 5 } });
+  
+  // Lọc ra những buyer vẫn còn tồn tại trong hệ thống (chưa bị xóa)
+  const validBuyerIds = allBuyerIdsFromOrders.filter(id => allUserIdsSet.has(id.toString()));
+  const totalBuyers = validBuyerIds.length;
 
-  // 4. Khách hàng chưa mua
+  // 4. Khách hàng chưa mua (hiện tại)
   const neverBought = totalUsers - totalBuyers;
 
   // 5. Tỷ lệ quay lại (khách đặt >= 2 đơn)
@@ -236,9 +240,9 @@ const getUserAnalytics = async (type) => {
   ]);
 
   // 7. Danh sách khách chưa mua (tối đa 20 người)
-  const allUserIds = await User.find({ role: 0 }).select("_id fullname email createdAt").limit(100).lean();
-  const buyerIdSet = new Set(buyerIds.map(String));
-  const neverBoughtList = allUserIds
+  const allUserIdsLimit = await User.find({ role: 0 }).select("_id fullname email createdAt").limit(100).lean();
+  const buyerIdSet = new Set(validBuyerIds.map(String));
+  const neverBoughtList = allUserIdsLimit
     .filter(u => !buyerIdSet.has(String(u._id)))
     .slice(0, 20);
 
@@ -528,9 +532,19 @@ const getFlashSaleStatsAnalytics = async () => {
     { $project: { title: 1, img: 1, originalPrice: 1, countInStock: 1, sold: 1 } }
   ]);
 
+  // Tổng số lượng đã bán & quota
+  const totalSoldQty = productStatsList.reduce((s, p) => s + p.soldCount, 0);
+  const totalQuota = productStatsList.reduce((s, p) => s + p.quantityLimit, 0);
+  const avgSellThroughRate = totalQuota > 0 ? Math.round((totalSoldQty / totalQuota) * 100) : 0;
+  const totalFlashSaleProducts = productStatsList.length;
+
   return {
     totalCampaigns,
     totalRevenue,
+    totalSoldQty,
+    totalQuota,
+    avgSellThroughRate,
+    totalFlashSaleProducts,
     topSoldProducts,
     slowSellingProducts,
     recommendedForSale,

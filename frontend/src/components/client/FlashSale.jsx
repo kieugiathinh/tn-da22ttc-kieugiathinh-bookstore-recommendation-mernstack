@@ -46,7 +46,13 @@ const FlashSale = () => {
             ...item.product,
             discountedPrice: item.discountPrice,
             sold: item.soldCount,
-            quantityLimit: item.quantityLimit,
+            countInStock: item.product.countInStock,
+            flashSale: {
+              discountPrice: item.discountPrice,
+              quantityLimit: item.quantityLimit,
+              soldCount: item.soldCount,
+              endTime: res.data.endTime,
+            }
           }));
           setProducts(mappedProducts);
           setEndTime(new Date(res.data.endTime).getTime());

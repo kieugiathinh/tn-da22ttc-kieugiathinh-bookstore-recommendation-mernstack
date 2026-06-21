@@ -44,6 +44,16 @@ const FlashSales = () => {
   const [bulkLimit, setBulkLimit] = useState("");
   const [customSettings, setCustomSettings] = useState({}); // { productId: { discountPrice, quantityLimit } }
 
+  // --- STATE MODAL SỬA SÁCH TRONG SALE ---
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
+  const [editingProductData, setEditingProductData] = useState({
+    saleId: null,
+    productId: null,
+    discountPrice: 0,
+    quantityLimit: 0,
+    productTitle: ""
+  });
+
   // 1. Fetch Data
   const fetchData = async () => {
     try {
@@ -100,6 +110,17 @@ const FlashSales = () => {
     setShowProductModal(true);
   };
 
+  const handleOpenEditProduct = (saleId, item) => {
+    setEditingProductData({
+      saleId,
+      productId: item.product._id,
+      discountPrice: item.discountPrice,
+      quantityLimit: item.quantityLimit,
+      productTitle: item.product?.title || "Sản phẩm"
+    });
+    setShowEditProductModal(true);
+  };
+
   // --- XỬ LÝ API ---
   const handleSaveSale = async (e) => {
     e.preventDefault();
@@ -136,6 +157,21 @@ const FlashSales = () => {
         Swal.fire({ title: "Đã xóa", icon: "success", timer: 1200, showConfirmButton: false });
         fetchData();
       } catch { Swal.fire("Lỗi", "Không thể xóa", "error"); }
+    }
+  };
+
+  const handleSaveEditProduct = async (e) => {
+    e.preventDefault();
+    try {
+      await userRequest.put(`/flash-sales/${editingProductData.saleId}/update-product/${editingProductData.productId}`, {
+        discountPrice: editingProductData.discountPrice,
+        quantityLimit: editingProductData.quantityLimit
+      });
+      Swal.fire({ title: "Thành công", text: "Cập nhật sản phẩm thành công", icon: "success", timer: 1500, showConfirmButton: false });
+      setShowEditProductModal(false);
+      fetchData();
+    } catch (error) {
+      Swal.fire("Lỗi", error.response?.data?.message || "Thất bại", "error");
     }
   };
 
@@ -362,9 +398,13 @@ const FlashSales = () => {
                                 </div>
                                 <div className="text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">Đã bán {item.soldCount}</div>
                               </td>
-                              <td className="px-5 py-3.5 text-center">
-                                <button className="flex items-center justify-center w-7 h-7 mx-auto rounded-md text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                  onClick={() => handleRemoveProduct(sale._id, item.product?._id)}>
+                              <td className="px-5 py-3.5 text-center flex items-center justify-center gap-1">
+                                <button className="flex items-center justify-center w-7 h-7 rounded-md text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                  onClick={() => handleOpenEditProduct(sale._id, item)} title="Sửa giá/số lượng">
+                                  <FaEdit size={12} />
+                                </button>
+                                <button className="flex items-center justify-center w-7 h-7 rounded-md text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                  onClick={() => handleRemoveProduct(sale._id, item.product?._id)} title="Xóa khỏi đợt Sale">
                                   <FaTimes size={12} />
                                 </button>
                               </td>
@@ -518,6 +558,34 @@ const FlashSales = () => {
             </div>
           </div>
         </div>
+      </Modal>
+
+      {/* --- MODAL SỬA SÁCH TRONG SALE --- */}
+      <Modal isOpen={showEditProductModal} onClose={() => setShowEditProductModal(false)} title="Chỉnh sửa sản phẩm">
+        <form onSubmit={handleSaveEditProduct} className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Tên sách</label>
+            <div className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-100 font-semibold text-gray-600">
+              {editingProductData.productTitle}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Giá Sale mới <span className="text-red-500">*</span></label>
+              <input type="number" required value={editingProductData.discountPrice} onChange={(e) => setEditingProductData({ ...editingProductData, discountPrice: Number(e.target.value) })}
+                className="w-full px-4 py-2.5 text-sm font-bold text-red-500 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-gray-50 focus:bg-white transition-all" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Số lượng bán <span className="text-red-500">*</span></label>
+              <input type="number" required value={editingProductData.quantityLimit} onChange={(e) => setEditingProductData({ ...editingProductData, quantityLimit: Number(e.target.value) })}
+                className="w-full px-4 py-2.5 text-sm font-bold text-gray-800 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-gray-50 focus:bg-white transition-all" />
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5">
+            <button type="button" onClick={() => setShowEditProductModal(false)} className="px-4 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition-colors">Hủy</button>
+            <button type="submit" className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary/90 shadow-sm transition-all">LƯU THAY ĐỔI</button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
