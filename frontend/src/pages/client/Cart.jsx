@@ -6,6 +6,7 @@ import { userRequest } from "../../requestMethods";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { FaBolt } from "react-icons/fa";
+import CartRecommendations from "../../components/client/CartRecommendations";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart);
@@ -413,6 +414,10 @@ const Cart = () => {
                 Xóa tất cả
               </button>
             </div>
+
+            {/* --- AI LỌC CỘNG TÁC (CF) --- */}
+            <CartRecommendations topK={5} />
+
           </div>
 
           {/* --- RIGHT COLUMN: ORDER SUMMARY --- */}

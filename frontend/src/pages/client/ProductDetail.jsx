@@ -22,6 +22,7 @@ import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import moment from "moment";
 import "moment/locale/vi"; // Import locale tiếng Việt
+import SimilarProducts from "../../components/client/SimilarProducts";
 
 // --- Star Rating Component ---
 const StarRating = ({ rating, size = "text-sm" }) => {
@@ -59,6 +60,7 @@ const Product = () => {
   // UI States
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [activeTab, setActiveTab] = useState("description"); // "description" or "reviews"
 
   const dispatch = useDispatch();
 
@@ -506,134 +508,148 @@ const Product = () => {
           </div>
         </div>
 
-        {/* ===== MÔ TẢ & REVIEWS ===== */}
-        <div className="mt-8 space-y-6">
+        {/* ===== MÔ TẢ & REVIEWS (TABS) ===== */}
+        <div className="mt-8 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10">
+          
+          {/* Tabs Navigation */}
+          <div className="flex border-b border-slate-200 mb-8 overflow-x-auto hide-scrollbar">
+            <button
+              onClick={() => setActiveTab("description")}
+              className={`pb-4 px-6 text-lg font-bold whitespace-nowrap transition-all duration-300 border-b-4 ${
+                activeTab === "description"
+                  ? "text-orange-600 border-orange-500"
+                  : "text-slate-400 border-transparent hover:text-slate-600"
+              }`}
+            >
+              Mô tả sản phẩm
+            </button>
+            <button
+              onClick={() => setActiveTab("reviews")}
+              className={`pb-4 px-6 text-lg font-bold whitespace-nowrap transition-all duration-300 border-b-4 flex items-center gap-2 ${
+                activeTab === "reviews"
+                  ? "text-orange-600 border-orange-500"
+                  : "text-slate-400 border-transparent hover:text-slate-600"
+              }`}
+            >
+              Đánh giá khách hàng
+              <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === "reviews" ? "bg-orange-100 text-orange-600" : "bg-slate-100 text-slate-500"}`}>
+                {reviews.length}
+              </span>
+            </button>
+          </div>
 
-          {/* Mô tả sản phẩm */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10">
-            <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
-              <div className="w-1 h-6 bg-gradient-to-b from-orange-500 to-amber-500 rounded-full" />
-              <h2 className="text-xl font-extrabold text-slate-800">Mô tả sản phẩm</h2>
-            </div>
-            
-            <div className={`relative transition-all duration-500 ease-in-out ${!showFullDesc ? "max-h-[300px] overflow-hidden" : ""}`}>
-              <div className="text-slate-700 text-justify leading-loose whitespace-pre-line text-sm pb-4">
-                {product.desc ? (
-                  <div dangerouslySetInnerHTML={{ __html: product.desc }} />
-                ) : (
-                  "Chưa có mô tả chi tiết."
+          {/* Tab Content: Mô tả */}
+          {activeTab === "description" && (
+            <div className="animate-fade-in">
+              <div className={`relative transition-all duration-500 ease-in-out ${!showFullDesc ? "max-h-[400px] overflow-hidden" : ""}`}>
+                <div className="text-slate-700 text-justify leading-loose whitespace-pre-line text-sm pb-4">
+                  {product.desc ? (
+                    <div dangerouslySetInnerHTML={{ __html: product.desc }} />
+                  ) : (
+                    "Chưa có mô tả chi tiết cho sản phẩm này."
+                  )}
+                </div>
+                
+                {/* Lớp gradient che phủ khi bị thu gọn */}
+                {!showFullDesc && product.desc && (
+                  <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
                 )}
               </div>
-              
-              {/* Lớp gradient che phủ khi bị thu gọn */}
-              {!showFullDesc && product.desc && (
-                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+
+              {/* Nút Xem thêm */}
+              {product.desc && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => setShowFullDesc(!showFullDesc)}
+                    className="px-8 py-2.5 rounded-full border-2 border-orange-200 text-orange-600 hover:bg-orange-50 font-bold text-sm transition-colors shadow-sm"
+                  >
+                    {showFullDesc ? "Thu gọn mô tả" : "Xem toàn bộ nội dung"}
+                  </button>
+                </div>
               )}
             </div>
+          )}
 
-            {/* Nút Xem thêm */}
-            {product.desc && (
-              <div className="flex justify-center mt-4">
-                <button
-                  onClick={() => setShowFullDesc(!showFullDesc)}
-                  className="px-8 py-2.5 rounded-full border-2 border-orange-200 text-orange-600 hover:bg-orange-50 font-bold text-sm transition-colors shadow-sm"
-                >
-                  {showFullDesc ? "Thu gọn mô tả" : "Xem thêm nội dung"}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Đánh giá */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10">
-            <div className="flex items-center justify-between mb-6 pb-5 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-6 bg-gradient-to-b from-amber-400 to-orange-500 rounded-full" />
-                <h2 className="text-xl font-extrabold text-slate-800">
-                  Đánh giá của khách hàng
-                </h2>
-              </div>
-              <span className="text-sm font-bold bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full">
-                {reviews.length} đánh giá
-              </span>
-            </div>
-
-            {loadingReviews ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-4 animate-pulse">
-                    <div className="w-10 h-10 bg-slate-100 rounded-full flex-shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-slate-100 rounded w-1/4" />
-                      <div className="h-3 bg-slate-100 rounded w-3/4" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : reviews.length > 0 ? (
-              <div className="space-y-6">
-                {(showAllReviews ? reviews : reviews.slice(0, 3)).map((rev) => (
-                  <div key={rev._id} className="flex gap-4 pb-6 border-b border-slate-100 last:border-0">
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0
-                                   bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
-                      {rev.user?.avatar ? (
-                        <img src={rev.user.avatar} alt="Ava" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-white font-bold text-sm">
-                          {rev.user?.fullname ? rev.user.fullname.charAt(0).toUpperCase() : "U"}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <h4 className="font-bold text-slate-800">{rev.user?.fullname || "Người dùng ẩn danh"}</h4>
-                        <span className="text-xs text-slate-400">{moment(rev.createdAt).fromNow()}</span>
+          {/* Tab Content: Đánh giá */}
+          {activeTab === "reviews" && (
+            <div className="animate-fade-in">
+              {loadingReviews ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-4 animate-pulse">
+                      <div className="w-10 h-10 bg-slate-100 rounded-full flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-slate-100 rounded w-1/4" />
+                        <div className="h-3 bg-slate-100 rounded w-3/4" />
                       </div>
-                      <div className="mb-2.5">
-                        <StarRating rating={rev.rating} size="text-xs" />
+                    </div>
+                  ))}
+                </div>
+              ) : reviews.length > 0 ? (
+                <div className="space-y-6">
+                  {(showAllReviews ? reviews : reviews.slice(0, 3)).map((rev) => (
+                    <div key={rev._id} className="flex gap-4 pb-6 border-b border-slate-100 last:border-0">
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0
+                                     bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+                        {rev.user?.avatar ? (
+                          <img src={rev.user.avatar} alt="Ava" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-white font-bold text-sm">
+                            {rev.user?.fullname ? rev.user.fullname.charAt(0).toUpperCase() : "U"}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-slate-600 text-sm bg-slate-50 p-3.5 rounded-xl leading-relaxed text-justify">
-                        {rev.comment}
-                      </p>
-                      {rev.reply && (
-                        <div className="mt-3 ml-4 bg-orange-50 p-3.5 rounded-xl border-l-4 border-orange-400">
-                          <p className="text-xs font-bold text-orange-700 mb-1">
-                            💬 Phản hồi của Nhà sách:
-                          </p>
-                          <p className="text-sm text-slate-700">{rev.reply}</p>
+
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <h4 className="font-bold text-slate-800">{rev.user?.fullname || "Người dùng ẩn danh"}</h4>
+                          <span className="text-xs text-slate-400">{moment(rev.createdAt).fromNow()}</span>
                         </div>
-                      )}
+                        <div className="mb-2.5">
+                          <StarRating rating={rev.rating} size="text-xs" />
+                        </div>
+                        <p className="text-slate-600 text-sm bg-slate-50 p-3.5 rounded-xl leading-relaxed text-justify">
+                          {rev.comment}
+                        </p>
+                        {rev.reply && (
+                          <div className="mt-3 ml-4 bg-orange-50 p-3.5 rounded-xl border-l-4 border-orange-400">
+                            <p className="text-xs font-bold text-orange-700 mb-1">
+                              💬 Phản hồi của Nhà sách:
+                            </p>
+                            <p className="text-sm text-slate-700">{rev.reply}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
 
-                {/* Nút Xem tất cả đánh giá */}
-                {reviews.length > 3 && (
-                  <div className="flex justify-center pt-4">
-                    <button
-                      onClick={() => setShowAllReviews(!showAllReviews)}
-                      className="px-8 py-2.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 font-bold text-sm transition-colors border border-orange-200"
-                    >
-                      {showAllReviews ? "Thu gọn đánh giá" : `Xem tất cả ${reviews.length} đánh giá`}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-14 text-slate-400">
-                <div className="text-5xl mb-3">📚</div>
-                <p className="font-medium">Chưa có đánh giá nào</p>
-                <p className="text-sm">Hãy là người đầu tiên nhận xét về cuốn sách này!</p>
-              </div>
-            )}
-          </div>
+                  {/* Nút Xem tất cả đánh giá */}
+                  {reviews.length > 3 && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setShowAllReviews(!showAllReviews)}
+                        className="px-8 py-2.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 font-bold text-sm transition-colors border border-orange-200"
+                      >
+                        {showAllReviews ? "Thu gọn đánh giá" : `Xem tất cả ${reviews.length} đánh giá`}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-14 text-slate-400">
+                  <div className="text-5xl mb-3">📚</div>
+                  <p className="font-medium">Chưa có đánh giá nào</p>
+                  <p className="text-sm">Hãy là người đầu tiên nhận xét về cuốn sách này!</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* --- ĐÃ ẨN GỢI Ý SÁCH THEO YÊU CẦU --- */}
-        {/*
+        {/* --- LỌC NỘI DUNG: SÁCH TƯƠNG TỰ --- */}
         <SimilarProducts productId={product._id} topK={10} />
+        {/*
         <RecommendedForYou topK={10} />
         */}
 

@@ -11,13 +11,19 @@ const BestSeller = () => {
   useEffect(() => {
     const fetchTrends = async () => {
       try {
-        const res = await userRequest.get(`/products/trends?period=${period}`);
-        setProducts(res.data);
-        if (res.data && res.data.length > 0) {
-          setActiveProduct(res.data[0]); // Mặc định chọn top 1
+        let days = 30;
+        if (period === "week") days = 7;
+        else if (period === "month") days = 30;
+        else if (period === "year") days = 365;
+
+        // Fetch sách nổi bật (Độ phổ biến) từ Recommendation AI Proxy thay vì lấy đơn thuần theo số lượng bán
+        const res = await userRequest.get(`/recommend/popular?limit=5&days=${days}`);
+        setProducts(res.data?.products || []);
+        if (res.data?.products && res.data.products.length > 0) {
+          setActiveProduct(res.data.products[0]); // Mặc định chọn top 1
         }
       } catch (err) {
-        console.error(err);
+        console.error("Lỗi khi lấy sách phổ biến:", err);
       }
     };
     fetchTrends();
@@ -97,8 +103,8 @@ const BestSeller = () => {
                   <p className="text-sm text-slate-500 truncate">{item.author}</p>
 
                   <div className="flex items-center gap-4 mt-1">
-                    <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
-                      Đã bán {item.periodSold || item.sold}
+                    <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded flex items-center gap-1">
+                      <FaTrophy className="text-xs" /> Độ HOT: {item.popularityScore ? Math.round(item.popularityScore) : (item.sold || 0)}
                     </span>
                     <div className="flex items-center gap-1 text-xs text-amber-500">
                       <FaStar /> {item.rating?.toFixed(1)}

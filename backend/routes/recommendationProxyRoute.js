@@ -16,17 +16,23 @@ import express from "express";
 import {
   getSimilarProducts,
   getUserRecommendations,
+  getPopularProducts,
   triggerRetrain,
   triggerRetrainForUser,
   getAIHealth,
-  simulateUserRecommendations
+  simulateUserRecommendations,
+  getHybridRecommendations
 } from "../controllers/recommendationProxyController.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import { protect, admin, optionalProtect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Public — không cần đăng nhập
+router.get("/popular", getPopularProducts);
 router.get("/similar/:productId", getSimilarProducts);
+
+// Optional auth — dùng cho Hybrid
+router.get("/hybrid", optionalProtect, getHybridRecommendations);
 
 // Protected — yêu cầu JWT cookie
 router.get("/for-you", protect, getUserRecommendations);

@@ -125,9 +125,105 @@ const getPurchasesData = async () => {
   return flatPurchases;
 };
 
+// ─── 5. Popularity-based Recommendations (Độ phổ biến) ─────────────────────────
+
+/**
+ * Lấy danh sách sách phổ biến nhất (Popular Books) kết hợp giữa:
+ * 1. Base Score (Dữ liệu nền tảng): Lượt bán (sold), Đánh giá (rating & numReviews).
+ * 2. Trending Score (Xu hướng 30 ngày qua): View, Cart, Purchase (từ UserInteraction).
+ * 
+ * Công thức:
+ * Score = (sold * 5) + (rating * log10(numReviews + 1) * 10) + trendingScore
+ */
+const getPopularBooks = async (limit = 10, days = 30) => {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  // 1. Tính điểm Trending từ Implicit Feedback (tạm bỏ qua favorite)
+  const trendingScores = await UserInteraction.aggregate([
+    { $match: { createdAt: { $gte: since } } },
+    {
+      $group: {
+        _id: "$productId",
+        trendingScore: {
+          $sum: {
+            $switch: {
+              branches: [
+                { case: { $eq: ["$interactionType", "view"] }, then: 1 },
+                { case: { $eq: ["$interactionType", "search_click"] }, then: 2 },
+                { case: { $eq: ["$interactionType", "add_to_cart"] }, then: 3 },
+                { case: { $eq: ["$interactionType", "purchase"] }, then: 5 },
+                { case: { $eq: ["$interactionType", "review"] }, then: 4 },
+              ],
+              default: 0,
+            },
+          },
+        },
+      },
+    },
+  ]);
+
+  const trendingMap = new Map();
+  trendingScores.forEach((item) => {
+    trendingMap.set(item._id.toString(), item.trendingScore);
+  });
+
+  // 1.5 Tính lượng bán thực tế trong khoảng thời gian `days` (periodSold)
+  const Order = (await import("../models/orderModel.js")).default;
+  const ordersAggregation = await Order.aggregate([
+    { $match: { createdAt: { $gte: since }, status: { $in: [1, 2, 3, 4] } } },
+    { $unwind: "$products" },
+    { $group: { _id: "$products.productId", periodSold: { $sum: "$products.quantity" } } }
+  ]);
+
+  const ordersMap = new Map();
+  ordersAggregation.forEach((item) => {
+    ordersMap.set(item._id.toString(), item.periodSold);
+  });
+
+  // 2. Lấy toàn bộ sách (thêm author, publisher, desc)
+  const allProducts = await Product.find({})
+    .populate("category", "name")
+    .select("_id title author publisher desc img originalPrice discountedPrice rating numReviews sold category countInStock")
+    .lean();
+
+  // 3. Tính điểm Popularity Score
+  // Nhấn mạnh vào dữ liệu của khoảng thời gian `days` (periodSold, trending)
+  const scoredProducts = allProducts.map((p) => {
+    const periodSold = ordersMap.get(p._id.toString()) || 0;
+    const trending = trendingMap.get(p._id.toString()) || 0;
+    
+    // Base all-time score (tie-breaker)
+    const baseSoldScore = (p.sold || 0) * 0.5; 
+    const ratingScore = (p.rating || 0) * Math.log10((p.numReviews || 0) + 1) * 2;
+    
+    // Period score (trọng số cao để filter ngày/tuần/tháng có ý nghĩa)
+    const periodScore = (periodSold * 20) + (trending * 2);
+    
+    const popularityScore = periodScore + baseSoldScore + ratingScore;
+
+    return {
+      ...p,
+      popularityScore,
+      periodSold, // Gửi kèm để hiển thị nếu cần
+      _aiMeta: {
+        algorithm: "popularity-weighted",
+        score: popularityScore,
+        periodSold,
+        trending,
+      }
+    };
+  });
+
+  // 4. Sort giảm dần theo điểm Popularity và limit
+  scoredProducts.sort((a, b) => b.popularityScore - a.popularityScore);
+
+  return scoredProducts.slice(0, limit);
+};
+
 export {
   getProductsData,
   getRatingsData,
   getInteractionsData,
   getPurchasesData,
+  getPopularBooks,
 };

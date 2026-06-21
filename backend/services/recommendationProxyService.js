@@ -62,15 +62,12 @@ const enrichAndSort = async (aiItems) => {
 };
 
 /**
- * Fallback: lấy sách bán chạy nhất khi Cold Start xảy ra.
+ * Fallback: lấy sách phổ biến nhất (Popularity-based) khi Cold Start xảy ra.
  * @param {number} limit
  */
 const getBestSellerFallback = async (limit = 6) => {
-  return await Product.find({})
-    .populate("category", "name")
-    .sort({ sold: -1 })
-    .limit(limit)
-    .lean();
+  const { getPopularBooks } = await import("./recommendationService.js");
+  return await getPopularBooks(limit);
 };
 
 // ─── Service Functions ────────────────────────────────────────────────────────
@@ -214,10 +211,84 @@ const getUserRecommendationsSimulator = async (userId, topK = 6) => {
   };
 };
 
+/**
+ * ─── HYBRID ENGINE ───────────────────────────────────────────────────────────
+ * Kết hợp: CF (40%) + Content-Based (30%) + Popularity (30%).
+ * Nếu User chưa đăng nhập hoặc Cold Start, tự động nghiêng về Popularity.
+ */
+const getHybridRecommendationsData = async (userId, topK = 20) => {
+  let hybridProducts = [];
+  const addedIds = new Set();
+  
+  const addProducts = (products) => {
+    for (const p of products) {
+      if (!addedIds.has(p._id.toString())) {
+        hybridProducts.push(p);
+        addedIds.add(p._id.toString());
+      }
+    }
+  };
+
+  const cfLimit = Math.ceil(topK * 0.4);
+  const cbfLimit = Math.ceil(topK * 0.3);
+  const popLimit = topK - cfLimit - cbfLimit;
+
+  // 1. Lấy CF Recommendations
+  if (userId) {
+    try {
+      const cfData = await getUserRecommendationsData(userId, topK);
+      if (!cfData.isColdStart && cfData.products) {
+        addProducts(cfData.products.slice(0, cfLimit));
+      }
+    } catch (e) {
+      console.error("[Hybrid] CF Error:", e.message);
+    }
+  }
+
+  // 2. Lấy Content-Based (dựa trên sách vừa xem gần nhất)
+  if (userId) {
+    try {
+      const UserInteraction = (await import("../models/userInteractionModel.js")).default;
+      const lastView = await UserInteraction.findOne({ userId, interactionType: "view" })
+        .sort({ createdAt: -1 })
+        .lean();
+        
+      if (lastView) {
+        const cbfData = await getSimilarProductsData(lastView.productId, cbfLimit);
+        if (cbfData.products) {
+          addProducts(cbfData.products);
+        }
+      }
+    } catch (e) {
+      console.error("[Hybrid] CBF Error:", e.message);
+    }
+  }
+
+  // 3. Lấy Popularity điền vào chỗ trống
+  const remaining = topK - hybridProducts.length;
+  if (remaining > 0) {
+    try {
+      const fallback = await getBestSellerFallback(remaining + 5); // Lấy dư để trừ trùng
+      addProducts(fallback);
+    } catch (e) {
+      console.error("[Hybrid] Popularity Error:", e.message);
+    }
+  }
+
+  // Trả về đúng topK
+  return {
+    products: hybridProducts.slice(0, topK),
+    algorithm: "hybrid-mixer (cf+cbf+pop)",
+    source: "nodejs-mixer",
+    count: Math.min(hybridProducts.length, topK),
+  };
+};
+
 export {
   getSimilarProductsData,
   getUserRecommendationsData,
   triggerCFRetrain,
   getAIHealthStatus,
   getUserRecommendationsSimulator,
+  getHybridRecommendationsData,
 };

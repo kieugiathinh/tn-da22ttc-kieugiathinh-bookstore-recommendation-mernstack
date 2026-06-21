@@ -123,6 +123,38 @@ export const getUserRecommendations = asyncHandler(async (req, res) => {
 });
 
 /**
+ * GET /api/v1/recommend/hybrid?top_k=20
+ * 
+ * Trả về gợi ý Lai (Hybrid) trộn từ CF, Content-Based và Popularity.
+ */
+export const getHybridRecommendations = asyncHandler(async (req, res) => {
+  // Lấy userId nếu có (có thể không đăng nhập vẫn trả về đc Popularity)
+  const userId = req.user?._id?.toString() ?? req.user?.id?.toString();
+  const topK = Math.min(parseInt(req.query.top_k, 10) || 20, 50);
+
+  try {
+    const { getHybridRecommendationsData } = await import("../services/recommendationProxyService.js");
+    const result = await getHybridRecommendationsData(userId, topK);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    console.warn(`[ProxyController] Hybrid error. Fallback to best sellers.`);
+    const fallback = await getBestSellerFallback(topK);
+    res.status(200).json({
+      success: true,
+      products: fallback,
+      algorithm: "bestseller-fallback",
+      source: "mongodb",
+      isFallback: true,
+      count: fallback.length,
+    });
+  }
+});
+
+/**
  * POST /api/v1/recommend/retrain
  *
  * [Admin only] Trigger retrain CF model ngay lập tức trên Python AI Service.
@@ -140,6 +172,35 @@ export const triggerRetrain = asyncHandler(async (req, res) => {
       success: false,
       message: "Không thể kết nối AI Service để trigger retrain.",
       error: aiError.message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/recommend/popular?limit=10&days=30
+ * 
+ * [Public] Lấy danh sách sách phổ biến (Popularity-based)
+ */
+export const getPopularProducts = asyncHandler(async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
+  const days = parseInt(req.query.days, 10) || 30;
+
+  try {
+    const { getPopularBooks } = await import("../services/recommendationService.js");
+    const products = await getPopularBooks(limit, days);
+
+    res.status(200).json({
+      success: true,
+      products,
+      algorithm: "popularity-weighted",
+      source: "mongodb",
+      count: products.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy sách phổ biến.",
+      error: error.message,
     });
   }
 });
