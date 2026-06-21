@@ -85,11 +85,11 @@ const UserInteractionSchema = mongoose.Schema(
     /**
      * Nguồn traffic — dùng để phân tích funnel và A/B test,
      * không dùng trực tiếp trong CF model.
-     * "homepage" | "search" | "category" | "recommendation" | "direct"
+     * "homepage" | "search" | "category" | "recommendation" | "direct" | "chatbot"
      */
     source: {
       type: String,
-      enum: ["homepage", "search", "category", "recommendation", "direct"],
+      enum: ["homepage", "search", "category", "recommendation", "direct", "chatbot"],
       default: "direct",
     },
   },

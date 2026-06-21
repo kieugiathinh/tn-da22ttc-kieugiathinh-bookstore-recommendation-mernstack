@@ -298,7 +298,19 @@ const ChatWidget = () => {
                                       ) : (
                                         <span className="text-orange-600 font-extrabold text-[13px]">{formatPrice(book.originalPrice)}</span>
                                       )}
-                                      <Link to={`/product/${book._id}`} className="mt-2 w-full py-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:shadow-md active:scale-95 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1">
+                                      <Link 
+                                        to={`/product/${book._id}`} 
+                                        onClick={() => {
+                                          if (currentUser) {
+                                            userRequest.post("/interactions", {
+                                              productId: book._id,
+                                              interactionType: "search_click",
+                                              source: "chatbot"
+                                            }).catch(() => {});
+                                          }
+                                        }}
+                                        className="mt-2 w-full py-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:shadow-md active:scale-95 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1"
+                                      >
                                         Xem ngay <FaChevronRight className="text-[8px]" />
                                       </Link>
                                     </div>
@@ -336,7 +348,19 @@ const ChatWidget = () => {
                                       ) : (
                                         <span className="text-orange-600 font-extrabold text-[14px]">{formatPrice(book.originalPrice)}</span>
                                       )}
-                                      <Link to={`/product/${book._id}`} className="mt-3 w-full py-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:shadow-md active:scale-95 text-[12px] font-bold rounded-lg transition-all flex items-center justify-center gap-1">
+                                      <Link 
+                                        to={`/product/${book._id}`} 
+                                        onClick={() => {
+                                          if (currentUser) {
+                                            userRequest.post("/interactions", {
+                                              productId: book._id,
+                                              interactionType: "search_click",
+                                              source: "chatbot"
+                                            }).catch(() => {});
+                                          }
+                                        }}
+                                        className="mt-3 w-full py-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:shadow-md active:scale-95 text-[12px] font-bold rounded-lg transition-all flex items-center justify-center gap-1"
+                                      >
                                         Xem ngay <FaChevronRight className="text-[10px]" />
                                       </Link>
                                     </div>

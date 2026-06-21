@@ -3,7 +3,7 @@ import { useLocation, Link } from "react-router-dom";
 import { useSidebar } from "../../context/SidebarContext";
 import {
   FaTachometerAlt, FaRobot, FaGlobe,
-  FaStore, FaBullhorn, FaAngleDown, FaChartBar, FaUsers
+  FaStore, FaBullhorn, FaAngleDown, FaChartBar, FaUsers, FaLightbulb
 } from "react-icons/fa";
 import BookBeeLogo from "../shared/BookBeeLogo";
 
@@ -41,12 +41,20 @@ const menuGroups = [
         ]
       },
       {
-        name: "Trí tuệ nhân tạo",
+        name: "AI Chatbot",
         icon: <FaRobot size={18} />,
         isDropdown: true,
         subItems: [
-          { name: "AI Gợi ý (Recommendations)", path: "/admin/ai-recommendations" },
-          { name: "AI Chat Insights", path: "/admin/chat-analytics" },
+          { name: "Dashboard", path: "/admin/chat-analytics" },
+          { name: "Lịch sử Chat", path: "/admin/chat-history" },
+        ]
+      },
+      {
+        name: "Hệ thống gợi ý",
+        icon: <FaLightbulb size={18} />,
+        isDropdown: true,
+        subItems: [
+          { name: "Dashboard", path: "/admin/ai-recommendations" },
         ]
       }
     ],
