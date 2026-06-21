@@ -33,6 +33,30 @@ const addProductToFlashSale = async (flashSaleId, data) => {
   return await flashSale.save();
 };
 
+const addMultipleProductsToFlashSale = async (flashSaleId, productsArray) => {
+  const flashSale = await FlashSale.findById(flashSaleId);
+  if (!flashSale) throw new Error("Đợt Flash Sale không tồn tại");
+
+  let addedCount = 0;
+  for (const data of productsArray) {
+    const { productId, discountPrice, quantityLimit } = data;
+    // Bỏ qua nếu sách đã tồn tại trong đợt sale này
+    const productExists = flashSale.products.find((item) => item.product.toString() === productId);
+    if (!productExists) {
+      flashSale.products.push({
+        product: productId,
+        discountPrice,
+        quantityLimit,
+        soldCount: 0,
+      });
+      addedCount++;
+    }
+  }
+
+  await flashSale.save();
+  return { flashSale, addedCount };
+};
+
 const getActiveFlashSale = async () => {
   const now = new Date();
   return await FlashSale.findOne({
@@ -125,6 +149,7 @@ const removeProductFromFlashSale = async (id, productId) => {
 export {
   createFlashSale,
   addProductToFlashSale,
+  addMultipleProductsToFlashSale,
   getActiveFlashSale,
   getAllFlashSales,
   deleteFlashSale,

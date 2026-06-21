@@ -62,6 +62,7 @@ const menuGroups = [
           { name: "Thống kê Khách hàng", path: "/admin/user-stats" },
           { name: "Thống kê Đơn hàng", path: "/admin/order-stats" },
           { name: "Thống kê Sách", path: "/admin/product-stats" },
+          { name: "Thống kê Flash Sale", path: "/admin/flashsale-stats" },
         ]
       },
     ],

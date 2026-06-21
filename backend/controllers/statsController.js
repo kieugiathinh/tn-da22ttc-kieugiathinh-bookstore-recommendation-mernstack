@@ -58,3 +58,8 @@ export const getProductStatsHandler = asyncHandler(async (req, res) => {
   const data = await statsService.getProductStatsAnalytics();
   res.status(200).json(data);
 });
+
+export const getFlashSaleStatsHandler = asyncHandler(async (req, res) => {
+  const data = await statsService.getFlashSaleStatsAnalytics();
+  res.status(200).json(data);
+});

@@ -15,6 +15,17 @@ const addProductToFlashSale = asyncHandler(async (req, res) => {
   res.status(200).json(flashSale);
 });
 
+// Thêm NHIỀU Sách vào Flash Sale
+// POST /api/v1/flash-sales/:id/add-multiple-products
+const addMultipleProducts = asyncHandler(async (req, res) => {
+  const { products } = req.body;
+  if (!products || !Array.isArray(products)) {
+    return res.status(400).json({ message: "Dữ liệu không hợp lệ" });
+  }
+  const result = await flashsaleService.addMultipleProductsToFlashSale(req.params.id, products);
+  res.status(200).json(result);
+});
+
 // 3. Lấy Flash Sale ĐANG DIỄN RA (Cho trang chủ)
 // GET /api/v1/flash-sales/active
 const getActiveFlashSale = asyncHandler(async (req, res) => {
@@ -52,6 +63,7 @@ const removeProductFromFlashSale = asyncHandler(async (req, res) => {
 export {
   createFlashSale,
   addProductToFlashSale,
+  addMultipleProducts,
   getActiveFlashSale,
   getAllFlashSales,
   deleteFlashSale,

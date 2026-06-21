@@ -12,6 +12,7 @@ import {
   getUserAnalyticsHandler,
   getOrderAnalyticsHandler,
   getProductStatsHandler,
+  getFlashSaleStatsHandler,
 } from "../controllers/statsController.js";
 
 const router = express.Router();
@@ -27,5 +28,6 @@ router.get("/latest-orders", protect, admin, getLatestOrders);
 router.get("/user-analytics", protect, admin, getUserAnalyticsHandler);
 router.get("/order-analytics", protect, admin, getOrderAnalyticsHandler);
 router.get("/product-stats", protect, admin, getProductStatsHandler);
+router.get("/flashsale-analytics", protect, admin, getFlashSaleStatsHandler);
 
 export default router;
