@@ -193,10 +193,22 @@ const Product = () => {
     ? Math.round((1 - finalPrice / product.originalPrice) * 100)
     : 0;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product.countInStock === 0) {
       toast.error("Sản phẩm đã hết hàng!");
       return;
+    }
+
+    try {
+      if (user) {
+        await userRequest.post('/interactions/track', {
+          productId: id,
+          interactionType: "add_to_cart",
+          source: "direct"
+        });
+      }
+    } catch (err) {
+      console.log("Track error:", err);
     }
 
     const remainingFS = product.flashSale

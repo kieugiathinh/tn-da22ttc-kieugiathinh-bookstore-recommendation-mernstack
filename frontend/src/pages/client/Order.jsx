@@ -103,6 +103,18 @@ const Order = () => {
         comment: data.comment || "",
         orderId: orderId,
       });
+
+      // Ghi lại hành vi review
+      try {
+        await userRequest.post('/interactions/track', {
+          productId: productId,
+          interactionType: "review",
+          source: "order"
+        });
+      } catch (err) {
+        console.log("Track error:", err);
+      }
+
       toast.success("Cảm ơn bạn đã đánh giá sản phẩm!");
       setShowRatingFor(null);
       // Cập nhật lại UI ngay lập tức

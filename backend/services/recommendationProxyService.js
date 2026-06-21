@@ -213,7 +213,7 @@ const getUserRecommendationsSimulator = async (userId, topK = 6) => {
 
 /**
  * ─── HYBRID ENGINE ───────────────────────────────────────────────────────────
- * Kết hợp: CF (40%) + Content-Based (30%) + Popularity (30%).
+ * Kết hợp: CF + Content-Based + Popularity theo tỉ lệ động (từ SystemConfig).
  * Nếu User chưa đăng nhập hoặc Cold Start, tự động nghiêng về Popularity.
  */
 const getHybridRecommendationsData = async (userId, topK = 20) => {
@@ -229,12 +229,31 @@ const getHybridRecommendationsData = async (userId, topK = 20) => {
     }
   };
 
-  const cfLimit = Math.ceil(topK * 0.4);
-  const cbfLimit = Math.ceil(topK * 0.3);
-  const popLimit = topK - cfLimit - cbfLimit;
+  // Đọc config tỉ lệ từ DB
+  let cfRatio = 0.4;
+  let cbfRatio = 0.3;
+  let popRatio = 0.3;
+
+  try {
+    const SystemConfig = (await import("../models/systemConfigModel.js")).default;
+    const config = await SystemConfig.findOne({ key: "HYBRID_WEIGHTS" }).lean();
+    if (config && config.value) {
+      const total = (config.value.cf || 0) + (config.value.cbf || 0) + (config.value.pop || 0);
+      if (total > 0) {
+        cfRatio = config.value.cf / total;
+        cbfRatio = config.value.cbf / total;
+        popRatio = config.value.pop / total;
+      }
+    }
+  } catch (err) {
+    console.error("[Hybrid] Không thể đọc config HYBRID_WEIGHTS:", err.message);
+  }
+
+  const cfLimit = Math.ceil(topK * cfRatio);
+  const cbfLimit = Math.ceil(topK * cbfRatio);
 
   // 1. Lấy CF Recommendations
-  if (userId) {
+  if (userId && cfLimit > 0) {
     try {
       const cfData = await getUserRecommendationsData(userId, topK);
       if (!cfData.isColdStart && cfData.products) {
@@ -246,7 +265,7 @@ const getHybridRecommendationsData = async (userId, topK = 20) => {
   }
 
   // 2. Lấy Content-Based (dựa trên sách vừa xem gần nhất)
-  if (userId) {
+  if (userId && cbfLimit > 0) {
     try {
       const UserInteraction = (await import("../models/userInteractionModel.js")).default;
       const lastView = await UserInteraction.findOne({ userId, interactionType: "view" })
@@ -283,6 +302,7 @@ const getHybridRecommendationsData = async (userId, topK = 20) => {
     count: Math.min(hybridProducts.length, topK),
   };
 };
+
 
 export {
   getSimilarProductsData,

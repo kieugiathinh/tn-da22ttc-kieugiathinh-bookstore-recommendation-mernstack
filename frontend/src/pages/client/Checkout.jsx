@@ -306,6 +306,20 @@ const Checkout = () => {
     if (paymentMethod === "COD") {
       try {
         await userRequest.post("/orders", { ...orderData, status: 0 });
+
+        // Ghi lại hành vi mua hàng
+        checkoutItems.forEach(async (item) => {
+          try {
+            await userRequest.post('/interactions/track', {
+              productId: item._id || item.productId,
+              interactionType: "purchase",
+              source: "checkout"
+            });
+          } catch (e) {
+            console.log("Track error:", e);
+          }
+        });
+
         dispatch(clearCart());
         navigate("/myorders");
         toast.success("Đặt hàng thành công!");
@@ -316,6 +330,20 @@ const Checkout = () => {
     } else if (paymentMethod === "Stripe") {
       try {
         localStorage.setItem("tempOrderData", JSON.stringify(orderData));
+
+        // Ghi lại hành vi mua hàng (Stripe pending)
+        checkoutItems.forEach(async (item) => {
+          try {
+            await userRequest.post('/interactions/track', {
+              productId: item._id || item.productId,
+              interactionType: "purchase",
+              source: "checkout"
+            });
+          } catch (e) {
+            console.log("Track error:", e);
+          }
+        });
+
         const res = await userRequest.post("/stripe/create-checkout-session", {
           cart: { products: checkoutItems, total: grandTotal },
           userId: user._id, email: shippingEmail, name: shippingName,

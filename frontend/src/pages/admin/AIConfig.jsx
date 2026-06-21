@@ -1,0 +1,256 @@
+import { useState, useEffect } from "react";
+import { userRequest } from "../../requestMethods";
+import { toast } from "react-toastify";
+import { FaSave, FaSync, FaCogs, FaSlidersH, FaBalanceScale } from "react-icons/fa";
+
+const AIConfig = () => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  // States cho Hybrid Weights
+  const [cfWeight, setCfWeight] = useState(40);
+  const [cbfWeight, setCbfWeight] = useState(30);
+  const [popWeight, setPopWeight] = useState(30);
+  
+  // States cho Interaction Weights
+  const [interactionWeights, setInteractionWeights] = useState({
+    view: 1,
+    search_click: 2,
+    add_to_cart: 3,
+    review: 4,
+    purchase: 5
+  });
+
+  const fetchConfigs = async () => {
+    try {
+      setLoading(true);
+      const [hybridRes, interactionRes] = await Promise.all([
+        userRequest.get("/config/HYBRID_WEIGHTS"),
+        userRequest.get("/config/INTERACTION_WEIGHTS")
+      ]);
+
+      const hybrid = hybridRes.data.value;
+      if (hybrid) {
+        setCfWeight(hybrid.cf || 40);
+        setCbfWeight(hybrid.cbf || 30);
+        setPopWeight(hybrid.pop || 30);
+      }
+
+      const interactions = interactionRes.data.value;
+      if (interactions) {
+        setInteractionWeights(interactions);
+      }
+    } catch (error) {
+      toast.error("Không thể tải cấu hình AI.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchConfigs();
+  }, []);
+
+  // Handle Hybrid Change - Đảm bảo tổng = 100
+  const handleHybridChange = (type, value) => {
+    let newVal = parseInt(value, 10);
+    if (isNaN(newVal) || newVal < 0) newVal = 0;
+    if (newVal > 100) newVal = 100;
+
+    if (type === "cf") {
+      setCfWeight(newVal);
+      // Chia đều phần còn lại cho 2 cái kia
+      const remain = 100 - newVal;
+      setCbfWeight(Math.floor(remain / 2));
+      setPopWeight(Math.ceil(remain / 2));
+    } else if (type === "cbf") {
+      setCbfWeight(newVal);
+      const remain = 100 - newVal;
+      setCfWeight(Math.floor(remain / 2));
+      setPopWeight(Math.ceil(remain / 2));
+    } else if (type === "pop") {
+      setPopWeight(newVal);
+      const remain = 100 - newVal;
+      setCfWeight(Math.floor(remain / 2));
+      setCbfWeight(Math.ceil(remain / 2));
+    }
+  };
+
+  const handleInteractionChange = (key, value) => {
+    let newVal = parseFloat(value);
+    if (isNaN(newVal) || newVal < 0) newVal = 0;
+    setInteractionWeights(prev => ({ ...prev, [key]: newVal }));
+  };
+
+  const handleSave = async () => {
+    // Validate Hybrid
+    const total = cfWeight + cbfWeight + popWeight;
+    if (total !== 100) {
+      toast.error("Tổng tỉ lệ Thuật toán phải bằng 100%.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await Promise.all([
+        userRequest.put("/config/HYBRID_WEIGHTS", {
+          value: { cf: cfWeight, cbf: cbfWeight, pop: popWeight }
+        }),
+        userRequest.put("/config/INTERACTION_WEIGHTS", {
+          value: interactionWeights
+        })
+      ]);
+      toast.success("Đã lưu cấu hình! Vui lòng Huấn luyện lại (Retrain) để AI áp dụng trọng số mới.");
+    } catch (error) {
+      toast.error("Lỗi khi lưu cấu hình.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center gap-3 text-indigo-500">
+        <FaSync className="animate-spin text-3xl" />
+        <span className="font-bold text-lg">Đang tải cấu hình...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-md">
+            <FaCogs className="text-white text-xl" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
+              Cấu hình Thuật toán AI
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 font-medium">
+              Chỉnh sửa tỉ lệ pha trộn thuật toán và trọng số tương tác để thay đổi hành vi gợi ý.
+            </p>
+          </div>
+        </div>
+        
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white rounded-xl font-black text-sm transition-all shadow-md"
+        >
+          {saving ? <FaSync className="animate-spin" /> : <FaSave />}
+          {saving ? "ĐANG LƯU..." : "LƯU CẤU HÌNH"}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── HYBRID WEIGHTS ── */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-6 border-b pb-4">
+            <FaBalanceScale className="text-indigo-500 text-xl" />
+            <h2 className="text-lg font-extrabold text-gray-900">Tỉ lệ Thuật toán (Hybrid)</h2>
+          </div>
+          <p className="text-sm text-gray-500 mb-6">
+            Điều chỉnh số lượng sách mà mỗi thuật toán sẽ đóng góp vào danh sách gợi ý. Tổng phải là 100%.
+          </p>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-bold text-gray-700">Lọc Cộng tác (Collaborative Filtering)</label>
+                <span className="text-indigo-600 font-black">{cfWeight}%</span>
+              </div>
+              <input
+                type="range"
+                min="0" max="100"
+                value={cfWeight}
+                onChange={(e) => handleHybridChange("cf", e.target.value)}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              />
+              <p className="text-xs text-gray-400">Gợi ý cá nhân hóa cao dựa trên thói quen của người dùng giống nhau.</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-bold text-gray-700">Lọc Nội dung (Content-Based)</label>
+                <span className="text-emerald-600 font-black">{cbfWeight}%</span>
+              </div>
+              <input
+                type="range"
+                min="0" max="100"
+                value={cbfWeight}
+                onChange={(e) => handleHybridChange("cbf", e.target.value)}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+              />
+              <p className="text-xs text-gray-400">Gợi ý sách tương tự với cuốn sách người dùng vừa xem gần đây.</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-bold text-gray-700">Bán chạy nhất (Popularity)</label>
+                <span className="text-rose-600 font-black">{popWeight}%</span>
+              </div>
+              <input
+                type="range"
+                min="0" max="100"
+                value={popWeight}
+                onChange={(e) => handleHybridChange("pop", e.target.value)}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
+              />
+              <p className="text-xs text-gray-400">Sách hot trend làm mồi nhử cho nhóm người dùng mới (Cold Start).</p>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-4 border-t flex justify-between items-center">
+            <span className="text-sm font-bold text-gray-500">Tổng cộng:</span>
+            <span className={`text-lg font-black ${cfWeight + cbfWeight + popWeight === 100 ? "text-emerald-500" : "text-rose-500"}`}>
+              {cfWeight + cbfWeight + popWeight}%
+            </span>
+          </div>
+        </div>
+
+        {/* ── INTERACTION WEIGHTS ── */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-6 border-b pb-4">
+            <FaSlidersH className="text-indigo-500 text-xl" />
+            <h2 className="text-lg font-extrabold text-gray-900">Trọng số Hành vi (Implicit Signals)</h2>
+          </div>
+          <p className="text-sm text-gray-500 mb-6">
+            Mức điểm mà AI sẽ gán cho mỗi loại hành vi của người dùng khi huấn luyện mô hình.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { key: "view", label: "Xem sản phẩm (View)", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+              { key: "search_click", label: "Click từ tìm kiếm", color: "text-cyan-600", bg: "bg-cyan-50", border: "border-cyan-200" },
+              { key: "add_to_cart", label: "Thêm vào giỏ hàng", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
+              { key: "review", label: "Đánh giá sách", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
+              { key: "purchase", label: "Mua hàng (Purchase)", color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" }
+            ].map(item => (
+              <div key={item.key} className={`p-4 rounded-xl border ${item.bg} ${item.border}`}>
+                <label className={`block text-xs font-black uppercase tracking-wider ${item.color} mb-2`}>
+                  {item.label}
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={interactionWeights[item.key]}
+                    onChange={(e) => handleInteractionChange(item.key, e.target.value)}
+                    className="w-20 px-3 py-2 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
+                  <span className="text-xs text-gray-500 font-medium">điểm</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AIConfig;

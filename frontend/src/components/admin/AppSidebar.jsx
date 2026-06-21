@@ -55,6 +55,8 @@ const menuGroups = [
         isDropdown: true,
         subItems: [
           { name: "Dashboard", path: "/admin/ai-recommendations" },
+          { name: "Cấu hình Thuật toán", path: "/admin/ai-recommendations/config" },
+          { name: "Hành vi người dùng", path: "/admin/ai-recommendations/interactions" },
         ]
       }
     ],

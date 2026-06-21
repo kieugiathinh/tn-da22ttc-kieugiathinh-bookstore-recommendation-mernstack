@@ -64,6 +64,7 @@ def _compute_time_decay(created_at_series: pd.Series) -> pd.Series:
 def build_implicit_ratings(
     df_interactions: pd.DataFrame,
     df_purchases: pd.DataFrame,
+    weights: dict = None,
 ) -> pd.DataFrame:
     """
     Chuyển đổi implicit feedback thành pseudo-ratings DataFrame.
@@ -75,10 +76,14 @@ def build_implicit_ratings(
     Args:
         df_interactions: DataFrame với cột userId, productId, interactionType, createdAt
         df_purchases:    DataFrame với cột userId, productId, quantity, purchasedAt
+        weights:         Dict trọng số tương tác
 
     Returns:
         pd.DataFrame với cột userId, productId, rating (pseudo), source="implicit"
     """
+    if weights is None:
+        weights = IMPLICIT_WEIGHTS
+        
     rows = []
 
     # ── Xử lý interactions ────────────────────────────────────────────────────
@@ -86,7 +91,7 @@ def build_implicit_ratings(
         required_cols = {"userId", "productId", "interactionType", "createdAt"}
         if required_cols.issubset(df_interactions.columns):
             df_i = df_interactions.copy()
-            df_i["weight"] = df_i["interactionType"].map(IMPLICIT_WEIGHTS).fillna(1.0)
+            df_i["weight"] = df_i["interactionType"].map(weights).fillna(1.0)
             df_i["decay"]  = _compute_time_decay(df_i["createdAt"])
             df_i["score"]  = df_i["weight"] * df_i["decay"]
             agg = (
@@ -102,8 +107,8 @@ def build_implicit_ratings(
         required_cols = {"userId", "productId", "quantity", "purchasedAt"}
         if required_cols.issubset(df_purchases.columns):
             df_p = df_purchases.copy()
-            # Purchase weight = quantity × IMPLICIT_WEIGHTS["purchase"]
-            purchase_w = IMPLICIT_WEIGHTS["purchase"]
+            # Purchase weight = quantity × weights["purchase"]
+            purchase_w = weights.get("purchase", 5.0)
             df_p["decay"]     = _compute_time_decay(df_p["purchasedAt"])
             df_p["score"]     = df_p["quantity"].clip(upper=5) * purchase_w * df_p["decay"]
             df_p["userId"]    = df_p["userId"].astype(str)
@@ -304,6 +309,7 @@ class CollaborativeRecommender:
         df_ratings: pd.DataFrame,
         df_interactions: Optional[pd.DataFrame] = None,
         df_purchases: Optional[pd.DataFrame] = None,
+        weights: Optional[dict] = None,
     ) -> "CollaborativeRecommender":
         """
         Huấn luyện Funk SVD trên ma trận User-Item ratings kết hợp.
@@ -312,6 +318,7 @@ class CollaborativeRecommender:
             df_ratings:      Explicit ratings từ Review collection (userId, productId, rating).
             df_interactions: Implicit signals từ UserInteraction (tuỳ chọn).
             df_purchases:    Lịch sử mua hàng từ Order (tuỳ chọn).
+            weights:         Dict trọng số động.
 
         Returns:
             self
@@ -320,7 +327,7 @@ class CollaborativeRecommender:
             ValueError: Nếu không đủ dữ liệu để train.
         """
         # ── Bước 1: Build implicit pseudo-ratings ────────────────────────────
-        df_implicit = build_implicit_ratings(df_interactions, df_purchases)
+        df_implicit = build_implicit_ratings(df_interactions, df_purchases, weights)
         self._implicit_count = len(df_implicit)
 
         if df_ratings is not None and not df_ratings.empty:

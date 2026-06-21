@@ -44,6 +44,8 @@ import AdminCoupon from "./pages/admin/CouponList";
 import AdminChatAnalytics from "./pages/admin/ChatAnalytics";
 import AdminChatHistory from "./pages/admin/ChatHistory";
 import AdminRecommendations from "./pages/admin/AIRecommendations";
+import AdminAIConfig from "./pages/admin/AIConfig";
+import AdminAIInteractions from "./pages/admin/AIInteractions";
 import AdminEmailCampaign from "./pages/admin/EmailCampaign";
 import AdminUserStats from "./pages/admin/UserStats";
 import AdminOrderStats from "./pages/admin/OrderStats";
@@ -106,6 +108,8 @@ const router = createBrowserRouter([
       { path: "chat-analytics", element: <AdminChatAnalytics /> },
       { path: "chat-history", element: <AdminChatHistory /> },
       { path: "ai-recommendations", element: <AdminRecommendations /> },
+      { path: "ai-recommendations/config", element: <AdminAIConfig /> },
+      { path: "ai-recommendations/interactions", element: <AdminAIInteractions /> },
       { path: "email-marketing", element: <AdminEmailCampaign /> },
       { path: "user-stats", element: <AdminUserStats /> },
       { path: "order-stats", element: <AdminOrderStats /> },

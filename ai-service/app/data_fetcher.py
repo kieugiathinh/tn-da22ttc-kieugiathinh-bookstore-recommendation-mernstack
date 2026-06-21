@@ -190,13 +190,60 @@ def fetch_purchases() -> pd.DataFrame:
     return df
 
 
+def fetch_interaction_weights() -> dict:
+    """
+    Lấy trọng số động (Dynamic Weights) từ cấu hình Node.js.
+    Nếu Node.js chưa có hoặc lỗi, trả về trọng số mặc định.
+    """
+    default_weights = {
+        "view": 1.0,
+        "search_click": 2.0,
+        "add_to_cart": 3.0,
+        "review": 4.0,
+        "purchase": 5.0,
+    }
+    
+    endpoint = "/api/v1/config/INTERACTION_WEIGHTS"
+    # Sửa lại base_url thành Node API URL bỏ đi phần cuổi nếu cần,
+    # nhưng _fetch sử dụng httpx.Client(base_url=settings.NODE_API_URL).
+    # Vì settings.NODE_API_URL thường là http://localhost:5000 (không có /api/v1)
+    # Hãy kiểm tra settings.NODE_API_URL trong runtime hoặc truyền endpoint có chứa /api/v1 
+    # Nhưng _fetch mặc định coi endpoint là path.
+
+    try:
+        with _get_client() as client:
+            # Sửa endpoint dựa trên cấu trúc các biến settings (thường NODE_API_URL có sẵn /api/v1/recommend/data)
+            # Thôi mình dùng http://localhost:5000 trực tiếp hoặc lấy cấu hình từ môi trường.
+            # Rủi ro: settings.NODE_API_URL có the la http://localhost:5000/api/v1/recommend/data 
+            pass
+    except Exception:
+        pass
+
+    # Do fetch_products() dùng settings.PRODUCTS_ENDPOINT ("/api/v1/recommend/data/products"),
+    # Vậy client config có base_url = "http://localhost:5000".
+    # Ok, ta gọi trực tiếp bằng _fetch
+    try:
+        with _get_client() as client:
+            response = client.get("/api/v1/config/INTERACTION_WEIGHTS")
+            if response.status_code == 200:
+                payload = response.json()
+                if payload.get("success") and payload.get("value"):
+                    # Chuyển đổi value sang dict với float
+                    weights = {k: float(v) for k, v in payload["value"].items()}
+                    print(f"[DataFetcher] Fetched dynamic weights: {weights}")
+                    return weights
+    except Exception as e:
+        print(f"[DataFetcher] Warn: Không thể lấy dynamic weights ({e}), dùng mặc định.")
+        
+    return default_weights
+
 def fetch_all_data() -> dict:
     """
     Convenience function: lấy tất cả data trong một lần gọi.
     Dùng khi training pipeline cần toàn bộ dataset.
 
     Returns:
-        dict với keys: "products", "ratings", "interactions", "purchases"
+        dict với keys: "products", "ratings", "interactions", "purchases", "weights"
     """
     print("[DataFetcher] >> Fetching all datasets from Node.js...")
     return {
@@ -204,4 +251,6 @@ def fetch_all_data() -> dict:
         "ratings": fetch_ratings(),
         "interactions": fetch_interactions(days=90),
         "purchases": fetch_purchases(),
+        "weights": fetch_interaction_weights(),
     }
+

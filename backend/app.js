@@ -89,6 +89,15 @@ app.use("/api/v1/shipping", shippingRoute);
 app.use("/api/v1/recommend/data", recommendationRoute);
 // Recommendation System — Proxy Endpoints (dành cho Frontend React)
 app.use("/api/v1/recommend", recommendationProxyRoute);
+
+// Config API (dành cho Admin)
+import configRoutes from "./routes/configRoutes.js";
+app.use("/api/v1/config", configRoutes);
+
+// Interactions API (dành cho Admin)
+import interactionRoutes from "./routes/interactionRoutes.js";
+app.use("/api/v1/interactions", interactionRoutes);
+
 app.use("/api/v1/newsletter", newsletterRoutes);
 
 // --- ERROR MIDDLEWARE ---
