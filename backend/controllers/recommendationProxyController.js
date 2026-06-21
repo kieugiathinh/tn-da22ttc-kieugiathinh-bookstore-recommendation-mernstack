@@ -17,6 +17,7 @@ import {
   triggerCFRetrain,
 } from "../services/recommendationProxyService.js";
 import Product from "../models/productModel.js";
+import Category from "../models/categoryModel.js";
 
 // ─── Helper: Fallback khi AI Service chết ────────────────────────────────────
 

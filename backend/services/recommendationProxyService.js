@@ -7,6 +7,7 @@
 
 import axios from "axios";
 import Product from "../models/productModel.js";
+import Category from "../models/categoryModel.js";
 import dotenv from "dotenv";
 
 dotenv.config();
