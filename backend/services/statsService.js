@@ -1,6 +1,7 @@
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
+import Category from "../models/categoryModel.js";
 
 const getTimeRange = (type) => {
   const now = new Date();
@@ -41,7 +42,7 @@ const getDashboardStats = async (type) => {
     {
       $match: {
         createdAt: { $gte: start, $lte: end },
-        status: { $ne: 3 },
+        status: { $ne: 5 }, // 5 = Đã hủy (hệ thống mới)
       },
     },
     {
@@ -56,7 +57,7 @@ const getDashboardStats = async (type) => {
 
   const canceled = await Order.countDocuments({
     createdAt: { $gte: start, $lte: end },
-    status: 3,
+    status: 5, // 5 = Đã hủy
   });
 
   return {
@@ -186,6 +187,293 @@ const getLatestOrders = async () => {
   return await Order.find().sort({ createdAt: -1 }).limit(6).lean();
 };
 
+// ─── THỐNG KÊ KHÁCH HÀNG ───────────────────────────────────────────────────────
+const getUserAnalytics = async (type) => {
+  const { start, end } = getTimeRange(type || "month");
+
+  // 1. Tổng số khách hàng
+  const totalUsers = await User.countDocuments({ role: 0 });
+
+  // 2. Khách hàng mới trong kỳ
+  const newUsers = await User.countDocuments({
+    role: 0,
+    createdAt: { $gte: start, $lte: end },
+  });
+
+  // 3. Khách hàng đã từng mua (có đơn hàng không bị hủy)
+  const buyerIds = await Order.distinct("userId", { status: { $ne: 5 } });
+  const totalBuyers = buyerIds.length;
+
+  // 4. Khách hàng chưa mua
+  const neverBought = totalUsers - totalBuyers;
+
+  // 5. Tỷ lệ quay lại (khách đặt >= 2 đơn)
+  const repeatBuyers = await Order.aggregate([
+    { $match: { status: { $ne: 5 } } },
+    { $group: { _id: "$userId", count: { $sum: 1 } } },
+    { $match: { count: { $gte: 2 } } },
+    { $count: "total" },
+  ]);
+  const repeatCount = repeatBuyers[0]?.total || 0;
+  const returnRate = totalBuyers > 0 ? Math.round((repeatCount / totalBuyers) * 100) : 0;
+
+  // 6. Top 10 khách hàng VIP
+  const topCustomers = await Order.aggregate([
+    { $match: { status: { $ne: 5 } } },
+    {
+      $group: {
+        _id: "$userId",
+        totalSpent: { $sum: "$total" },
+        orderCount: { $sum: 1 },
+        name: { $first: "$name" },
+        email: { $first: "$email" },
+        lastOrder: { $max: "$createdAt" },
+      },
+    },
+    { $sort: { totalSpent: -1 } },
+    { $limit: 10 },
+  ]);
+
+  // 7. Danh sách khách chưa mua (tối đa 20 người)
+  const allUserIds = await User.find({ role: 0 }).select("_id fullname email createdAt").limit(100).lean();
+  const buyerIdSet = new Set(buyerIds.map(String));
+  const neverBoughtList = allUserIds
+    .filter(u => !buyerIdSet.has(String(u._id)))
+    .slice(0, 20);
+
+  // 8. Khách hàng mới theo tháng (năm hiện tại)
+  const currentYear = new Date().getFullYear();
+  const newByMonth = await User.aggregate([
+    {
+      $match: {
+        role: 0,
+        createdAt: { $gte: new Date(currentYear, 0, 1), $lte: new Date(currentYear, 11, 31, 23, 59, 59) },
+      },
+    },
+    { $group: { _id: { $month: "$createdAt" }, count: { $sum: 1 } } },
+    { $sort: { _id: 1 } },
+  ]);
+  const newUsersByMonth = Array.from({ length: 12 }, (_, i) => {
+    const found = newByMonth.find(d => d._id === i + 1);
+    return { month: `T${i + 1}`, count: found ? found.count : 0 };
+  });
+
+  return {
+    totalUsers,
+    newUsers,
+    totalBuyers,
+    neverBought,
+    returnRate,
+    topCustomers,
+    neverBoughtList,
+    newUsersByMonth,
+    repeatCount,
+  };
+};
+
+// ─── THỐNG KÊ ĐƠN HÀNG ──────────────────────────────────────────────────────────
+const getOrderAnalytics = async (type) => {
+  const { start, end } = getTimeRange(type || "month");
+  const now = new Date();
+
+  // 1. Tổng số đơn trong kỳ
+  const totalOrders = await Order.countDocuments({ createdAt: { $gte: start, $lte: end } });
+
+  // 2. Đơn đã giao (status=4) — dùng làm doanh thu thực
+  const deliveredOrders = await Order.countDocuments({ createdAt: { $gte: start, $lte: end }, status: 4 });
+
+  // 3. Đơn đã hủy
+  const canceledOrders = await Order.countDocuments({ createdAt: { $gte: start, $lte: end }, status: 5 });
+
+  // 4. Đơn đang xử lý (0..3)
+  const processingOrders = await Order.countDocuments({
+    createdAt: { $gte: start, $lte: end },
+    status: { $in: [0, 1, 2, 3] },
+  });
+
+  // 5. Doanh thu thực tế (chỉ đơn đã giao)
+  const revenueResult = await Order.aggregate([
+    { $match: { createdAt: { $gte: start, $lte: end }, status: 4 } },
+    { $group: { _id: null, total: { $sum: "$total" }, avgOrder: { $avg: "$total" } } },
+  ]);
+  const revenue = revenueResult[0]?.total || 0;
+  const avgOrderValue = Math.round(revenueResult[0]?.avgOrder || 0);
+
+  // 6. Tỷ lệ hủy
+  const cancelRate = totalOrders > 0 ? Math.round((canceledOrders / totalOrders) * 100) : 0;
+
+  // 7. Phân bố theo trạng thái
+  const statusDistribution = await Order.aggregate([
+    { $match: { createdAt: { $gte: start, $lte: end } } },
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+    { $sort: { _id: 1 } },
+  ]);
+
+  // 8. Doanh thu theo ngày (30 ngày gần nhất)
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(now.getDate() - 29);
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+  const dailyRevenue = await Order.aggregate([
+    { $match: { createdAt: { $gte: thirtyDaysAgo }, status: 4 } },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+          day: { $dayOfMonth: "$createdAt" },
+        },
+        revenue: { $sum: "$total" },
+        orders: { $sum: 1 },
+      },
+    },
+    { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
+  ]);
+
+  // Map 30 ngày, điền 0 nếu không có
+  const dailyMap = {};
+  dailyRevenue.forEach(d => {
+    const key = `${d._id.year}-${String(d._id.month).padStart(2, "0")}-${String(d._id.day).padStart(2, "0")}`;
+    dailyMap[key] = { revenue: d.revenue, orders: d.orders };
+  });
+
+  const revenueByDay = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date(thirtyDaysAgo);
+    date.setDate(thirtyDaysAgo.getDate() + i);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return {
+      date: `${date.getDate()}/${date.getMonth() + 1}`,
+      revenue: dailyMap[key]?.revenue || 0,
+      orders: dailyMap[key]?.orders || 0,
+    };
+  });
+
+  // 9. Phân bố phương thức thanh toán
+  const paymentDistribution = await Order.aggregate([
+    { $match: { createdAt: { $gte: start, $lte: end } } },
+    { $group: { _id: "$paymentMethod", count: { $sum: 1 }, revenue: { $sum: "$total" } } },
+    { $sort: { count: -1 } },
+  ]);
+
+  // 10. Top 5 sản phẩm được đặt nhiều nhất trong kỳ
+  const topProducts = await Order.aggregate([
+    { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 5 } } },
+    { $unwind: "$products" },
+    {
+      $group: {
+        _id: "$products.productId",
+        title: { $first: "$products.title" },
+        img: { $first: "$products.img" },
+        totalQty: { $sum: "$products.quantity" },
+        totalRevenue: { $sum: { $multiply: ["$products.price", "$products.quantity"] } },
+      },
+    },
+    { $sort: { totalQty: -1 } },
+    { $limit: 5 },
+  ]);
+
+  return {
+    totalOrders,
+    deliveredOrders,
+    canceledOrders,
+    processingOrders,
+    revenue,
+    avgOrderValue,
+    cancelRate,
+    statusDistribution,
+    revenueByDay,
+    paymentDistribution,
+    topProducts,
+  };
+};
+
+// ─── THỐNG KÊ SÁCH ────────────────────────────────────────────────────────────
+const getProductStatsAnalytics = async () => {
+  // 1. Tổng quan kho
+  const totalProducts  = await Product.countDocuments();
+  const outOfStock     = await Product.countDocuments({ countInStock: 0 });
+  const lowStock       = await Product.countDocuments({ countInStock: { $gt: 0, $lte: 10 } });
+  const inStock        = totalProducts - outOfStock - lowStock;
+
+  // 2. Tổng tồn kho + tổng đã bán
+  const summaryResult = await Product.aggregate([
+    { $group: { _id: null, totalStock: { $sum: "$countInStock" }, totalSold: { $sum: "$sold" } } },
+  ]);
+  const totalStock = summaryResult[0]?.totalStock ?? 0;
+  const totalSold  = summaryResult[0]?.totalSold ?? 0;
+
+  // 3. Top 10 bán chạy
+  const topSelling = await Product.find({ sold: { $gt: 0 } })
+    .sort({ sold: -1 })
+    .limit(10)
+    .populate("category", "name")
+    .select("title author img sold countInStock originalPrice discountedPrice rating numReviews category")
+    .lean();
+
+  // 4. Bán ế / không bán được (sold = 0 và đã thêm > 30 ngày)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const slowMoving = await Product.find({ sold: 0, createdAt: { $lte: thirtyDaysAgo } })
+    .sort({ countInStock: -1 })
+    .limit(10)
+    .populate("category", "name")
+    .select("title author img sold countInStock originalPrice discountedPrice createdAt category")
+    .lean();
+
+  // 5. Sách sắp hết hàng (1–10 cuốn, bán nhiều nhất) → cần nhập thêm
+  const needRestock = await Product.find({ countInStock: { $gt: 0, $lte: 10 } })
+    .sort({ sold: -1 })
+    .limit(10)
+    .populate("category", "name")
+    .select("title author img sold countInStock originalPrice discountedPrice category")
+    .lean();
+
+  // 6. Phân bố theo thể loại (số lượng đầu sách + tổng tồn kho)
+  const categoryDistribution = await Product.aggregate([
+    {
+      $lookup: {
+        from: "categories",
+        localField: "category",
+        foreignField: "_id",
+        as: "catInfo",
+      },
+    },
+    { $unwind: { path: "$catInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $group: {
+        _id: "$catInfo.name",
+        count: { $sum: 1 },
+        totalSold: { $sum: "$sold" },
+        totalStock: { $sum: "$countInStock" },
+      },
+    },
+    { $sort: { count: -1 } },
+    { $limit: 10 },
+  ]);
+
+  // 7. Sản phẩm đánh giá cao nhất (rating >= 4)
+  const topRated = await Product.find({ numReviews: { $gte: 1 }, rating: { $gte: 4 } })
+    .sort({ rating: -1, numReviews: -1 })
+    .limit(5)
+    .populate("category", "name")
+    .select("title author img rating numReviews sold originalPrice discountedPrice category")
+    .lean();
+
+  return {
+    totalProducts,
+    outOfStock,
+    lowStock,
+    inStock,
+    totalStock,
+    totalSold,
+    topSelling,
+    slowMoving,
+    needRestock,
+    categoryDistribution,
+    topRated,
+  };
+};
+
 export {
   getDashboardStats,
   getRevenueChart,
@@ -195,4 +483,7 @@ export {
   getProductAnalytics,
   getTopCustomers,
   getLatestOrders,
+  getUserAnalytics,
+  getOrderAnalytics,
+  getProductStatsAnalytics,
 };
