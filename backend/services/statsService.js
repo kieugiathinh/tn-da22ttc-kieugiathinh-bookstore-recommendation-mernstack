@@ -33,6 +33,25 @@ const getTimeRange = (type) => {
   return { start, end };
 };
 
+const getPreviousTimeRange = (type, currentStart) => {
+  const start = new Date(currentStart);
+  const end = new Date(currentStart);
+  end.setMilliseconds(-1);
+
+  if (type === "day") {
+    start.setDate(start.getDate() - 1);
+  } else if (type === "week") {
+    start.setDate(start.getDate() - 7);
+  } else if (type === "month") {
+    start.setMonth(start.getMonth() - 1);
+  } else if (type === "year") {
+    start.setFullYear(start.getFullYear() - 1);
+  } else if (type === "all") {
+    return { start: new Date(0), end: new Date(0) }; // Không có kỳ trước cho All
+  }
+  return { start, end };
+};
+
 const getDashboardStats = async (type) => {
   const { start, end } = getTimeRange(type || "month");
 
@@ -191,121 +210,219 @@ const getLatestOrders = async () => {
 // ─── THỐNG KÊ KHÁCH HÀNG ───────────────────────────────────────────────────────
 const getUserAnalytics = async (type) => {
   const { start, end } = getTimeRange(type || "month");
+  const { start: prevStart, end: prevEnd } = getPreviousTimeRange(type || "month", start);
 
-  // 1. Lấy danh sách tất cả khách hàng (role: 0) hiện tại
-  const allUsers = await User.find({ role: 0 }).select("_id createdAt").lean();
+  // 1. Tổng khách hàng hiện tại (đăng ký tính đến end)
+  const allUsers = await User.find({ role: 0, createdAt: { $lte: end } }).select("_id createdAt").lean();
   const totalUsers = allUsers.length;
   const allUserIdsSet = new Set(allUsers.map(u => u._id.toString()));
 
-  // 2. Khách hàng mới trong kỳ (lọc từ allUsers)
-  const newUsers = allUsers.filter(
-    u => u.createdAt >= start && u.createdAt <= end
-  ).length;
+  const prevTotalUsers = allUsers.filter(u => u.createdAt <= prevEnd).length;
 
-  // 3. Khách hàng đã từng mua (có đơn hàng không bị hủy)
-  const allBuyerIdsFromOrders = await Order.distinct("userId", { status: { $ne: 5 } });
+  // 2. Khách hàng mới trong kỳ
+  const newUsers = allUsers.filter(u => u.createdAt >= start && u.createdAt <= end).length;
+  const prevNewUsers = allUsers.filter(u => u.createdAt >= prevStart && u.createdAt <= prevEnd).length;
+
+  // 3. Khách hàng đã mua (tính đến end) -> Để tính "chưa mua toàn hệ thống"
+  const allOrdersToEnd = await Order.find({ createdAt: { $lte: end }, status: { $ne: 5 } }).select("userId createdAt total name email").lean();
+  const allBuyersSet = new Set(allOrdersToEnd.map(o => o.userId?.toString()).filter(Boolean));
+  const validBuyersToEnd = [...allBuyersSet].filter(id => allUserIdsSet.has(id));
+  const totalBuyersToEnd = validBuyersToEnd.length;
+
+  // 4. Khách chưa mua toàn hệ thống
+  const neverBought = totalUsers - totalBuyersToEnd;
   
-  // Lọc ra những buyer vẫn còn tồn tại trong hệ thống (chưa bị xóa)
-  const validBuyerIds = allBuyerIdsFromOrders.filter(id => allUserIdsSet.has(id.toString()));
-  const totalBuyers = validBuyerIds.length;
+  const allOrdersToPrevEnd = allOrdersToEnd.filter(o => o.createdAt <= prevEnd);
+  const prevBuyersSet = new Set(allOrdersToPrevEnd.map(o => o.userId?.toString()).filter(Boolean));
+  const prevValidBuyers = [...prevBuyersSet].filter(id => allUserIdsSet.has(id));
+  const prevNeverBought = prevTotalUsers - prevValidBuyers.length;
 
-  // 4. Khách hàng chưa mua (hiện tại)
-  const neverBought = totalUsers - totalBuyers;
+  // 5. Khách mua trong kỳ (để phân tích mua lần đầu/quay lại)
+  const ordersInPeriod = allOrdersToEnd.filter(o => o.createdAt >= start && o.createdAt <= end);
+  const buyersInPeriodSet = new Set(ordersInPeriod.map(o => o.userId?.toString()).filter(Boolean));
+  const validBuyersInPeriod = [...buyersInPeriodSet].filter(id => allUserIdsSet.has(id));
+  const totalBuyersInPeriod = validBuyersInPeriod.length;
 
-  // 5. Tỷ lệ quay lại (khách đặt >= 2 đơn)
-  const repeatBuyers = await Order.aggregate([
-    { $match: { status: { $ne: 5 } } },
-    { $group: { _id: "$userId", count: { $sum: 1 } } },
-    { $match: { count: { $gte: 2 } } },
-    { $count: "total" },
-  ]);
-  const repeatCount = repeatBuyers[0]?.total || 0;
-  const returnRate = totalBuyers > 0 ? Math.round((repeatCount / totalBuyers) * 100) : 0;
-
-  // 6. Top 10 khách hàng VIP
-  const topCustomers = await Order.aggregate([
-    { $match: { status: { $ne: 5 } } },
-    {
-      $group: {
-        _id: "$userId",
-        totalSpent: { $sum: "$total" },
-        orderCount: { $sum: 1 },
-        name: { $first: "$name" },
-        email: { $first: "$email" },
-        lastOrder: { $max: "$createdAt" },
-      },
-    },
-    { $sort: { totalSpent: -1 } },
-    { $limit: 10 },
-  ]);
-
-  // 7. Danh sách khách chưa mua (tối đa 20 người)
-  const allUserIdsLimit = await User.find({ role: 0 }).select("_id fullname email createdAt").limit(100).lean();
-  const buyerIdSet = new Set(validBuyerIds.map(String));
-  const neverBoughtList = allUserIdsLimit
-    .filter(u => !buyerIdSet.has(String(u._id)))
-    .slice(0, 20);
-
-  // 8. Khách hàng mới theo tháng (năm hiện tại)
-  const currentYear = new Date().getFullYear();
-  const newByMonth = await User.aggregate([
-    {
-      $match: {
-        role: 0,
-        createdAt: { $gte: new Date(currentYear, 0, 1), $lte: new Date(currentYear, 11, 31, 23, 59, 59) },
-      },
-    },
-    { $group: { _id: { $month: "$createdAt" }, count: { $sum: 1 } } },
-    { $sort: { _id: 1 } },
-  ]);
-  const newUsersByMonth = Array.from({ length: 12 }, (_, i) => {
-    const found = newByMonth.find(d => d._id === i + 1);
-    return { month: `T${i + 1}`, count: found ? found.count : 0 };
+  const orderCountByUserId = {};
+  allOrdersToEnd.forEach(o => {
+    const uid = o.userId?.toString();
+    if(uid) orderCountByUserId[uid] = (orderCountByUserId[uid] || 0) + 1;
   });
+
+  const repeatCount = validBuyersInPeriod.filter(id => orderCountByUserId[id] >= 2).length;
+  const returnRate = totalBuyersInPeriod > 0 ? Math.round((repeatCount / totalBuyersInPeriod) * 100) : 0;
+
+  const ordersInPrevPeriod = allOrdersToPrevEnd.filter(o => o.createdAt >= prevStart && o.createdAt <= prevEnd);
+  const buyersInPrevPeriodSet = new Set(ordersInPrevPeriod.map(o => o.userId?.toString()).filter(Boolean));
+  const validBuyersInPrevPeriod = [...buyersInPrevPeriodSet].filter(id => allUserIdsSet.has(id));
+  
+  const orderCountByUserIdPrev = {};
+  allOrdersToPrevEnd.forEach(o => {
+    const uid = o.userId?.toString();
+    if(uid) orderCountByUserIdPrev[uid] = (orderCountByUserIdPrev[uid] || 0) + 1;
+  });
+  const prevRepeatCount = validBuyersInPrevPeriod.filter(id => orderCountByUserIdPrev[id] >= 2).length;
+  const prevReturnRate = validBuyersInPrevPeriod.length > 0 ? Math.round((prevRepeatCount / validBuyersInPrevPeriod.length) * 100) : 0;
+
+  const calcChange = (cur, prev) => {
+    if (prev === 0) return cur > 0 ? 100 : 0;
+    return Math.round(((cur - prev) / prev) * 100);
+  };
+
+  const changes = {
+    totalUsers: calcChange(totalUsers, prevTotalUsers),
+    newUsers: calcChange(newUsers, prevNewUsers),
+    neverBought: calcChange(neverBought, prevNeverBought),
+    returnRate: returnRate - prevReturnRate, // Absolute diff
+  };
+
+  // 6. Top 10 khách hàng VIP (luỹ kế đến end)
+  const topMap = {};
+  allOrdersToEnd.forEach(o => {
+    const uid = o.userId?.toString();
+    if(uid && allUserIdsSet.has(uid)) {
+      if(!topMap[uid]) {
+        topMap[uid] = { _id: uid, totalSpent: 0, orderCount: 0, name: o.name, email: o.email, lastOrder: o.createdAt };
+      }
+      topMap[uid].totalSpent += o.total;
+      topMap[uid].orderCount += 1;
+      if (o.createdAt > topMap[uid].lastOrder) topMap[uid].lastOrder = o.createdAt;
+      if (o.name && !topMap[uid].name) topMap[uid].name = o.name;
+    }
+  });
+  const validTopCustomers = Object.values(topMap).sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 10);
+  const finalTopCustomers = validTopCustomers.map(c => ({
+    ...c,
+    avgOrder: Math.round(c.totalSpent / c.orderCount)
+  }));
+
+  // 7. Danh sách khách chưa mua toàn hệ thống
+  const neverBoughtSet = new Set([...allUserIdsSet].filter(x => !allBuyersSet.has(x)));
+  const neverBoughtListFull = await User.find({ _id: { $in: Array.from(neverBoughtSet) } })
+    .select("_id fullname email createdAt")
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .lean();
+
+  const nowTime = new Date().getTime();
+  const neverBoughtList = neverBoughtListFull.map(u => ({
+    ...u,
+    daysSinceRegister: Math.floor((nowTime - new Date(u.createdAt).getTime()) / (1000 * 3600 * 24)),
+    source: "Website"
+  }));
+
+  // 8. Biểu đồ Khách mới & Khách quay lại theo thời gian
+  const timeChartData = [];
+  if (type === "year" || type === "all") {
+    const yearToUse = type === "year" ? start.getFullYear() : new Date().getFullYear();
+    for (let i = 0; i < 12; i++) {
+      const monthStart = new Date(yearToUse, i, 1);
+      const monthEnd = new Date(yearToUse, i + 1, 0, 23, 59, 59);
+      const newU = allUsers.filter(u => u.createdAt >= monthStart && u.createdAt <= monthEnd).length;
+      
+      const ordersInMonth = allOrdersToEnd.filter(o => o.createdAt >= monthStart && o.createdAt <= monthEnd);
+      const buyersInMonth = [...new Set(ordersInMonth.map(o => o.userId?.toString()).filter(Boolean))].filter(id => allUserIdsSet.has(id));
+      const returningAccurate = buyersInMonth.filter(id => {
+         const count = allOrdersToEnd.filter(o => o.userId?.toString() === id && o.createdAt <= monthEnd).length;
+         return count >= 2;
+      }).length;
+      const newBuyers = buyersInMonth.length - returningAccurate;
+
+      timeChartData.push({
+        time: `T${i + 1}`,
+        newUsers: newU,
+        newBuyers: newBuyers,
+        returning: returningAccurate
+      });
+    }
+  } else {
+    const days = Math.round((end - start) / (1000 * 3600 * 24));
+    for (let i = 0; i <= days; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      const dStart = new Date(d); dStart.setHours(0,0,0,0);
+      const dEnd = new Date(d); dEnd.setHours(23,59,59,999);
+      if (dStart > end) break;
+
+      const newU = allUsers.filter(u => u.createdAt >= dStart && u.createdAt <= dEnd).length;
+      const ordersInDay = allOrdersToEnd.filter(o => o.createdAt >= dStart && o.createdAt <= dEnd);
+      const buyersInDay = [...new Set(ordersInDay.map(o => o.userId?.toString()).filter(Boolean))].filter(id => allUserIdsSet.has(id));
+      const returningAccurate = buyersInDay.filter(id => {
+         const count = allOrdersToEnd.filter(o => o.userId?.toString() === id && o.createdAt <= dEnd).length;
+         return count >= 2;
+      }).length;
+      const newBuyers = buyersInDay.length - returningAccurate;
+
+      timeChartData.push({
+        time: `${d.getDate()}/${d.getMonth() + 1}`,
+        newUsers: newU,
+        newBuyers: newBuyers,
+        returning: returningAccurate
+      });
+    }
+  }
 
   return {
     totalUsers,
     newUsers,
-    totalBuyers,
+    totalBuyers: totalBuyersToEnd,
     neverBought,
     returnRate,
-    topCustomers,
-    neverBoughtList,
-    newUsersByMonth,
     repeatCount,
+    changes,
+    topCustomers: finalTopCustomers,
+    neverBoughtList,
+    timeChartData,
   };
 };
 
 // ─── THỐNG KÊ ĐƠN HÀNG ──────────────────────────────────────────────────────────
+// ─── THỐNG KÊ ĐƠN HÀNG ──────────────────────────────────────────────────────────
 const getOrderAnalytics = async (type) => {
   const { start, end } = getTimeRange(type || "month");
-  const now = new Date();
+  const { start: prevStart, end: prevEnd } = getPreviousTimeRange(type || "month", start);
 
-  // 1. Tổng số đơn trong kỳ
+  // --- KỲ HIỆN TẠI ---
   const totalOrders = await Order.countDocuments({ createdAt: { $gte: start, $lte: end } });
-
-  // 2. Đơn đã giao (status=4) — dùng làm doanh thu thực
   const deliveredOrders = await Order.countDocuments({ createdAt: { $gte: start, $lte: end }, status: 4 });
-
-  // 3. Đơn đã hủy
   const canceledOrders = await Order.countDocuments({ createdAt: { $gte: start, $lte: end }, status: 5 });
-
-  // 4. Đơn đang xử lý (0..3)
   const processingOrders = await Order.countDocuments({
     createdAt: { $gte: start, $lte: end },
     status: { $in: [0, 1, 2, 3] },
   });
 
-  // 5. Doanh thu thực tế (chỉ đơn đã giao)
   const revenueResult = await Order.aggregate([
     { $match: { createdAt: { $gte: start, $lte: end }, status: 4 } },
     { $group: { _id: null, total: { $sum: "$total" }, avgOrder: { $avg: "$total" } } },
   ]);
   const revenue = revenueResult[0]?.total || 0;
   const avgOrderValue = Math.round(revenueResult[0]?.avgOrder || 0);
-
-  // 6. Tỷ lệ hủy
   const cancelRate = totalOrders > 0 ? Math.round((canceledOrders / totalOrders) * 100) : 0;
+
+  // --- KỲ TRƯỚC ---
+  const prevTotalOrders = await Order.countDocuments({ createdAt: { $gte: prevStart, $lte: prevEnd } });
+  const prevDeliveredOrders = await Order.countDocuments({ createdAt: { $gte: prevStart, $lte: prevEnd }, status: 4 });
+  const prevCanceledOrders = await Order.countDocuments({ createdAt: { $gte: prevStart, $lte: prevEnd }, status: 5 });
+  
+  const prevRevenueResult = await Order.aggregate([
+    { $match: { createdAt: { $gte: prevStart, $lte: prevEnd }, status: 4 } },
+    { $group: { _id: null, total: { $sum: "$total" }, avgOrder: { $avg: "$total" } } },
+  ]);
+  const prevRevenue = prevRevenueResult[0]?.total || 0;
+  const prevAvgOrderValue = Math.round(prevRevenueResult[0]?.avgOrder || 0);
+  const prevCancelRate = prevTotalOrders > 0 ? Math.round((prevCanceledOrders / prevTotalOrders) * 100) : 0;
+
+  const calcChange = (cur, prev) => {
+    if (prev === 0) return cur > 0 ? 100 : 0;
+    return Math.round(((cur - prev) / prev) * 100);
+  };
+
+  const changes = {
+    revenue: calcChange(revenue, prevRevenue),
+    totalOrders: calcChange(totalOrders, prevTotalOrders),
+    avgOrderValue: calcChange(avgOrderValue, prevAvgOrderValue),
+    cancelRate: cancelRate - prevCancelRate, // Absolute change for %
+  };
 
   // 7. Phân bố theo trạng thái
   const statusDistribution = await Order.aggregate([
@@ -314,67 +431,74 @@ const getOrderAnalytics = async (type) => {
     { $sort: { _id: 1 } },
   ]);
 
-  // 8. Doanh thu theo ngày (30 ngày gần nhất)
-  const thirtyDaysAgo = new Date(now);
-  thirtyDaysAgo.setDate(now.getDate() - 29);
-  thirtyDaysAgo.setHours(0, 0, 0, 0);
+  // 8 & Biểu đồ Status theo thời gian (Đồng bộ bộ lọc thời gian)
+  const allOrdersInPeriod = await Order.find({ createdAt: { $gte: start, $lte: end } }).select("status total createdAt").lean();
+  
+  const revenueOverTime = [];
+  const statusByTime = [];
 
-  const dailyRevenue = await Order.aggregate([
-    { $match: { createdAt: { $gte: thirtyDaysAgo }, status: 4 } },
-    {
-      $group: {
-        _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
-          day: { $dayOfMonth: "$createdAt" },
-        },
-        revenue: { $sum: "$total" },
-        orders: { $sum: 1 },
-      },
-    },
-    { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
-  ]);
+  if (type === "year" || type === "all") {
+    const yearToUse = type === "year" ? start.getFullYear() : new Date().getFullYear();
+    for (let i = 0; i < 12; i++) {
+      const monthStart = new Date(yearToUse, i, 1);
+      const monthEnd = new Date(yearToUse, i + 1, 0, 23, 59, 59);
+      
+      const ordersInMonth = allOrdersInPeriod.filter(o => o.createdAt >= monthStart && o.createdAt <= monthEnd);
+      const delivered = ordersInMonth.filter(o => o.status === 4);
+      const processing = ordersInMonth.filter(o => o.status >= 0 && o.status <= 3);
+      const canceled = ordersInMonth.filter(o => o.status === 5);
 
-  // Map 30 ngày, điền 0 nếu không có
-  const dailyMap = {};
-  dailyRevenue.forEach(d => {
-    const key = `${d._id.year}-${String(d._id.month).padStart(2, "0")}-${String(d._id.day).padStart(2, "0")}`;
-    dailyMap[key] = { revenue: d.revenue, orders: d.orders };
-  });
+      const rev = delivered.reduce((sum, o) => sum + o.total, 0);
 
-  const revenueByDay = Array.from({ length: 30 }, (_, i) => {
-    const date = new Date(thirtyDaysAgo);
-    date.setDate(thirtyDaysAgo.getDate() + i);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    return {
-      date: `${date.getDate()}/${date.getMonth() + 1}`,
-      revenue: dailyMap[key]?.revenue || 0,
-      orders: dailyMap[key]?.orders || 0,
-    };
-  });
+      revenueOverTime.push({
+        time: `T${i + 1}`,
+        revenue: rev,
+        orders: ordersInMonth.length,
+      });
 
-  // 9. Phân bố phương thức thanh toán
+      statusByTime.push({
+        time: `T${i + 1}`,
+        delivered: delivered.length,
+        processing: processing.length,
+        canceled: canceled.length,
+      });
+    }
+  } else {
+    const days = Math.round((end - start) / (1000 * 3600 * 24));
+    for (let i = 0; i <= days; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      const dStart = new Date(d); dStart.setHours(0,0,0,0);
+      const dEnd = new Date(d); dEnd.setHours(23,59,59,999);
+      if (dStart > end) break;
+
+      const ordersInDay = allOrdersInPeriod.filter(o => o.createdAt >= dStart && o.createdAt <= dEnd);
+      const delivered = ordersInDay.filter(o => o.status === 4);
+      const processing = ordersInDay.filter(o => o.status >= 0 && o.status <= 3);
+      const canceled = ordersInDay.filter(o => o.status === 5);
+
+      const rev = delivered.reduce((sum, o) => sum + o.total, 0);
+
+      revenueOverTime.push({
+        time: `${d.getDate()}/${d.getMonth() + 1}`,
+        revenue: rev,
+        orders: ordersInDay.length,
+      });
+
+      statusByTime.push({
+        time: `${d.getDate()}/${d.getMonth() + 1}`,
+        delivered: delivered.length,
+        processing: processing.length,
+        canceled: canceled.length,
+      });
+    }
+  }
+
+  // 9. Phân bố phương thức thanh toán (CHỈ TÍNH ĐƠN ĐÃ GIAO)
   const paymentDistribution = await Order.aggregate([
-    { $match: { createdAt: { $gte: start, $lte: end } } },
+    { $match: { createdAt: { $gte: start, $lte: end }, status: 4 } },
     { $group: { _id: "$paymentMethod", count: { $sum: 1 }, revenue: { $sum: "$total" } } },
-    { $sort: { count: -1 } },
-  ]);
-
-  // 10. Top 5 sản phẩm được đặt nhiều nhất trong kỳ
-  const topProducts = await Order.aggregate([
-    { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 5 } } },
-    { $unwind: "$products" },
-    {
-      $group: {
-        _id: "$products.productId",
-        title: { $first: "$products.title" },
-        img: { $first: "$products.img" },
-        totalQty: { $sum: "$products.quantity" },
-        totalRevenue: { $sum: { $multiply: ["$products.price", "$products.quantity"] } },
-      },
-    },
-    { $sort: { totalQty: -1 } },
-    { $limit: 5 },
+    { $sort: { revenue: -1 } },
   ]);
 
   return {
@@ -385,10 +509,11 @@ const getOrderAnalytics = async (type) => {
     revenue,
     avgOrderValue,
     cancelRate,
+    changes,
     statusDistribution,
-    revenueByDay,
+    revenueOverTime,
+    statusByTime,
     paymentDistribution,
-    topProducts,
   };
 };
 
