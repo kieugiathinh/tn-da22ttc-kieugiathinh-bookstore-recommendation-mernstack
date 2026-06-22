@@ -89,7 +89,7 @@ const UserInteractionSchema = mongoose.Schema(
      */
     source: {
       type: String,
-      enum: ["homepage", "search", "category", "recommendation", "direct", "chatbot"],
+      enum: ["homepage", "search", "category", "recommendation", "direct", "chatbot", "checkout", "order"],
       default: "direct",
     },
   },

@@ -22,8 +22,8 @@ const AdminLayoutContent = () => {
 
       {/* Khu vực nội dung chính - flex-1 chiếm phần còn lại */}
       <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${
-          isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
+        className={`flex flex-col flex-1 min-h-screen transition-all duration-300 ease-in-out ${
+          isExpanded || isHovered ? "lg:ml-[272px]" : "lg:ml-[80px]"
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         {/* Header dính trên cùng */}

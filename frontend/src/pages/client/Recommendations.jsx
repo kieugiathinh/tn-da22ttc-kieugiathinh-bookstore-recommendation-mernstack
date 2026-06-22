@@ -83,23 +83,23 @@ const Recommendations = () => {
         )}
 
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden">
+        <div className="rounded-2xl shadow-sm border border-emerald-100 overflow-hidden bg-gradient-to-b from-emerald-500 to-white">
           {/* Header */}
-          <div className="px-6 py-8 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600">
+          <div className="px-6 py-10 border-b border-white/20">
             <div className="text-center w-full">
-              <h1 className="text-3xl font-extrabold text-white uppercase tracking-wide flex justify-center items-center gap-3 mb-2">
-                <HiSparkles className="text-white text-4xl animate-pulse" />
-                Khám Phá Sách Dành Riêng Cho Bạn
-                <HiSparkles className="text-white text-4xl animate-pulse" />
+              <h1 className="text-3xl font-extrabold text-white uppercase tracking-wide flex justify-center items-center gap-3 mb-3">
+                <HiSparkles className="text-white text-4xl animate-pulse drop-shadow-sm" />
+                <span className="drop-shadow-sm">Khám Phá Sách Dành Riêng Cho Bạn</span>
+                <HiSparkles className="text-white text-4xl animate-pulse drop-shadow-sm" />
               </h1>
-              <p className="text-emerald-50 text-sm font-medium">
+              <p className="text-white/90 text-sm font-medium drop-shadow-sm max-w-2xl mx-auto">
                 Tuyển tập những tựa sách được AI tổng hợp từ sở thích, lịch sử mua sắm và xu hướng mới nhất.
               </p>
             </div>
           </div>
 
           {/* Content Grid */}
-          <div className="p-6 bg-gradient-to-b from-emerald-50/30 to-white">
+          <div className="p-6 min-h-[500px]">
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {Array.from({ length: 20 }).map((_, i) => <SkeletonCard key={i} />)}

@@ -414,10 +414,6 @@ const Cart = () => {
                 Xóa tất cả
               </button>
             </div>
-
-            {/* --- AI LỌC CỘNG TÁC (CF) --- */}
-            <CartRecommendations topK={5} />
-
           </div>
 
           {/* --- RIGHT COLUMN: ORDER SUMMARY --- */}
@@ -474,6 +470,11 @@ const Cart = () => {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* --- AI LỌC CỘNG TÁC (CF) --- */}
+        <div className="mt-12">
+          <CartRecommendations topK={10} />
         </div>
       </div>
     </div>

@@ -58,29 +58,24 @@ const RecommendedForYou = ({ topK = 20 }) => {
   if (!loading && products.length === 0 && !error) return null;
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm mb-8 border border-emerald-100 overflow-hidden">
-      {/* Header — Emerald Gradient */}
-      <div className="px-6 py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-          <HiSparkles className="text-white text-2xl animate-pulse" />
-          Dành Riêng Cho Bạn
-          <HiSparkles className="text-white text-2xl animate-pulse" />
+    <section className="rounded-2xl shadow-sm mb-8 overflow-hidden bg-gradient-to-b from-emerald-500 to-white border border-emerald-100">
+      {/* Header */}
+      <div className="px-6 py-6 flex justify-center items-center border-b border-white/20">
+        <h2 className="text-2xl font-extrabold text-white flex items-center gap-3 uppercase tracking-tight drop-shadow-md">
+          <HiSparkles className="text-white text-3xl animate-pulse drop-shadow-sm" />
+          <span>Dành Riêng Cho Bạn</span>
+          <HiSparkles className="text-white text-3xl animate-pulse drop-shadow-sm" />
         </h2>
-        {currentUser && (
-          <span className="text-emerald-100 text-sm font-medium italic hidden sm:block">
-            Được cá nhân hóa bởi AI
-          </span>
-        )}
       </div>
 
       {/* Content — Grid Layout */}
-      <div className="p-5 px-6 bg-gradient-to-b from-emerald-50/30 to-white">
+      <div className="p-5 px-6">
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
-          <p className="text-center text-sm text-slate-400 py-6">{error}</p>
+          <p className="text-center text-sm text-slate-500 py-6">{error}</p>
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -97,7 +92,7 @@ const RecommendedForYou = ({ topK = 20 }) => {
                            bg-white border-2 border-emerald-500 text-emerald-600
                            font-bold text-sm uppercase tracking-wide
                            hover:bg-emerald-500 hover:text-white
-                           hover:shadow-lg hover:shadow-emerald-200
+                           hover:shadow-md
                            hover:-translate-y-0.5 active:translate-y-0
                            transition-all duration-300"
               >

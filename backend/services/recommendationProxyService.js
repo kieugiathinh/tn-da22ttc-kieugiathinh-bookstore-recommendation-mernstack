@@ -80,9 +80,8 @@ const getBestSellerFallback = async (limit = 6) => {
  * @returns {Promise<{products: Array, algorithm: string, source: string}>}
  */
 const getSimilarProductsData = async (productId, topK = 6) => {
-  // Gọi Python AI Service
   const aiRes = await aiClient.get(`/recommend/item/${productId}`, {
-    params: { top_k: topK },
+    params: { top_k: Math.min(topK, 20) },
   });
 
   const aiItems = aiRes.data?.recommendations ?? [];
@@ -108,7 +107,7 @@ const getSimilarProductsData = async (productId, topK = 6) => {
 const getUserRecommendationsData = async (userId, topK = 6) => {
   // Gọi Python AI Service
   const aiRes = await aiClient.get(`/recommend/user/${userId}/collaborative`, {
-    params: { top_k: topK },
+    params: { top_k: Math.min(topK, 20) },
   });
 
   const { recommendations = [], coldStart = false } = aiRes.data;
@@ -190,7 +189,7 @@ const getAIHealthStatus = async () => {
  */
 const getUserRecommendationsSimulator = async (userId, topK = 6) => {
   const aiRes = await aiClient.get(`/recommend/user/${userId}/collaborative`, {
-    params: { top_k: topK },
+    params: { top_k: Math.min(topK, 20) },
   });
 
   const { recommendations = [], coldStart = false } = aiRes.data;

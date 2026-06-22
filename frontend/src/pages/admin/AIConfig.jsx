@@ -52,7 +52,10 @@ const AIConfig = () => {
     fetchConfigs();
   }, []);
 
-  // Handle Hybrid Change - Đảm bảo tổng = 100
+  // Handle Hybrid Change - Đảm bảo tổng = 100 theo thứ tự ưu tiên
+  // Ưu tiên 1: Lọc cộng tác (CF) - Khi thay đổi, CBF và Pop chia đều phần còn lại
+  // Ưu tiên 2: Lọc nội dung (CBF) - Khi thay đổi, CF giữ nguyên, Pop gánh phần còn lại
+  // Ưu tiên 3: Phổ biến (Pop) - Khi thay đổi, CF giữ nguyên, CBF gánh phần còn lại
   const handleHybridChange = (type, value) => {
     let newVal = parseInt(value, 10);
     if (isNaN(newVal) || newVal < 0) newVal = 0;
@@ -60,20 +63,21 @@ const AIConfig = () => {
 
     if (type === "cf") {
       setCfWeight(newVal);
-      // Chia đều phần còn lại cho 2 cái kia
       const remain = 100 - newVal;
       setCbfWeight(Math.floor(remain / 2));
       setPopWeight(Math.ceil(remain / 2));
     } else if (type === "cbf") {
-      setCbfWeight(newVal);
-      const remain = 100 - newVal;
-      setCfWeight(Math.floor(remain / 2));
-      setPopWeight(Math.ceil(remain / 2));
+      // CBF không được vượt quá (100 - CF)
+      const maxCbf = 100 - cfWeight;
+      const actualCbf = Math.min(newVal, maxCbf);
+      setCbfWeight(actualCbf);
+      setPopWeight(100 - cfWeight - actualCbf);
     } else if (type === "pop") {
-      setPopWeight(newVal);
-      const remain = 100 - newVal;
-      setCfWeight(Math.floor(remain / 2));
-      setCbfWeight(Math.ceil(remain / 2));
+      // Pop không được vượt quá (100 - CF)
+      const maxPop = 100 - cfWeight;
+      const actualPop = Math.min(newVal, maxPop);
+      setPopWeight(actualPop);
+      setCbfWeight(100 - cfWeight - actualPop);
     }
   };
 
@@ -233,15 +237,31 @@ const AIConfig = () => {
                 <label className={`block text-xs font-black uppercase tracking-wider ${item.color} mb-2`}>
                   {item.label}
                 </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={interactionWeights[item.key]}
-                    onChange={(e) => handleInteractionChange(item.key, e.target.value)}
-                    className="w-20 px-3 py-2 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 font-bold"
-                  />
+                <div className="flex items-center gap-3">
+                  <div className={`flex items-center border ${item.border} rounded-lg overflow-hidden bg-white shadow-sm`}>
+                    <button
+                      type="button"
+                      onClick={() => handleInteractionChange(item.key, Math.max(0, (parseFloat(interactionWeights[item.key]) || 0) - 0.5))}
+                      className={`px-3 py-1.5 ${item.bg} ${item.color} hover:opacity-80 font-black border-r ${item.border} transition-colors`}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      value={interactionWeights[item.key]}
+                      onChange={(e) => handleInteractionChange(item.key, e.target.value)}
+                      className="w-14 px-2 py-1.5 text-center font-bold text-gray-800 border-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleInteractionChange(item.key, (parseFloat(interactionWeights[item.key]) || 0) + 0.5)}
+                      className={`px-3 py-1.5 ${item.bg} ${item.color} hover:opacity-80 font-black border-l ${item.border} transition-colors`}
+                    >
+                      +
+                    </button>
+                  </div>
                   <span className="text-xs text-gray-500 font-medium">điểm</span>
                 </div>
               </div>

@@ -54,7 +54,7 @@ const menuGroups = [
         icon: <FaLightbulb size={18} />,
         isDropdown: true,
         subItems: [
-          { name: "Dashboard", path: "/admin/ai-recommendations" },
+          { name: "Dashboard", path: "/admin/ai-recommendations", exact: true },
           { name: "Cấu hình Thuật toán", path: "/admin/ai-recommendations/config" },
           { name: "Hành vi người dùng", path: "/admin/ai-recommendations/interactions" },
         ]
@@ -91,7 +91,7 @@ const AppSidebar = () => {
     menuGroups.forEach(group => {
       group.items.forEach(item => {
         if (item.isDropdown) {
-          const isChildActive = item.subItems.some(sub => location.pathname.startsWith(sub.path));
+          const isChildActive = item.subItems.some(sub => isActive(sub.path, sub.exact));
           if (isChildActive) newOpenState[item.name] = true;
         }
       });
@@ -105,9 +105,10 @@ const AppSidebar = () => {
     if (!showLabel) setIsHovered(true);
   };
 
-  const isActive = (path) => {
+  const isActive = (path, exact = false) => {
     if (path === "/admin") return location.pathname === "/admin";
-    return location.pathname.startsWith(path);
+    if (exact) return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path + "/");
   };
 
   const handleLinkClick = () => {
@@ -131,7 +132,7 @@ const AppSidebar = () => {
       {/* ---- LOGO ---- */}
       <div className={[
         "flex flex-shrink-0 items-center border-b border-gray-50 transition-all duration-300",
-        showLabel ? "justify-start px-6 py-5" : "justify-center px-0 py-5",
+        showLabel ? "justify-center px-4 py-5" : "justify-center px-0 py-5",
       ].join(" ")}>
         {showLabel ? (
           <BookBeeLogo className="h-8 max-w-[140px]" />
@@ -139,7 +140,7 @@ const AppSidebar = () => {
           <img
             src="/logochatbot.png"
             alt="Logo"
-            className="w-10 h-10 object-contain drop-shadow-sm"
+            className="w-10 h-10 object-contain drop-shadow-sm rounded-full bg-white"
           />
         )}
       </div>
@@ -162,7 +163,7 @@ const AppSidebar = () => {
               {group.items.map((item) => {
                 if (item.isDropdown) {
                   const isOpen = openDropdowns[item.name];
-                  const hasActive = item.subItems.some(s => isActive(s.path));
+                  const hasActive = item.subItems.some(s => isActive(s.path, s.exact));
 
                   return (
                     <li key={item.name}>
@@ -213,7 +214,7 @@ const AppSidebar = () => {
                       ].join(" ")}>
                         <ul className="mt-1 mb-1 ml-4 pl-4 border-l-2 border-gray-100 space-y-0.5">
                           {item.subItems.map((sub) => {
-                            const subActive = isActive(sub.path);
+                            const subActive = isActive(sub.path, sub.exact);
                             return (
                               <li key={sub.path}>
                                 <Link

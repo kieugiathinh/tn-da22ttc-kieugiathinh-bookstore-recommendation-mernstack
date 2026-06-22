@@ -51,7 +51,7 @@ const CartRecommendations = ({ topK = 10 }) => {
   if (!currentUser || (!loading && products.length === 0 && !error)) return null;
 
   return (
-    <div className="mt-12 bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b border-emerald-100 flex items-center justify-between
                       bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50">
@@ -67,7 +67,7 @@ const CartRecommendations = ({ topK = 10 }) => {
       <div className="p-5 px-6">
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: topK }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
@@ -75,7 +75,7 @@ const CartRecommendations = ({ topK = 10 }) => {
           <p className="text-center text-sm text-slate-400 py-6">{error}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {products.slice(0, 5).map((product) => (
+            {products.slice(0, topK).map((product) => (
               <ProductCard key={product._id} product={product} />
             ))}
           </div>

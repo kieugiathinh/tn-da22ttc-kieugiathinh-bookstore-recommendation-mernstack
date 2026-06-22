@@ -18,6 +18,20 @@ export const getInteractions = asyncHandler(async (req, res) => {
   if (req.query.source && req.query.source !== "all") {
     query.source = req.query.source;
   }
+  
+  if (req.query.keyword) {
+    const keyword = req.query.keyword;
+    const User = (await import("../models/userModel.js")).default;
+    const Product = (await import("../models/productModel.js")).default;
+    
+    const users = await User.find({ name: { $regex: keyword, $options: "i" } }).select("_id");
+    const products = await Product.find({ title: { $regex: keyword, $options: "i" } }).select("_id");
+    
+    query.$or = [
+      { userId: { $in: users.map(u => u._id) } },
+      { productId: { $in: products.map(p => p._id) } }
+    ];
+  }
 
   // Populate user info & product info
   const interactions = await UserInteraction.find(query)
@@ -72,3 +86,20 @@ export const trackUserInteraction = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * @desc    Xóa một hành vi
+ * @route   DELETE /api/v1/interactions/:id
+ * @access  Private/Admin
+ */
+export const deleteInteraction = asyncHandler(async (req, res) => {
+  const interaction = await UserInteraction.findById(req.params.id);
+
+  if (!interaction) {
+    res.status(404);
+    throw new Error("Không tìm thấy hành vi");
+  }
+
+  await interaction.deleteOne();
+
+  res.json({ success: true, message: "Hành vi đã được xóa thành công" });
+});
