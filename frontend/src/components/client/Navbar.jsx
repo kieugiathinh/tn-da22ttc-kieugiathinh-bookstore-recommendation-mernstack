@@ -25,6 +25,7 @@ const Navbar = () => {
   const [searchHistory, setSearchHistory] = useState([]);
   const [trendingSearches, setTrendingSearches] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   const cart = useSelector((state) => state.cart);
   const { currentUser, logout } = useAuth();
@@ -68,6 +69,24 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!search.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await userRequest.get(`/search/suggest?q=${encodeURIComponent(search.trim())}`);
+        setSuggestions(res.data);
+      } catch (error) {
+        console.error("Error fetching suggestions:", error);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search]);
 
   const handleSearch = async (keyword = search) => {
     if (keyword.trim()) {
@@ -153,46 +172,83 @@ const Navbar = () => {
             </button>
 
             {/* SEARCH DROPDOWN */}
-            {isSearchFocused && (searchHistory.length > 0 || trendingSearches.length > 0) && (
+            {isSearchFocused && (search.trim() || searchHistory.length > 0 || trendingSearches.length > 0) && (
               <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-fade-in">
-                {currentUser && searchHistory.length > 0 && (
-                  <div className="p-3 border-b border-gray-50">
-                    <div className="flex items-center justify-between px-2 mb-2">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                        <FiClock /> Lịch sử tìm kiếm
-                      </span>
-                      <button onClick={handleClearAllHistory} className="text-xs text-orange-500 hover:text-orange-600 font-medium hover:underline">
-                        Xóa tất cả
-                      </button>
+                {search.trim() ? (
+                  suggestions.length > 0 ? (
+                    <div className="p-2">
+                      <div className="px-2 mb-2 mt-1">
+                        <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <FiSearch /> Gợi ý sản phẩm
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        {suggestions.map((item) => (
+                          <Link
+                            key={item._id}
+                            to={`/product/${item._id}?source=search`}
+                            onClick={() => {
+                              setIsSearchFocused(false);
+                              setSearch("");
+                            }}
+                            className="flex items-center gap-3 hover:bg-orange-50 rounded-xl p-2 cursor-pointer transition-colors"
+                          >
+                            <img src={item.img} alt={item.title} className="w-10 h-14 object-cover rounded-md shadow-sm border border-gray-100" />
+                            <div className="flex flex-col overflow-hidden">
+                              <span className="text-sm text-gray-800 font-bold truncate leading-tight mb-1">{item.title}</span>
+                              <span className="text-xs text-gray-500 truncate">{item.author || "Đang cập nhật"}</span>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      {searchHistory.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between hover:bg-orange-50 rounded-xl px-2 py-1.5 cursor-pointer group/item transition-colors" onClick={() => handleSearch(item.keyword)}>
-                          <span className="text-sm text-gray-700 font-medium truncate flex-1">{item.keyword}</span>
-                          <button onClick={(e) => handleDeleteHistory(e, item.keyword)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover/item:opacity-100 transition-all">
-                            <FiX size={14} />
+                  ) : (
+                    <div className="p-4 text-center text-sm text-gray-500 font-medium">
+                      Không tìm thấy kết quả nào cho "{search}"
+                    </div>
+                  )
+                ) : (
+                  <>
+                    {currentUser && searchHistory.length > 0 && (
+                      <div className="p-3 border-b border-gray-50">
+                        <div className="flex items-center justify-between px-2 mb-2">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <FiClock /> Lịch sử tìm kiếm
+                          </span>
+                          <button onClick={handleClearAllHistory} className="text-[10px] text-orange-500 hover:text-orange-600 font-medium hover:underline tracking-wide">
+                            XÓA TẤT CẢ
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {trendingSearches.length > 0 && (
-                  <div className="p-3">
-                    <div className="px-2 mb-2">
-                      <span className="text-xs font-bold text-orange-500 uppercase tracking-wider flex items-center gap-1.5">
-                        <FiTrendingUp /> Tìm kiếm phổ biến
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 px-1">
-                      {trendingSearches.map((item, idx) => (
-                        <button key={idx} onClick={() => handleSearch(item.keyword)} className="px-3 py-1.5 bg-gray-50 hover:bg-orange-100 hover:text-orange-700 text-gray-600 text-xs font-medium rounded-lg transition-colors border border-gray-100 flex items-center gap-1.5">
-                          {item.keyword}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                        <div className="space-y-1">
+                          {searchHistory.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between hover:bg-orange-50 rounded-xl px-2 py-1.5 cursor-pointer group/item transition-colors" onClick={() => handleSearch(item.keyword)}>
+                              <span className="text-sm text-gray-700 font-medium truncate flex-1">{item.keyword}</span>
+                              <button onClick={(e) => handleDeleteHistory(e, item.keyword)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover/item:opacity-100 transition-all">
+                                <FiX size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {trendingSearches.length > 0 && (
+                      <div className="p-3">
+                        <div className="px-2 mb-2">
+                          <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wider flex items-center gap-1.5">
+                            <FiTrendingUp /> Tìm kiếm phổ biến
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2 px-1">
+                          {trendingSearches.map((item, idx) => (
+                            <button key={idx} onClick={() => handleSearch(item.keyword)} className="px-3 py-1.5 bg-gray-50 hover:bg-orange-100 hover:text-orange-700 text-gray-600 text-xs font-medium rounded-lg transition-colors border border-gray-100 flex items-center gap-1.5 shadow-sm">
+                              {item.keyword}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

@@ -1,5 +1,5 @@
 import SearchHistory from "../models/searchHistoryModel.js";
-
+import Product from "../models/productModel.js";
 const recordSearch = async (userId, keyword, source) => {
   if (!keyword || !keyword.trim()) throw new Error("Keyword is required");
 
@@ -62,10 +62,26 @@ const getTrendingSearches = async () => {
   }));
 };
 
+const getSearchSuggestions = async (keyword) => {
+  if (!keyword || !keyword.trim()) return [];
+
+  // Tìm kiếm theo title hoặc author, không phân biệt hoa thường
+  const regex = new RegExp(keyword.trim(), "i");
+  const suggestions = await Product.find({
+    $or: [{ title: regex }, { author: regex }],
+  })
+    .select("_id title author img price") // Chỉ lấy các trường cần thiết
+    .limit(5)
+    .lean();
+
+  return suggestions;
+};
+
 export {
   recordSearch,
   getSearchHistory,
   deleteSearchHistory,
   clearSearchHistory,
   getTrendingSearches,
+  getSearchSuggestions,
 };

@@ -44,10 +44,20 @@ const getTrendingSearches = asyncHandler(async (req, res) => {
   res.status(200).json(trending);
 });
 
+// @desc    Lấy gợi ý tìm kiếm (Auto-Suggest)
+// @route   GET /api/search/suggest?q=...
+// @access  Public
+const getSearchSuggestions = asyncHandler(async (req, res) => {
+  const keyword = req.query.q;
+  const suggestions = await searchService.getSearchSuggestions(keyword);
+  res.status(200).json(suggestions);
+});
+
 export {
   recordSearch,
   getSearchHistory,
   deleteSearchHistory,
   clearSearchHistory,
   getTrendingSearches,
+  getSearchSuggestions,
 };

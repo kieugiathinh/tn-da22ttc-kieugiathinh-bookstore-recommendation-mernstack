@@ -105,9 +105,9 @@ const ProductList = () => {
     const updated = selectedCategories.includes(id)
       ? selectedCategories.filter((c) => c !== id)
       : [...selectedCategories, id];
-    
+
     setSelectedCategories(updated);
-    
+
     // Xóa catId trên URL nếu đang ở route /products/:catId để chuyển về /products?category=...
     if (catId) {
       navigate(`/products?category=${updated.join(",")}`);
@@ -162,7 +162,7 @@ const ProductList = () => {
                   <FaListUl className="mr-2 text-orange-500" /> Bộ Lọc
                 </h3>
                 {selectedCategories.length > 0 && (
-                  <button 
+                  <button
                     onClick={handleClearFilters}
                     className="text-xs font-semibold text-rose-500 hover:text-rose-600 hover:underline"
                   >
@@ -170,7 +170,7 @@ const ProductList = () => {
                   </button>
                 )}
               </div>
-              
+
               <h4 className="font-semibold text-slate-700 mb-3">Danh Mục Sách</h4>
               <ul className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 {categories.map((cat) => (
@@ -189,9 +189,8 @@ const ProductList = () => {
                           </svg>
                         </div>
                       </div>
-                      <span className={`text-sm font-medium transition-colors ${
-                        selectedCategories.includes(cat._id) ? "text-orange-600" : "text-slate-600 group-hover:text-orange-500"
-                      }`}>
+                      <span className={`text-sm font-medium transition-colors ${selectedCategories.includes(cat._id) ? "text-orange-600" : "text-slate-600 group-hover:text-orange-500"
+                        }`}>
                         {cat.name}
                       </span>
                     </label>
@@ -223,7 +222,7 @@ const ProductList = () => {
                 >
                   <option value="newest">Mới nhất</option>
                   <option value="bestseller">Bán chạy nhất</option>
-                  <option value="toprated">Mật Vàng 5 Sao</option>
+                  <option value="toprated">Đánh giá cao nhất</option>
                   <option value="asc">Giá: Thấp đến Cao</option>
                   <option value="desc">Giá: Cao đến Thấp</option>
                 </select>
@@ -268,14 +267,14 @@ const ProductList = () => {
                     >
                       <FaChevronLeft className="text-sm" />
                     </button>
-                    
+
                     {[...Array(totalPages)].map((_, i) => (
                       <button
                         key={i + 1}
                         onClick={() => paginate(i + 1)}
                         className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all shadow-sm
-                          ${currentPage === i + 1 
-                            ? "bg-orange-500 text-white shadow-orange-500/40 border-none scale-110" 
+                          ${currentPage === i + 1
+                            ? "bg-orange-500 text-white shadow-orange-500/40 border-none scale-110"
                             : "bg-white text-slate-600 border border-slate-200 hover:border-orange-400 hover:text-orange-500"
                           }`}
                       >
