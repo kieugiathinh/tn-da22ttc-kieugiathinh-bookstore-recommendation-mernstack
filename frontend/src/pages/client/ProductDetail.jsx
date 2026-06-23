@@ -79,9 +79,28 @@ const Product = () => {
     getProduct();
   }, [id]);
 
-  // Trigger CF retrain sau khi user đã đăng nhập xem sản phẩm
+  // Tracking hành vi (view hoặc search_click)
   useEffect(() => {
     if (!user || !id) return;
+
+    // Lấy source từ query string (?source=search)
+    const queryParams = new URLSearchParams(location.search);
+    const source = queryParams.get("source") || "direct";
+    // Nếu source = search, ghi nhận là search_click, ngược lại là view
+    const interactionType = source === "search" ? "search_click" : "view";
+
+    const trackInteraction = async () => {
+      try {
+        await userRequest.post("/interactions/track", {
+          productId: id,
+          interactionType,
+          source
+        });
+      } catch (err) {
+        console.error("Lỗi tracking:", err);
+      }
+    };
+    trackInteraction();
 
     userRequest
       .post("/recommend/refresh", {}, { withCredentials: true })
@@ -92,7 +111,7 @@ const Product = () => {
       })
       .catch(() => {
       });
-  }, [id, user?._id]);
+  }, [id, user, location.search]);
 
   // Fetch Reviews
   const fetchReviews = async () => {

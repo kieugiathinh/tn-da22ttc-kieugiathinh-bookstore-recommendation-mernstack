@@ -6,18 +6,25 @@ import {
   FiClipboard,
   FiSettings,
   FiTag,
-  FiMenu
+  FiMenu,
+  FiClock,
+  FiTrendingUp,
+  FiX
 } from "react-icons/fi";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useAuth } from "../../context/AuthContext";
 import BookBeeLogo from "../shared/BookBeeLogo";
+import { userRequest } from "../../requestMethods";
 
 const Navbar = () => {
   const [search, setSearch] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [trendingSearches, setTrendingSearches] = useState([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const cart = useSelector((state) => state.cart);
   const { currentUser, logout } = useAuth();
@@ -35,14 +42,71 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSearch = () => {
-    if (search.trim()) {
-      navigate(`/products?search=${encodeURIComponent(search.trim())}`);
+  useEffect(() => {
+    const fetchSearchData = async () => {
+      try {
+        const trendingRes = await userRequest.get("/search/trending");
+        setTrendingSearches(trendingRes.data);
+
+        if (currentUser) {
+          const historyRes = await userRequest.get("/search/history");
+          setSearchHistory(historyRes.data);
+        }
+      } catch (error) {
+        console.error("Error fetching search data:", error);
+      }
+    };
+    fetchSearchData();
+  }, [currentUser]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.search-container')) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearch = async (keyword = search) => {
+    if (keyword.trim()) {
+      try {
+        await userRequest.post("/search/record", { keyword: keyword.trim() });
+        if (currentUser) {
+          const historyRes = await userRequest.get("/search/history");
+          setSearchHistory(historyRes.data);
+        }
+      } catch (error) {
+        console.error("Error recording search:", error);
+      }
+      setIsSearchFocused(false);
+      navigate(`/products?search=${encodeURIComponent(keyword.trim())}`);
     }
   };
 
   const handleEnterKey = (e) => {
-    if (e.key === "Enter") handleSearch();
+    if (e.key === "Enter") handleSearch(search);
+  };
+
+  const handleDeleteHistory = async (e, keyword) => {
+    e.stopPropagation();
+    try {
+      await userRequest.delete(`/search/history/${encodeURIComponent(keyword)}`);
+      setSearchHistory(prev => prev.filter(item => item.keyword !== keyword));
+    } catch (error) {
+      console.error("Error deleting history:", error);
+    }
+  };
+
+  const handleClearAllHistory = async (e) => {
+    e.stopPropagation();
+    try {
+      await userRequest.delete("/search/history");
+      setSearchHistory([]);
+    } catch (error) {
+      console.error("Error clearing history:", error);
+    }
   };
 
   const handleLogout = () => {
@@ -65,11 +129,12 @@ const Navbar = () => {
 
         {/* SEARCH BAR */}
         <div className="flex-1 hidden md:flex items-center justify-center">
-          <div className="relative w-full max-w-[520px] group">
+          <div className="relative w-full max-w-[520px] group search-container">
             <input
               type="text"
               placeholder="Tìm kiếm sách yêu thích của bạn..."
               value={search}
+              onFocus={() => setIsSearchFocused(true)}
               className="w-full py-2.5 pl-6 pr-14 border-2 border-primary rounded-full outline-none
                          focus:ring-0 focus:shadow-md focus:border-orange-500
                          text-sm text-slate-700 placeholder:text-slate-400
@@ -78,7 +143,7 @@ const Navbar = () => {
               onKeyDown={handleEnterKey}
             />
             <button
-              onClick={handleSearch}
+              onClick={() => handleSearch(search)}
               className="absolute right-1.5 top-1/2 -translate-y-1/2
                          bg-primary hover:bg-primary-hover
                          text-white rounded-full w-10 h-[80%] flex items-center justify-center
@@ -86,6 +151,51 @@ const Navbar = () => {
             >
               <FiSearch className="text-lg" />
             </button>
+
+            {/* SEARCH DROPDOWN */}
+            {isSearchFocused && (searchHistory.length > 0 || trendingSearches.length > 0) && (
+              <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-fade-in">
+                {currentUser && searchHistory.length > 0 && (
+                  <div className="p-3 border-b border-gray-50">
+                    <div className="flex items-center justify-between px-2 mb-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <FiClock /> Lịch sử tìm kiếm
+                      </span>
+                      <button onClick={handleClearAllHistory} className="text-xs text-orange-500 hover:text-orange-600 font-medium hover:underline">
+                        Xóa tất cả
+                      </button>
+                    </div>
+                    <div className="space-y-1">
+                      {searchHistory.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between hover:bg-orange-50 rounded-xl px-2 py-1.5 cursor-pointer group/item transition-colors" onClick={() => handleSearch(item.keyword)}>
+                          <span className="text-sm text-gray-700 font-medium truncate flex-1">{item.keyword}</span>
+                          <button onClick={(e) => handleDeleteHistory(e, item.keyword)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover/item:opacity-100 transition-all">
+                            <FiX size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {trendingSearches.length > 0 && (
+                  <div className="p-3">
+                    <div className="px-2 mb-2">
+                      <span className="text-xs font-bold text-orange-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <FiTrendingUp /> Tìm kiếm phổ biến
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 px-1">
+                      {trendingSearches.map((item, idx) => (
+                        <button key={idx} onClick={() => handleSearch(item.keyword)} className="px-3 py-1.5 bg-gray-50 hover:bg-orange-100 hover:text-orange-700 text-gray-600 text-xs font-medium rounded-lg transition-colors border border-gray-100 flex items-center gap-1.5">
+                          {item.keyword}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

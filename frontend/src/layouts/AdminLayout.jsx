@@ -30,7 +30,7 @@ const AdminLayoutContent = () => {
         <AppHeader />
 
         {/* Nội dung trang (được inject từ React Router) */}
-        <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
+        <div className="p-4 md:p-6 w-full">
           <Outlet />
         </div>
       </div>

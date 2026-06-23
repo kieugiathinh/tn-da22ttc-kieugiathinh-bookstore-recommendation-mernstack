@@ -1,7 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FaFire, FaStar, FaLeaf, FaBolt } from "react-icons/fa";
 
 const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller = false }) => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isSearchContext = searchParams.has("search");
+
   // Ưu tiên dữ liệu flash sale từ API
   const hasFlashSale = Boolean(product.flashSale) || isFlashSale;
   const fsSoldCount = product.flashSale ? product.flashSale.soldCount : product.sold;
@@ -54,7 +58,7 @@ const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller
         </div>
       )}
 
-      <Link to={`/product/${product._id}`} className="flex-1 flex flex-col">
+      <Link to={`/product/${product._id}${isSearchContext ? "?source=search" : ""}`} className="flex-1 flex flex-col">
         {/* Ảnh sản phẩm */}
         <div className="h-48 w-full flex items-center justify-center overflow-hidden mb-3 rounded-xl bg-orange-50/30">
           <img

@@ -3,7 +3,7 @@ import { userRequest } from "../../requestMethods";
 import { FaEye, FaTimes, FaRobot, FaUser, FaHistory } from "react-icons/fa";
 import moment from "moment";
 import { toast } from "sonner";
-
+import PageHeader from "../../components/admin/PageHeader";
 const ChatHistory = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,17 +26,10 @@ const ChatHistory = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-md">
-            <FaHistory className="text-white text-xl" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
-              Lịch sử Chatbot
-            </h1>
-            <p className="text-sm text-gray-500">Xem lại các đoạn hội thoại của khách hàng với AI</p>
-          </div>
-        </div>
+      <PageHeader 
+        title="Lịch sử Chatbot"
+        subtitle="Xem lại các đoạn hội thoại của khách hàng với AI"
+      />
 
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">

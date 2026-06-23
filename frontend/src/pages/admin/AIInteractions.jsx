@@ -34,6 +34,8 @@ const AIInteractions = () => {
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(15);
 
+  const [trendingSearches, setTrendingSearches] = useState([]);
+
   const fetchInteractions = async () => {
     try {
       setLoading(true);
@@ -48,6 +50,15 @@ const AIInteractions = () => {
     }
   };
 
+  const fetchTrending = async () => {
+    try {
+      const res = await userRequest.get("/search/trending");
+      setTrendingSearches(res.data);
+    } catch (error) {
+      console.error("Lỗi lấy trending:", error);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa hành vi này không?")) {
       try {
@@ -59,6 +70,10 @@ const AIInteractions = () => {
       }
     }
   };
+
+  useEffect(() => {
+    fetchTrending();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -89,6 +104,23 @@ const AIInteractions = () => {
           </button>
         }
       />
+
+      {/* ── TRENDING SEARCHES ── */}
+      {trendingSearches && trendingSearches.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="flex items-center gap-2 mb-3 text-sm font-bold text-gray-700">
+            <FaSearch className="text-cyan-500" /> Top Từ Khóa Tìm Kiếm (7 Ngày Qua)
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {trendingSearches.map((item, index) => (
+              <div key={index} className="px-3 py-1.5 bg-cyan-50 border border-cyan-100 rounded-lg flex items-center gap-2 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="text-xs font-semibold text-cyan-800">{item.keyword}</span>
+                <span className="text-[10px] font-bold text-white bg-cyan-500 px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── TOOLBAR ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5 space-y-3">
