@@ -1,7 +1,6 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, ScrollRestoration } from "react-router-dom";
 import Navbar from "../components/client/Navbar";
 import Footer from "../components/client/Footer";
-import ScrollToTop from "../components/common/ScrollToTop";
 import ChatWidget from "../components/client/ChatWidget";
 import Announcement from "../components/client/Announcement";
 
@@ -9,7 +8,7 @@ import Announcement from "../components/client/Announcement";
 const ClientLayout = () => {
   return (
     <div className="flex flex-col min-h-screen">
-      <ScrollToTop />
+      <ScrollRestoration />
       <Announcement />
       <Navbar />
       <div className="flex-1">

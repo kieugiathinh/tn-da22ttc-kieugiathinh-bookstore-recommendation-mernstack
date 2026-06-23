@@ -1,10 +1,9 @@
-import { Outlet, Navigate } from "react-router-dom";
+import { Outlet, Navigate, ScrollRestoration } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import AppSidebar from "../components/admin/AppSidebar";
 import AppHeader from "../components/admin/AppHeader";
 import Backdrop from "../components/admin/Backdrop";
-import ScrollToTop from "../components/common/ScrollToTop";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 
 // Inner component: nằm BÊN TRONG SidebarProvider nên có thể dùng useSidebar()
@@ -28,6 +27,7 @@ const AdminLayoutContent = () => {
       >
         {/* Header dính trên cùng */}
         <AppHeader />
+        <ScrollRestoration />
 
         {/* Nội dung trang (được inject từ React Router) */}
         <div className="p-4 md:p-6 w-full">
@@ -54,7 +54,6 @@ const AdminLayout = () => {
 
   return (
     <SidebarProvider>
-      <ScrollToTop />
       <AdminLayoutContent />
     </SidebarProvider>
   );

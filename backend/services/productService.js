@@ -112,13 +112,45 @@ const getAllProducts = async (queryParms) => {
       .lean();
     return await flashsaleService.attachFlashSaleToProducts(products);
   }
-  
+  // Xử lý Tìm kiếm với MongoDB Atlas Search
+  if (qSearch) {
+    const pipeline = [
+      {
+        $search: {
+          index: "product_search_index",
+          text: {
+            query: qSearch,
+            path: ["title", "author"],
+            fuzzy: { maxEdits: 1, prefixLength: 0 }
+          }
+        }
+      }
+    ];
+
+    if (qCategory) {
+      const categories = qCategory.split(",");
+      pipeline.push({
+        $match: { category: { $in: categories.map(c => new mongoose.Types.ObjectId(c)) } }
+      });
+    }
+
+    if (qNew) {
+      pipeline.push({ $sort: { createdAt: -1 } });
+    } else if (qBestSeller) {
+      pipeline.push({ $sort: { sold: -1 } });
+    }
+
+    let products = await Product.aggregate(pipeline);
+    products = await Product.populate(products, { path: "category" });
+    return await flashsaleService.attachFlashSaleToProducts(products);
+  }
+
+  // Luồng xử lý bình thường không có tìm kiếm
   let filter = {};
   if (qCategory) {
     const categories = qCategory.split(",");
     filter.category = { $in: categories };
   }
-  if (qSearch) filter.title = { $regex: qSearch, $options: "i" };
 
   let query = Product.find(filter).populate("category").lean();
 

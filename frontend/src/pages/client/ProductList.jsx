@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { userRequest } from "../../requestMethods";
 import ProductCard from "../../components/client/ProductCard";
@@ -41,8 +41,13 @@ const ProductList = () => {
     setCurrentPage(1);
   }, [selectedCategories, sort, searchTerm]);
 
+  const isFirstRender = useRef(true);
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage]);
 
   // 1. Lấy danh sách thể loại

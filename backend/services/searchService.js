@@ -65,14 +65,24 @@ const getTrendingSearches = async () => {
 const getSearchSuggestions = async (keyword) => {
   if (!keyword || !keyword.trim()) return [];
 
-  // Tìm kiếm theo title hoặc author, không phân biệt hoa thường
-  const regex = new RegExp(keyword.trim(), "i");
-  const suggestions = await Product.find({
-    $or: [{ title: regex }, { author: regex }],
-  })
-    .select("_id title author img price") // Chỉ lấy các trường cần thiết
-    .limit(5)
-    .lean();
+  // Sử dụng MongoDB Atlas Search (yêu cầu đã tạo Index "product_search_index")
+  const suggestions = await Product.aggregate([
+    {
+      $search: {
+        index: "product_search_index",
+        text: {
+          query: keyword.trim(),
+          path: ["title", "author"],
+          fuzzy: {
+            maxEdits: 1, // Hỗ trợ sai chính tả nhẹ
+            prefixLength: 0
+          }
+        }
+      }
+    },
+    { $limit: 5 },
+    { $project: { _id: 1, title: 1, author: 1, img: 1, price: 1 } }
+  ]);
 
   return suggestions;
 };
