@@ -14,7 +14,7 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { useLocation, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { userRequest } from "../../requestMethods";
 import { useDispatch } from "react-redux";
 import { addProduct } from "../../redux/cartRedux";
@@ -79,9 +79,14 @@ const Product = () => {
     getProduct();
   }, [id]);
 
+  const trackedProductId = useRef(null);
+
   // Tracking hành vi (view hoặc search_click)
   useEffect(() => {
     if (!user || !id) return;
+    
+    // Nếu ID này đã được ghi nhận thành công thì bỏ qua
+    if (trackedProductId.current === id) return; 
 
     // Lấy source từ query string (?source=search)
     const queryParams = new URLSearchParams(location.search);
@@ -96,11 +101,17 @@ const Product = () => {
           interactionType,
           source
         });
+        // Đánh dấu là đã tracking thành công cho sản phẩm này
+        trackedProductId.current = id;
       } catch (err) {
         console.error("Lỗi tracking:", err);
       }
     };
-    trackInteraction();
+
+    // Thiết lập đếm ngược 10 giây mới tính là 1 lượt xem hợp lệ
+    const timerId = setTimeout(() => {
+      trackInteraction();
+    }, 10000);
 
     userRequest
       .post("/recommend/refresh", {}, { withCredentials: true })
@@ -111,6 +122,12 @@ const Product = () => {
       })
       .catch(() => {
       });
+
+    // Dọn dẹp (Cleanup function): Nếu người dùng thoát trang hoặc chuyển sang 
+    // sản phẩm khác trước 10s, tiến trình này sẽ bị hủy và không ghi nhận lượt xem.
+    return () => {
+      clearTimeout(timerId);
+    };
   }, [id, user, location.search]);
 
   // Fetch Reviews
