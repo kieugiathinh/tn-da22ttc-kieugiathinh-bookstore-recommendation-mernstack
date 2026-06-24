@@ -44,11 +44,11 @@ const VNPayReturn = () => {
 
         {/* VNPay Logo */}
         <div className="flex justify-center mb-6">
-          <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+          <div className="bg-white px-4 rounded-xl shadow-sm border border-slate-100 h-14 flex items-center justify-center">
             <img
               src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png"
               alt="VNPay"
-              className="h-10 object-contain"
+              className="h-7 object-contain"
             />
           </div>
         </div>

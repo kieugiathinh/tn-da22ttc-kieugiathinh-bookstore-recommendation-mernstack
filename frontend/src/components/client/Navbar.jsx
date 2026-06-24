@@ -154,7 +154,7 @@ const Navbar = () => {
               placeholder="Tìm kiếm sách yêu thích của bạn..."
               value={search}
               onFocus={() => setIsSearchFocused(true)}
-              className="w-full py-2.5 pl-6 pr-14 border-2 border-primary rounded-full outline-none
+              className="w-full py-2.5 pl-5 pr-14 border-2 border-slate-200 hover:border-orange-200 rounded-2xl outline-none
                          focus:ring-0 focus:shadow-md focus:border-orange-500
                          text-sm text-slate-700 placeholder:text-slate-400
                          bg-white transition-all duration-300"
@@ -164,9 +164,9 @@ const Navbar = () => {
             <button
               onClick={() => handleSearch(search)}
               className="absolute right-1.5 top-1/2 -translate-y-1/2
-                         bg-primary hover:bg-primary-hover
-                         text-white rounded-full w-10 h-[80%] flex items-center justify-center
-                         transition-all duration-200 cursor-pointer"
+                         bg-orange-500 hover:bg-orange-600
+                         text-white rounded-xl w-10 h-[80%] flex items-center justify-center
+                         transition-all duration-200 cursor-pointer shadow-sm"
             >
               <FiSearch className="text-lg" />
             </button>
@@ -231,7 +231,7 @@ const Navbar = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {trendingSearches.length > 0 && (
                       <div className="p-3">
                         <div className="px-2 mb-2">
@@ -259,9 +259,9 @@ const Navbar = () => {
         <div className="flex items-center gap-5">
           {/* Cart */}
           <Link to="/cart">
-            <div className="relative cursor-pointer group p-2">
+            <div className="relative cursor-pointer group p-2.5 rounded-xl hover:bg-orange-50 transition-colors duration-300">
               <FiShoppingCart
-                className="text-2xl text-slate-600 group-hover:text-primary transition-colors duration-200"
+                className="text-2xl text-slate-600 group-hover:text-orange-500 transition-colors duration-300"
               />
               {cart.quantity > 0 && (
                 <span

@@ -78,52 +78,60 @@ const Success = () => {
   }, []); // Để dependency rỗng [] để chỉ chạy 1 lần khi mount
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center px-4">
-      {isProcessing ? (
-        <div className="flex flex-col items-center">
-          <FaSpinner className="text-primary text-6xl animate-spin mb-4" />
-          <h2 className="text-xl font-semibold text-gray-700">
-            Đang xử lý đơn hàng của bạn...
-          </h2>
-          <p className="text-gray-500">Vui lòng không tắt trình duyệt.</p>
-        </div>
-      ) : (
-        <div className="bg-white p-10 rounded-2xl shadow-xl max-w-md w-full border border-green-100">
-          <FaCheckCircle className="text-green-500 text-7xl mx-auto mb-6 animate-bounce" />
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Thanh toán thành công!
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Cảm ơn bạn đã mua sắm tại BookBee.
-          </p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-center p-4">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg border border-slate-100 text-center relative overflow-hidden">
+        {/* Decorative Header */}
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-500 to-amber-500"></div>
 
-          {orderId && (
-            <div className="bg-gray-50 p-4 rounded-lg mb-8 border border-gray-200">
-              <p className="text-sm text-gray-500 uppercase font-bold">
-                Mã đơn hàng
-              </p>
-              <p className="text-xl font-mono text-primary font-bold">
-                #{orderId.slice(-8).toUpperCase()}
-              </p>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={() => navigate("/myorders")}
-              className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-primary-hover transition shadow-lg"
-            >
-              Xem Đơn Hàng Của Tôi
-            </button>
-            <button
-              onClick={() => navigate("/")}
-              className="w-full bg-white border-2 border-primary text-primary py-3 rounded-lg font-bold hover:bg-primary-light transition"
-            >
-              Tiếp Tục Mua Sắm
-            </button>
+        {/* Stripe Logo */}
+        <div className="flex justify-center mb-6">
+          <div className="bg-white px-4 rounded-xl shadow-sm border border-slate-100 h-14 flex items-center justify-center">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
+              alt="Stripe"
+              className="h-7 object-contain"
+            />
           </div>
         </div>
-      )}
+
+        {isProcessing ? (
+          <div className="flex flex-col items-center py-6">
+            <FaSpinner className="animate-spin text-5xl text-primary mb-6" />
+            <h2 className="text-xl font-black text-slate-800">Đang xử lý đơn hàng...</h2>
+            <p className="text-slate-500 mt-2 text-sm">Vui lòng không đóng trình duyệt lúc này.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center py-4 animate-fadeIn">
+            <FaCheckCircle className="text-6xl text-emerald-500 mb-4 drop-shadow-md" />
+            <h2 className="text-2xl font-black text-slate-800">Thanh Toán Hoàn Tất!</h2>
+            <p className="text-slate-600 mt-2 font-medium">Cảm ơn bạn đã mua sắm tại BookBee.</p>
+
+            {orderId && (
+              <div className="bg-slate-50 p-4 rounded-xl mt-6 w-full border border-slate-100">
+                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Mã đơn hàng</p>
+                <p className="text-lg font-mono text-slate-800 font-bold">
+                  #{orderId.slice(-8).toUpperCase()}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-8 flex flex-col gap-3 w-full">
+              <button
+                onClick={() => navigate("/myorders")}
+                className="w-full py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-orange-200 hover:scale-105 transition-transform"
+              >
+                Xem Đơn Hàng Của Bạn
+              </button>
+              <button
+                onClick={() => navigate("/products")}
+                className="w-full py-3 bg-orange-50 text-primary font-bold rounded-xl hover:bg-orange-100 transition-colors"
+              >
+                Tiếp tục mua sắm
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

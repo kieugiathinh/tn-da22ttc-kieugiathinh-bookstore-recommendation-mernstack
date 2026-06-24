@@ -27,7 +27,7 @@ import Contact from "./pages/client/Contact";
 import AllCoupons from "./pages/client/AllCoupons";
 import ForgotPassword from "./pages/client/ForgotPassword";
 import ResetPassword from "./pages/client/ResetPassword";
-import { FAQ, ShippingPolicy, PrivacyPolicy, Terms } from "./pages/client/PolicyPages";
+import { FAQ, ShippingPolicy, PrivacyPolicy, Terms, PaymentPolicy } from "./pages/client/PolicyPages";
 import Recommendations from "./pages/client/Recommendations";
 
 // ── Admin Pages ───────────────────────────────────────────────────────────────
@@ -75,6 +75,7 @@ const router = createBrowserRouter([
       { path: "/shipping", element: <ShippingPolicy /> },
       { path: "/privacy", element: <PrivacyPolicy /> },
       { path: "/terms", element: <Terms /> },
+      { path: "/payment-policy", element: <PaymentPolicy /> },
       { path: "/recommendations", element: <Recommendations /> },
       { path: "/coupons", element: <AllCoupons /> },
 

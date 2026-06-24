@@ -50,12 +50,12 @@ const Footer = () => {
 
   return (
     <footer className="mt-16 font-sans border-t border-slate-100">
-      
+
       {/* ============ TẦNG 1: NEWSLETTER BAR ============ */}
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 py-5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            
+
             {/* Cột trái: Tiêu đề */}
             <div className="flex items-center gap-3 text-white md:w-1/3">
               <FaEnvelope className="text-3xl drop-shadow-sm" />
@@ -76,11 +76,10 @@ const Footer = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`px-8 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-sm uppercase tracking-wide flex items-center justify-center ${
-                  isLoading 
-                    ? "bg-slate-400 text-white cursor-not-allowed" 
-                    : "bg-slate-800 hover:bg-slate-900 text-white cursor-pointer hover:shadow-md active:scale-95"
-                }`}
+                className={`px-8 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-sm uppercase tracking-wide flex items-center justify-center ${isLoading
+                  ? "bg-slate-400 text-white cursor-not-allowed"
+                  : "bg-slate-800 hover:bg-slate-900 text-white cursor-pointer hover:shadow-md active:scale-95"
+                  }`}
               >
                 {isLoading ? "Đang xử lý..." : "Đăng ký"}
               </button>
@@ -140,11 +139,10 @@ const Footer = () => {
                 Dịch vụ khách hàng
               </h3>
               <ul className="space-y-3 text-sm font-medium">
-                <FooterLink to="/shipping" text="Điều khoản sử dụng" />
-                <FooterLink to="/shipping" text="Chính sách bảo mật" />
-                <FooterLink to="/returns" text="Chính sách đổi trả & hoàn tiền" />
+                <FooterLink to="/terms" text="Điều khoản sử dụng" />
+                <FooterLink to="/privacy" text="Chính sách bảo mật" />
+                <FooterLink to="/payment-policy" text="Chính sách bảo mật thanh toán" />
                 <FooterLink to="/shipping" text="Chính sách vận chuyển" />
-                <FooterLink to="/faq" text="Hệ thống cửa hàng" />
               </ul>
             </div>
 
@@ -157,8 +155,7 @@ const Footer = () => {
               <ul className="space-y-3 text-sm font-medium">
                 <FooterLink to="/about" text="Giới thiệu BookBee" />
                 <FooterLink to="/faq" text="Câu hỏi thường gặp" />
-                <FooterLink to="/contact" text="Liên hệ hợp tác" />
-                <FooterLink to="/blog" text="Tin tức & Blog" />
+                <FooterLink to="/contact" text="Liên hệ với chúng tôi" />
                 <FooterLink to="/products" text="Danh mục sản phẩm" />
               </ul>
             </div>
@@ -192,16 +189,16 @@ const Footer = () => {
       <div className="bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            
+
             {/* Đơn Vị Vận Chuyển */}
             <div className="flex items-center gap-4">
               <span className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
                 Đơn vị vận chuyển
               </span>
               <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm hover:border-orange-300 transition-colors cursor-pointer group">
-                <img 
-                  src="https://cdn.hstatic.net/themes/200000472237/1001423864/14/logo.png?v=2874" 
-                  alt="Giao Hàng Nhanh" 
+                <img
+                  src="https://cdn.hstatic.net/themes/200000472237/1001423864/14/logo.png?v=2874"
+                  alt="Giao Hàng Nhanh"
                   className="h-6 object-contain transition-all duration-300"
                 />
               </div>
@@ -212,12 +209,21 @@ const Footer = () => {
               <span className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
                 Thanh toán an toàn
               </span>
-              <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors cursor-pointer group">
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" 
-                  alt="Stripe" 
-                  className="h-5 object-contain transition-all duration-300"
-                />
+              <div className="flex items-center gap-3">
+                <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm hover:border-blue-300 transition-colors cursor-pointer">
+                  <img
+                    src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png"
+                    alt="VNPay"
+                    className="h-5 object-contain"
+                  />
+                </div>
+                <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors cursor-pointer">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
+                    alt="Stripe"
+                    className="h-5 object-contain"
+                  />
+                </div>
               </div>
             </div>
 
