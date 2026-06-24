@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { FaUserPlus, FaEdit, FaTrash, FaSearch, FaFilter, FaUsers, FaUserTie, FaUser } from "react-icons/fa";
+import { FaUserPlus, FaEdit, FaTrash, FaSearch, FaFilter, FaUsers, FaUserTie, FaUser, FaChevronDown } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
 import PageHeader from "../../components/admin/PageHeader";
@@ -11,7 +11,7 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
+
   // Filters
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all"); // "all", "admin", "customer"
@@ -138,7 +138,7 @@ const Users = () => {
             <p className="mt-0.5 text-2xl font-black text-gray-900">{users.length}</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => {setFilterRole("customer"); setCurrentPage(1);}}>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => { setFilterRole("customer"); setCurrentPage(1); }}>
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500 transition-transform group-hover:scale-110">
             <FaUser size={18} />
           </div>
@@ -147,7 +147,7 @@ const Users = () => {
             <p className="mt-0.5 text-2xl font-black text-gray-900">{totalCustomer}</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => {setFilterRole("admin"); setCurrentPage(1);}}>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => { setFilterRole("admin"); setCurrentPage(1); }}>
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50 text-primary transition-transform group-hover:scale-110">
             <FaUserTie size={18} />
           </div>
@@ -171,7 +171,7 @@ const Users = () => {
               className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-gray-50 focus:bg-white transition-all"
             />
           </div>
-          
+
           <div className="relative">
             <FaFilter className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={11} />
             <select
@@ -183,20 +183,24 @@ const Users = () => {
               <option value="admin">Quản trị viên</option>
               <option value="customer">Khách hàng</option>
             </select>
+            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
           </div>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-xs font-semibold text-gray-500">Hiển thị:</span>
-          <select
-            value={rowsPerPage}
-            onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-            className="pl-3 pr-7 py-2 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-primary appearance-none cursor-pointer"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+          <div className="relative">
+            <select
+              value={rowsPerPage}
+              onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-primary appearance-none cursor-pointer"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
         </div>
       </div>
 

@@ -24,6 +24,7 @@ import recommendationRoute from "./routes/recommendationRoute.js";
 import recommendationProxyRoute from "./routes/recommendationProxyRoute.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 import searchRoute from "./routes/searchRoute.js";
+import paymentRoute from "./routes/paymentRoute.js";
 
 const app = express();
 
@@ -101,6 +102,7 @@ import interactionRoutes from "./routes/interactionRoutes.js";
 app.use("/api/v1/interactions", interactionRoutes);
 
 app.use("/api/v1/newsletter", newsletterRoutes);
+app.use("/api/v1/payment", paymentRoute);
 
 // --- ERROR MIDDLEWARE ---
 app.use(notFound);

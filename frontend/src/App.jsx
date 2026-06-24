@@ -18,6 +18,7 @@ import MyAccount from "./pages/client/MyAccount";
 import Order from "./pages/client/Order";
 import Success from "./pages/client/Success";
 import Checkout from "./pages/client/Checkout";
+import VNPayReturn from "./pages/client/VNPayReturn";
 import ProductList from "./pages/client/ProductList";
 import FlashSale from "./pages/client/FlashSale";
 import MyVouchers from "./pages/client/MyVouchers";
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
       { path: "/products", element: <ProductList /> },
       { path: "/products/:category", element: <ProductList /> },
       { path: "/checkout", element: <Checkout /> },
+      { path: "/vnpay-return", element: <VNPayReturn /> },
       { path: "/success", element: <Success /> },
       { path: "/flash-sale", element: <FlashSale /> },
       { path: "/about", element: <About /> },

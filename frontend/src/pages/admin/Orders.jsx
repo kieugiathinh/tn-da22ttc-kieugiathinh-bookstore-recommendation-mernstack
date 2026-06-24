@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import {
   FaClock, FaShippingFast, FaCheckDouble, FaTimesCircle,
   FaCheckCircle, FaBoxOpen, FaEye, FaSearch, FaCalendarAlt,
-  FaFilter, FaSortAmountDown
+  FaFilter, FaSortAmountDown, FaChevronDown
 } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
@@ -11,12 +11,12 @@ import Pagination from "../../components/admin/Pagination";
 
 // ─── STATUS CONFIG ─────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  0: { label: "Chờ xác nhận",  icon: FaClock,        color: "bg-yellow-50 text-yellow-700 border border-yellow-200"  },
-  1: { label: "Đã xác nhận",   icon: FaCheckCircle,  color: "bg-blue-50 text-blue-700 border border-blue-200"        },
-  2: { label: "Đang chuẩn bị", icon: FaBoxOpen,      color: "bg-purple-50 text-purple-700 border border-purple-200"  },
-  3: { label: "Đang giao",     icon: FaShippingFast, color: "bg-indigo-50 text-indigo-700 border border-indigo-200"  },
-  4: { label: "Đã giao",       icon: FaCheckDouble,  color: "bg-emerald-50 text-emerald-700 border border-emerald-200"},
-  5: { label: "Đã hủy",        icon: FaTimesCircle,  color: "bg-red-50 text-red-600 border border-red-200"           },
+  0: { label: "Chờ xác nhận", icon: FaClock, color: "bg-yellow-50 text-yellow-700 border border-yellow-200" },
+  1: { label: "Đã xác nhận", icon: FaCheckCircle, color: "bg-blue-50 text-blue-700 border border-blue-200" },
+  2: { label: "Đang chuẩn bị", icon: FaBoxOpen, color: "bg-purple-50 text-purple-700 border border-purple-200" },
+  3: { label: "Đang giao", icon: FaShippingFast, color: "bg-indigo-50 text-indigo-700 border border-indigo-200" },
+  4: { label: "Đã giao", icon: FaCheckDouble, color: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  5: { label: "Đã hủy", icon: FaTimesCircle, color: "bg-red-50 text-red-600 border border-red-200" },
 };
 
 const StatusBadge = ({ status }) => {
@@ -32,15 +32,16 @@ const StatusBadge = ({ status }) => {
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────────
 const Orders = () => {
-  const [orders, setOrders]           = useState([]);
-  const [loading, setLoading]         = useState(true);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterDate, setFilterDate]   = useState("all");
-  const [searchTerm, setSearchTerm]   = useState("");
+  const [filterDate, setFilterDate] = useState("all");
+  const [filterPayment, setFilterPayment] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showModal, setShowModal]     = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchOrders = async () => {
@@ -106,17 +107,26 @@ const Orders = () => {
         matchDate = orderDate >= mon;
       } else if (filterDate === "month") {
         matchDate = orderDate.getMonth() === now.getMonth() &&
-                    orderDate.getFullYear() === now.getFullYear();
+          orderDate.getFullYear() === now.getFullYear();
       } else if (filterDate === "year") {
         matchDate = orderDate.getFullYear() === now.getFullYear();
       }
-      return matchStatus && matchSearch && matchDate;
+      let matchPayment = true;
+      if (filterPayment !== "all") {
+        if (filterPayment === "STRIPE") {
+          matchPayment = o.paymentMethod === "Stripe" || o.paymentMethod === "STRIPE";
+        } else {
+          matchPayment = o.paymentMethod === filterPayment;
+        }
+      }
+
+      return matchStatus && matchSearch && matchDate && matchPayment;
     });
-  }, [orders, filterStatus, searchTerm, filterDate]);
+  }, [orders, filterStatus, searchTerm, filterDate, filterPayment]);
 
   // ── Pagination ─────────────────────────────────────────────────────────────
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
-  const pageData   = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const pageData = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   // ── Count per status ───────────────────────────────────────────────────────
   const counts = useMemo(() => {
@@ -132,6 +142,15 @@ const Orders = () => {
     ...Object.entries(STATUS_CONFIG).map(([v, cfg]) => ({ value: v, label: cfg.label })),
   ];
 
+  const resetFilters = () => {
+    setSearchTerm("");
+    setFilterStatus("all");
+    setFilterDate("all");
+    setFilterPayment("all");
+    setCurrentPage(1);
+  };
+  const hasFilter = searchTerm || filterStatus !== "all" || filterDate !== "all" || filterPayment !== "all";
+
   return (
     <div className="space-y-5">
       {/* ── PAGE HEADER ── */}
@@ -146,16 +165,14 @@ const Orders = () => {
           <button
             key={tab.value}
             onClick={() => { setFilterStatus(tab.value); setCurrentPage(1); }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all border ${
-              filterStatus === tab.value
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all border ${filterStatus === tab.value
                 ? "bg-primary text-white border-primary shadow-sm"
                 : "bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary"
-            }`}
+              }`}
           >
             {tab.label}
-            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold min-w-[18px] text-center ${
-              filterStatus === tab.value ? "bg-white/25 text-white" : "bg-gray-100 text-gray-500"
-            }`}>
+            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold min-w-[18px] text-center ${filterStatus === tab.value ? "bg-white/25 text-white" : "bg-gray-100 text-gray-500"
+              }`}>
               {counts[tab.value] ?? 0}
             </span>
           </button>
@@ -163,27 +180,54 @@ const Orders = () => {
       </div>
 
       {/* ── TOOLBAR: Tìm kiếm + Lọc ── */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5">
-        {/* Search */}
-        <div className="relative flex-1 w-full sm:max-w-sm">
-          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={13} />
-          <input
-            type="text"
-            placeholder="Tìm mã đơn, tên, SĐT khách hàng..."
-            value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-gray-50 focus:bg-white transition-all"
-          />
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5 space-y-3">
+        {/* Row 1: Search + Add */}
+        <div className="flex gap-3 flex-col sm:flex-row items-start sm:items-center">
+          <div className="relative flex-1 w-full">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={13} />
+            <input
+              type="text"
+              placeholder="Tìm mã đơn, tên, SĐT khách hàng..."
+              value={searchTerm}
+              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-gray-50 focus:bg-white transition-all"
+            />
+          </div>
+          {hasFilter && (
+            <button
+              onClick={resetFilters}
+              className="text-xs font-semibold text-gray-500 hover:text-primary px-3 py-2 rounded-lg hover:bg-orange-50 transition-colors flex-shrink-0"
+            >
+              ✕ Xóa bộ lọc
+            </button>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 text-sm text-gray-600 ml-auto">
+        {/* Row 2: Filters */}
+        <div className="flex flex-wrap gap-2.5">
+          {/* Payment filter */}
+          <div className="relative">
+            <FaFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={11} />
+            <select
+              value={filterPayment}
+              onChange={e => { setFilterPayment(e.target.value); setCurrentPage(1); }}
+              className={`pl-8 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterPayment !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
+            >
+              <option value="all">Tất cả thanh toán</option>
+              <option value="COD">💵 Tiền mặt (COD)</option>
+              <option value="VNPay">📱 VNPay</option>
+              <option value="STRIPE">💳 Stripe</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
+
           {/* Date filter */}
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 hover:border-primary transition-colors">
-            <FaCalendarAlt className="text-gray-400 flex-shrink-0" size={13} />
+          <div className="relative">
+            <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={11} />
             <select
               value={filterDate}
               onChange={e => { setFilterDate(e.target.value); setCurrentPage(1); }}
-              className="bg-transparent text-sm text-gray-700 font-medium focus:outline-none cursor-pointer"
+              className={`pl-8 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterDate !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
             >
               <option value="all">Tất cả thời gian</option>
               <option value="today">Hôm nay</option>
@@ -191,20 +235,24 @@ const Orders = () => {
               <option value="month">Tháng này</option>
               <option value="year">Năm nay</option>
             </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
           </div>
 
           {/* Rows per page */}
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 hover:border-primary transition-colors">
-            <FaSortAmountDown className="text-gray-400 flex-shrink-0" size={13} />
-            <select
-              value={rowsPerPage}
-              onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-              className="bg-transparent text-sm text-gray-700 font-medium focus:outline-none cursor-pointer"
-            >
-              <option value={10}>10 / trang</option>
-              <option value={20}>20 / trang</option>
-              <option value={50}>50 / trang</option>
-            </select>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs font-semibold text-gray-500">Hiển thị:</span>
+            <div className="relative">
+              <select
+                value={rowsPerPage}
+                onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                className="pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-primary cursor-pointer appearance-none"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+            </div>
           </div>
         </div>
       </div>
@@ -283,12 +331,17 @@ const Orders = () => {
 
                         {/* PT thanh toán */}
                         <td className="px-5 py-4">
-                          <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold border ${
-                            order.paymentMethod === "STRIPE"
+                          <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold border ${order.paymentMethod === "STRIPE" || order.paymentMethod === "Stripe"
                               ? "bg-violet-50 text-violet-700 border-violet-200"
-                              : "bg-gray-50 text-gray-600 border-gray-200"
-                          }`}>
-                            {order.paymentMethod === "STRIPE" ? "💳 Stripe" : "💵 COD"}
+                              : order.paymentMethod === "VNPay"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-gray-50 text-gray-600 border-gray-200"
+                            }`}>
+                            {order.paymentMethod === "STRIPE" || order.paymentMethod === "Stripe" ? (
+                              <div className="flex items-center gap-2"><img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="h-4 object-contain" /></div>
+                            ) : order.paymentMethod === "VNPay" ? (
+                              <div className="flex items-center gap-2"><img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png" alt="VNPay" className="h-4 object-contain" /></div>
+                            ) : "💵 COD"}
                           </span>
                         </td>
 
@@ -329,8 +382,16 @@ const Orders = () => {
                       <td colSpan={7} className="py-16 text-center">
                         <div className="flex flex-col items-center gap-3 text-gray-400">
                           <FaFilter size={28} className="text-gray-200" />
-                          <p className="text-sm font-medium">Không tìm thấy đơn hàng nào</p>
-                          <p className="text-xs">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                          <p className="text-sm font-medium">
+                            {hasFilter ? `Không tìm thấy đơn hàng nào phù hợp` : "Chưa có đơn hàng nào"}
+                          </p>
+                          {hasFilter ? (
+                            <button onClick={resetFilters} className="text-xs text-primary hover:underline">
+                              Xóa bộ lọc
+                            </button>
+                          ) : (
+                            <p className="text-xs">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -395,10 +456,16 @@ const Orders = () => {
                   <p className="text-xs text-gray-700 leading-relaxed">
                     <span className="font-semibold text-gray-500">Địa chỉ: </span>{selectedOrder.address}
                   </p>
-                  <p className="text-xs text-gray-700">
+                  <div className="text-xs text-gray-700 flex items-center gap-1">
                     <span className="font-semibold text-gray-500">Phương thức: </span>
-                    <span className="font-bold text-primary">{selectedOrder.paymentMethod}</span>
-                  </p>
+                    <span className="font-bold text-primary flex items-center gap-2">
+                      {selectedOrder.paymentMethod === "Stripe" || selectedOrder.paymentMethod === "STRIPE" ? (
+                        <><img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="h-5 object-contain" /> Stripe</>
+                      ) : selectedOrder.paymentMethod === "VNPay" ? (
+                        <><img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png" alt="VNPay" className="h-5 object-contain" /> VNPay</>
+                      ) : "Tiền mặt (COD)"}
+                    </span>
+                  </div>
                   <p className="text-xs text-gray-500">
                     {new Date(selectedOrder.createdAt).toLocaleString("vi-VN")}
                   </p>

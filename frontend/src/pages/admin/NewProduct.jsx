@@ -66,6 +66,12 @@ const NewProduct = () => {
       // Tạo giá ngẫu nhiên hợp lý (vì Google Books không cung cấp giá VNĐ)
       const randomPrice = Math.floor(Math.random() * (250000 - 50000 + 1) / 1000) * 1000 + 50000;
 
+      // Xử lý publishedYear từ publishedDate
+      let publishedYearStr = "";
+      if (bookData.publishedDate) {
+        publishedYearStr = bookData.publishedDate.substring(0, 4);
+      }
+
       setInputs((prev) => ({
         ...prev,
         title: bookData.title || prev.title,
@@ -73,6 +79,8 @@ const NewProduct = () => {
         publisher: bookData.publisher || prev.publisher || "",
         desc: bookData.description || prev.desc || "",
         originalPrice: prev.originalPrice || randomPrice,
+        pageCount: bookData.pageCount || prev.pageCount || "",
+        publishedYear: publishedYearStr || prev.publishedYear || ""
       }));
 
       // Nếu có ảnh bìa từ Google Books
@@ -119,10 +127,17 @@ const NewProduct = () => {
 
       setUploadStatus("Đang lưu vào cơ sở dữ liệu...");
       const newProduct = {
-        ...inputs, img: url, category: cat,
+        ...inputs, 
+        img: url, 
+        category: cat,
         countInStock: Number(inputs.countInStock) || 0,
         originalPrice: Number(inputs.originalPrice),
         discountedPrice: Number(inputs.discountedPrice) || 0,
+        pageCount: inputs.pageCount ? Number(inputs.pageCount) : null,
+        publishedYear: inputs.publishedYear ? Number(inputs.publishedYear) : null,
+        language: inputs.language || "vi",
+        ageGroup: inputs.ageGroup || "all",
+        tags: inputs.tags ? inputs.tags.split(",").map(t => t.trim()).filter(Boolean) : []
       };
       await userRequest.post("/products", newProduct);
       Swal.fire("Thành công!", "Sách mới đã được thêm vào kho.", "success");
@@ -203,6 +218,42 @@ const NewProduct = () => {
                   <InputField label="Giá Bìa (VND)" required type="number" name="originalPrice" placeholder="100000" value={inputs.originalPrice || ""} onChange={handleChange} />
                   <InputField label="Giá Bán (Sau giảm)" type="number" name="discountedPrice" placeholder="80000" value={inputs.discountedPrice || ""} onChange={handleChange} />
                 </div>
+              </div>
+            </Card>
+
+            {/* CARD THÔNG TIN BỔ SUNG (AI RECOMMENDATION) */}
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-5 border-b border-gray-100 pb-3">Thuộc tính Mở rộng (Hỗ trợ AI Recommendation)</h2>
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <InputField label="Ngôn ngữ" required as="select" name="language" value={inputs.language || "vi"} onChange={handleChange}>
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">Tiếng Anh</option>
+                    <option value="ja">Tiếng Nhật</option>
+                    <option value="zh">Tiếng Trung</option>
+                    <option value="fr">Tiếng Pháp</option>
+                    <option value="other">Khác</option>
+                  </InputField>
+                  <InputField label="Độ tuổi phù hợp" required as="select" name="ageGroup" value={inputs.ageGroup || "all"} onChange={handleChange}>
+                    <option value="all">Mọi lứa tuổi</option>
+                    <option value="children">Trẻ em</option>
+                    <option value="teen">Thanh thiếu niên</option>
+                    <option value="adult">Người lớn (18+)</option>
+                  </InputField>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <InputField label="Năm xuất bản" type="number" name="publishedYear" placeholder="2024" value={inputs.publishedYear || ""} onChange={handleChange} />
+                  <InputField label="Số trang" type="number" name="pageCount" placeholder="300" value={inputs.pageCount || ""} onChange={handleChange} min="1" />
+                </div>
+
+                <InputField 
+                  label="Từ khóa / Tags (Phân cách bằng dấu phẩy)" 
+                  name="tags" 
+                  placeholder="Ví dụ: Tiểu thuyết, Tâm lý, Bestseller 2024" 
+                  value={inputs.tags || ""} 
+                  onChange={handleChange} 
+                />
               </div>
             </Card>
           </div>

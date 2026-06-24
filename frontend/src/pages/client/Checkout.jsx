@@ -348,6 +348,37 @@ const Checkout = () => {
       } catch (err) {
         toast.error("Lỗi kết nối Stripe!");
       }
+    } else if (paymentMethod === "VNPay") {
+      try {
+        const resOrder = await userRequest.post("/orders", { ...orderData, status: 0 });
+        const newOrder = resOrder.data;
+
+        // Ghi lại hành vi mua hàng
+        await Promise.allSettled(
+          checkoutItems.map((item) =>
+            userRequest.post('/interactions/track', {
+              productId: item._id || item.productId,
+              interactionType: "purchase",
+              source: "checkout"
+            }).catch(e => console.log("Track error:", e))
+          )
+        );
+
+        dispatch(clearCart());
+
+        // Gọi API tạo link thanh toán VNPay
+        const resPayment = await publicRequest.post("/payment/create_payment_url", {
+          amount: grandTotal,
+          orderId: newOrder._id,
+        });
+
+        if (resPayment.data.paymentUrl) {
+          window.location.href = resPayment.data.paymentUrl;
+        }
+      } catch (err) {
+        console.log(err);
+        toast.error("Lỗi khởi tạo thanh toán VNPay!");
+      }
     }
   };
 
@@ -615,8 +646,8 @@ const Checkout = () => {
                     onChange={() => setPaymentMethod("Stripe")}
                     className="w-4 h-4 accent-amber-500" />
                   <div className="ml-4 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                      <FaCreditCard className="text-amber-600 text-xl" />
+                    <div className="w-12 h-10 bg-white border border-gray-200 shadow-sm rounded-lg flex items-center justify-center px-1.5">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="w-full object-contain" />
                     </div>
                     <div>
                       <span className="block font-bold text-slate-800 text-sm">Thanh toán Online (Stripe)</span>
@@ -625,6 +656,31 @@ const Checkout = () => {
                   </div>
                   {paymentMethod === "Stripe" && (
                     <FaCheck className="ml-auto text-amber-500" />
+                  )}
+                </label>
+                {/* VNPay */}
+                <label
+                  className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all
+                    ${paymentMethod === "VNPay"
+                      ? "border-blue-400 bg-blue-50/60 shadow-sm"
+                      : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
+                    }`}
+                >
+                  <input type="radio" name="payment" value="VNPay"
+                    checked={paymentMethod === "VNPay"}
+                    onChange={() => setPaymentMethod("VNPay")}
+                    className="w-4 h-4 accent-blue-500" />
+                  <div className="ml-4 flex items-center gap-3">
+                    <div className="w-12 h-10 bg-white border border-gray-200 shadow-sm rounded-lg flex items-center justify-center p-1">
+                      <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png" alt="VNPay" className="w-full object-contain" />
+                    </div>
+                    <div>
+                      <span className="block font-bold text-slate-800 text-sm">Thanh toán qua VNPAY</span>
+                      <span className="text-xs text-slate-500">Quét mã QR qua ứng dụng ngân hàng</span>
+                    </div>
+                  </div>
+                  {paymentMethod === "VNPay" && (
+                    <FaCheck className="ml-auto text-blue-500" />
                   )}
                 </label>
               </div>

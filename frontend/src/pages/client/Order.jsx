@@ -494,10 +494,28 @@ const Order = () => {
                           </div>
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-500">Thanh toán:</span>
-                            <span className="font-bold text-slate-800">
-                              {order.paymentMethod === "COD"
-                                ? "Tiền mặt (COD)"
-                                : "Chuyển khoản / Stripe"}
+                            <span className="font-bold text-slate-800 flex items-center gap-2">
+                              {order.paymentMethod === "COD" ? (
+                                "Tiền mặt (COD)"
+                              ) : order.paymentMethod === "VNPay" ? (
+                                <>
+                                  <img 
+                                    src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png" 
+                                    alt="VNPay" 
+                                    className="h-4 object-contain"
+                                  />
+                                  <span>VNPay</span>
+                                </>
+                              ) : (
+                                <>
+                                  <img 
+                                    src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" 
+                                    alt="Stripe" 
+                                    className="h-4 object-contain"
+                                  />
+                                  <span>Stripe</span>
+                                </>
+                              )}
                             </span>
                           </div>
                         </div>

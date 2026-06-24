@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { userRequest } from "../../requestMethods";
-import { FaTrash, FaEye, FaEyeSlash, FaReply, FaStar, FaStarHalfAlt, FaRegStar, FaSearch, FaFilter, FaCommentDots, FaRegSmileBeam, FaClock } from "react-icons/fa";
+import { FaTrash, FaEye, FaEyeSlash, FaReply, FaStar, FaStarHalfAlt, FaRegStar, FaSearch, FaFilter, FaCommentDots, FaRegSmileBeam, FaClock, FaChevronDown } from "react-icons/fa";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import PageHeader from "../../components/admin/PageHeader";
@@ -175,6 +175,7 @@ const AdminReviews = () => {
               <option value="replied">Đã phản hồi</option>
               <option value="pending">Chưa phản hồi</option>
             </select>
+            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
           </div>
           
           <div className="relative">
@@ -191,20 +192,24 @@ const AdminReviews = () => {
               <option value="2">2 Sao</option>
               <option value="1">1 Sao</option>
             </select>
+            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
           </div>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-xs font-semibold text-gray-500">Hiển thị:</span>
-          <select
-            value={rowsPerPage}
-            onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-            className="pl-3 pr-7 py-2 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-primary appearance-none cursor-pointer"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+          <div className="relative">
+            <select
+              value={rowsPerPage}
+              onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-primary appearance-none cursor-pointer"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
         </div>
       </div>
 

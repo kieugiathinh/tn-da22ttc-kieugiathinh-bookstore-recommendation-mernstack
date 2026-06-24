@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { FaTrash, FaEdit, FaPlus, FaCloudUploadAlt, FaSearch, FaTags, FaBookOpen, FaChartPie } from "react-icons/fa";
+import { FaTrash, FaEdit, FaPlus, FaCloudUploadAlt, FaSearch, FaTags, FaBookOpen, FaChartPie, FaChevronDown } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -208,15 +208,18 @@ const Categories = () => {
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-xs font-semibold text-gray-500">Hiển thị:</span>
-          <select
-            value={rowsPerPage}
-            onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-            className="pl-3 pr-7 py-2 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-primary appearance-none cursor-pointer"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+          <div className="relative">
+            <select
+              value={rowsPerPage}
+              onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-primary appearance-none cursor-pointer"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
         </div>
       </div>
 
