@@ -164,27 +164,6 @@ const PolicyTemplate = ({
                 </div>
               </nav>
             )}
-
-            <div className="rounded-3xl bg-slate-950 p-6 text-white shadow-xl shadow-slate-900/10">
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500">
-                <FaHeadset size={20} />
-              </div>
-
-              <h2 className="text-lg font-extrabold">Bạn cần hỗ trợ?</h2>
-
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                Hãy gửi yêu cầu qua trang Liên hệ. BookBee sẽ kiểm tra thông
-                tin đơn hàng và phản hồi trong thời gian sớm nhất.
-              </p>
-
-              <a
-                href="/contact"
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-extrabold text-slate-900 transition hover:bg-orange-50 hover:text-orange-600"
-              >
-                <FaEnvelope />
-                Liên hệ BookBee
-              </a>
-            </div>
           </div>
         </aside>
 

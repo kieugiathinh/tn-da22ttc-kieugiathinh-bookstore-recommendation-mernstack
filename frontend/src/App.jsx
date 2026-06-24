@@ -52,6 +52,7 @@ import AdminUserStats from "./pages/admin/UserStats";
 import AdminOrderStats from "./pages/admin/OrderStats";
 import AdminProductStats from "./pages/admin/ProductStats";
 import AdminFlashSaleStats from "./pages/admin/FlashSaleStats";
+import AdminContacts from "./pages/admin/AdminContacts";
 
 // ── Router Configuration ─────────────────────────────────────────────────────
 const router = createBrowserRouter([
@@ -118,6 +119,7 @@ const router = createBrowserRouter([
       { path: "order-stats", element: <AdminOrderStats /> },
       { path: "product-stats", element: <AdminProductStats /> },
       { path: "flashsale-stats", element: <AdminFlashSaleStats /> },
+      { path: "contacts", element: <AdminContacts /> },
     ],
   },
 ]);

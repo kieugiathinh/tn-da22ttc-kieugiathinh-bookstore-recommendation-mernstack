@@ -386,7 +386,7 @@ const sendMarketingEmail = async (emails, subject, htmlContent) => {
       };
       await transporter.sendMail(mailOptions);
       successCount++;
-      
+
       // Delay 150ms giữa mỗi mail để tránh rate-limit của Google SMTP
       await new Promise(resolve => setTimeout(resolve, 150));
     } catch (err) {
@@ -397,10 +397,92 @@ const sendMarketingEmail = async (emails, subject, htmlContent) => {
   console.log(`✅ Đã gửi chiến dịch Email Marketing thành công tới ${successCount}/${emails.length} người dùng.`);
 };
 
+// ============================================
+// 6. CONTACT AUTO REPLY
+// ============================================
+
+const sendContactAutoReply = async (email, name) => {
+  const content = `
+    <div style="padding: 36px 32px;">
+      <h2 style="margin: 0 0 8px; font-size: 22px; color: #1c1917; font-weight: 700;">
+        Xin chào ${name},
+      </h2>
+      <p style="margin: 0 0 24px; font-size: 15px; color: #57534e; line-height: 1.7;">
+        Chúng tôi đã nhận được yêu cầu hỗ trợ của bạn. Đội ngũ chăm sóc khách hàng của <strong style="color: #EE4D2D;">BookBee</strong> sẽ kiểm tra và phản hồi lại cho bạn trong thời gian sớm nhất (thường trong vòng 24 giờ).
+      </p>
+      <p style="margin: 0; font-size: 15px; color: #57534e; line-height: 1.7;">
+        Cảm ơn bạn đã luôn tin tưởng và đồng hành cùng BookBee!
+      </p>
+    </div>
+  `;
+  const mailOptions = {
+    from: `"BookBee Support" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Xác nhận nhận yêu cầu hỗ trợ từ BookBee",
+    html: getEmailWrapper(content),
+    attachments: [logoAttachment]
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("❌ Lỗi gửi auto-reply liên hệ:", err.message);
+  }
+};
+
+// ============================================
+// 7. CONTACT ADMIN REPLY
+// ============================================
+
+const sendContactAdminReply = async (email, name, originalMessage, replyMessage) => {
+  const content = `
+    <div style="padding: 36px 32px;">
+      <h2 style="margin: 0 0 8px; font-size: 22px; color: #1c1917; font-weight: 700;">
+        Phản hồi từ BookBee,
+      </h2>
+      <p style="margin: 0 0 24px; font-size: 15px; color: #57534e; line-height: 1.7;">
+        Chào <strong>${name}</strong>, cảm ơn bạn đã liên hệ với chúng tôi. Dưới đây là phản hồi cho yêu cầu của bạn:
+      </p>
+
+      <!-- Nội dung admin trả lời -->
+      <div style="background: #f8fafc; border-left: 4px solid #F59E0B; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+        <p style="margin: 0; font-size: 15px; color: #1e293b; line-height: 1.6; white-space: pre-wrap;">${replyMessage}</p>
+      </div>
+
+      <!-- Tin nhắn gốc -->
+      <div style="margin-bottom: 24px;">
+        <p style="margin: 0 0 8px; font-size: 13px; color: #94a3b8; font-weight: 600; text-transform: uppercase;">
+          Yêu cầu ban đầu của bạn:
+        </p>
+        <p style="margin: 0; font-size: 14px; color: #64748b; font-style: italic; background: #f1f5f9; padding: 16px; border-radius: 8px;">
+          "${originalMessage}"
+        </p>
+      </div>
+
+      <p style="margin: 0; font-size: 15px; color: #57534e; line-height: 1.7;">
+        Nếu bạn cần hỗ trợ thêm, đừng ngần ngại phản hồi lại email này. Chúc bạn một ngày tốt lành!
+      </p>
+    </div>
+  `;
+  const mailOptions = {
+    from: `"BookBee Support" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Phản hồi yêu cầu hỗ trợ - BookBee",
+    html: getEmailWrapper(content),
+    attachments: [logoAttachment]
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("❌ Lỗi gửi email phản hồi từ admin:", err.message);
+  }
+};
+
 export {
   sendWelcomeEmail,
   sendResetPasswordEmail,
   sendNewsletterWelcomeEmail,
   sendOrderConfirmationEmail,
-  sendMarketingEmail
+  sendMarketingEmail,
+  sendContactAutoReply,
+  sendContactAdminReply
 };

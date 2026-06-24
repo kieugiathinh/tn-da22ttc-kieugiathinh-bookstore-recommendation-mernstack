@@ -3,7 +3,7 @@ import { useLocation, Link } from "react-router-dom";
 import { useSidebar } from "../../context/SidebarContext";
 import {
   FaTachometerAlt, FaRobot, FaGlobe,
-  FaStore, FaBullhorn, FaAngleDown, FaChartBar, FaUsers, FaLightbulb
+  FaStore, FaBullhorn, FaAngleDown, FaChartBar, FaUsers, FaLightbulb, FaExternalLinkAlt
 } from "react-icons/fa";
 import BookBeeLogo from "../shared/BookBeeLogo";
 
@@ -27,6 +27,7 @@ const menuGroups = [
           { name: "Thể loại", path: "/admin/categories" },
           { name: "Khách hàng", path: "/admin/users" },
           { name: "Đánh giá", path: "/admin/reviews" },
+          { name: "Liên hệ", path: "/admin/contacts" },
         ]
       },
       {
@@ -131,17 +132,30 @@ const AppSidebar = () => {
     >
       {/* ---- LOGO ---- */}
       <div className={[
-        "flex flex-shrink-0 items-center border-b border-gray-50 transition-all duration-300",
+        "flex flex-shrink-0 items-center border-b border-gray-50 transition-all duration-300 relative",
         showLabel ? "justify-center px-4 py-5" : "justify-center px-0 py-5",
       ].join(" ")}>
         {showLabel ? (
-          <BookBeeLogo className="h-8 max-w-[140px]" />
+          <>
+            <BookBeeLogo className="h-8 max-w-[140px]" />
+            <a 
+              href="/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              title="Đến cửa hàng BookBee"
+              className="absolute right-4 text-gray-400 hover:text-primary transition-colors bg-gray-50 hover:bg-orange-50 p-2 rounded-lg"
+            >
+              <FaExternalLinkAlt size={14} />
+            </a>
+          </>
         ) : (
-          <img
-            src="/logochatbot.png"
-            alt="Logo"
-            className="w-10 h-10 object-contain drop-shadow-sm rounded-full bg-white"
-          />
+          <a href="/" target="_blank" rel="noopener noreferrer" title="Đến cửa hàng BookBee" className="block cursor-pointer">
+            <img
+              src="/logochatbot.png"
+              alt="Logo"
+              className="w-10 h-10 object-contain drop-shadow-sm rounded-full bg-white hover:ring-2 hover:ring-primary transition-all"
+            />
+          </a>
         )}
       </div>
 
@@ -285,31 +299,6 @@ const AppSidebar = () => {
           </div>
         ))}
       </nav>
-
-      {/* ---- FOOTER ---- */}
-      <div className="flex-shrink-0 border-t border-gray-100 p-3">
-        <a
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          title={!showLabel ? "Về Cửa hàng" : undefined}
-          className={[
-            "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-semibold text-gray-600",
-            "hover:bg-orange-50 hover:text-primary transition-all duration-200",
-            !showLabel && "justify-center",
-          ].filter(Boolean).join(" ")}
-        >
-          <FaGlobe
-            size={18}
-            className="flex-shrink-0 text-gray-400 transition-all duration-300 group-hover:rotate-12 group-hover:text-primary"
-          />
-          {showLabel && (
-            <span className="truncate transition-transform duration-200 group-hover:translate-x-0.5">
-              Cửa hàng BookBee
-            </span>
-          )}
-        </a>
-      </div>
     </aside>
   );
 };
