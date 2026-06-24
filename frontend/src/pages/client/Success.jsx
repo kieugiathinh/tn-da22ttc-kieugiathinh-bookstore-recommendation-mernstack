@@ -15,19 +15,17 @@ const Success = () => {
   const [orderId, setOrderId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(true);
 
-  // 2. Khai báo biến useRef để chặn chạy 2 lần
-  const orderCreated = useRef(false);
-
+  // Dùng state toàn cục module thay vì useRef để tránh lỗi StrictMode mount 2 lần
   useEffect(() => {
     const createOrder = async () => {
-      // Nếu giỏ hàng trống HOẶC đã tạo đơn rồi thì dừng ngay
-      if (cart.products.length === 0 || orderCreated.current) {
+      // Nếu giỏ hàng trống HOẶC đã bắt đầu xử lý tạo đơn rồi thì dừng ngay
+      if (cart.products.length === 0 || window.isOrderCreatingStripe) {
         setIsProcessing(false);
         return;
       }
 
       // Đánh dấu là đang chạy để lần sau không chạy nữa
-      orderCreated.current = true;
+      window.isOrderCreatingStripe = true;
 
       const tempShipping =
         JSON.parse(localStorage.getItem("tempOrderData")) || {};
@@ -65,6 +63,7 @@ const Success = () => {
         localStorage.removeItem("tempOrderData");
       } catch (err) {
         console.error(err);
+        window.isOrderCreatingStripe = false; // reset nếu lỗi để thử lại
       } finally {
         setIsProcessing(false);
       }

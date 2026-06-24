@@ -72,10 +72,13 @@ const createOrder = async (orderData, userId) => {
   }
 
   // 4. GỬI EMAIL XÁC NHẬN
-  // Chạy bất đồng bộ, không đợi để tránh làm chậm response
-  sendOrderConfirmationEmail(savedOrder.email, savedOrder).catch((err) => {
-    console.error("❌ Lỗi gửi email xác nhận đơn hàng:", err.message);
-  });
+  // Với VNPay, email sẽ được gửi sau khi thanh toán thành công (trong callback)
+  // Với COD và Stripe, email được gửi ngay khi tạo đơn (vì Stripe chỉ tạo đơn sau khi thanh toán xong)
+  if (savedOrder.paymentMethod === "COD" || savedOrder.paymentMethod === "Stripe" || savedOrder.paymentMethod === "STRIPE") {
+    sendOrderConfirmationEmail(savedOrder.email, savedOrder).catch((err) => {
+      console.error("❌ Lỗi gửi email xác nhận đơn hàng:", err.message);
+    });
+  }
 
   return savedOrder;
 };
