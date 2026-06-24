@@ -20,6 +20,12 @@ const BannerSchema = mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    type: {
+      type: String,
+      enum: ["main", "sub", "top"],
+      default: "main",
+    },
   },
   {
     timestamps: true,

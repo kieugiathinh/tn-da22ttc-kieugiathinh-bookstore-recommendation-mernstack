@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { userRequest } from "../../requestMethods";
 import {
-  FaRobot,
-  FaBookOpen,
-  FaExclamationTriangle,
-  FaLightbulb,
-  FaChartLine,
-  FaSmile,
-  FaFolderOpen,
-  FaSync,
+  FaRobot, FaSync, FaComments, FaCommentDots, FaUsers, FaCircleNotch,
+  FaArrowUp, FaArrowDown, FaBookOpen, FaLightbulb, FaExclamationTriangle,
+  FaChartLine, FaFilter, FaShoppingCart, FaMousePointer, FaEye
 } from "react-icons/fa";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, BarChart, Bar
+} from "recharts";
+import { toast } from "sonner";
+import moment from "moment";
 
-// ── PERIOD OPTIONS ────────────────────────────────────────────────────────────
 const PERIOD_OPTIONS = [
   { label: "3 ngày", value: 3 },
   { label: "7 ngày", value: 7 },
@@ -19,262 +19,342 @@ const PERIOD_OPTIONS = [
   { label: "30 ngày", value: 30 },
 ];
 
-// ── INSIGHT CARD ──────────────────────────────────────────────────────────────
-const InsightCard = ({ icon: Icon, title, items, borderColor, iconBg, iconColor, emptyText }) => (
-  <div className={`rounded-2xl border-2 bg-white shadow-sm hover:shadow-md transition-shadow ${borderColor}`}>
-    {/* Header */}
-    <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
-      <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
-        <Icon className={`text-lg ${iconColor}`} />
+const COLORS = ["#10b981", "#f59e0b", "#ef4444"]; // Tích cực, Trung lập, Tiêu cực
+
+// ── TREND INDICATOR COMPONENT ──
+const TrendIndicator = ({ value }) => {
+  if (value === undefined || value === null) return null;
+  const isPositive = value >= 0;
+  return (
+    <div className={`flex items-center gap-1 text-[11px] font-bold ${isPositive ? 'text-emerald-100' : 'text-red-100'}`}>
+      {isPositive ? <FaArrowUp size={8} /> : <FaArrowDown size={8} />}
+      {Math.abs(value)}%
+    </div>
+  );
+};
+
+// ── METRIC CARD COMPONENT ──
+const MetricCard = ({ title, value, icon: Icon, bgGradient, subtitle, trendValue }) => (
+  <div className={`rounded-2xl p-6 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 ${bgGradient} text-white relative overflow-hidden group`}>
+    <div className="relative z-10 flex items-start justify-between">
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-xs font-bold uppercase tracking-widest opacity-80">{title}</p>
+          <TrendIndicator value={trendValue} />
+        </div>
+        <h3 className="text-3xl font-black tracking-tight leading-none drop-shadow-sm">{value}</h3>
+        {subtitle && <p className="mt-2 text-sm font-medium opacity-90">{subtitle}</p>}
       </div>
-      <h3 className="font-bold text-gray-900">{title}</h3>
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm shadow-inner group-hover:scale-110 transition-transform">
+        <Icon className="text-2xl" />
+      </div>
     </div>
-    {/* Body */}
-    <div className="p-5">
-      {items && items.length > 0 ? (
-        <ul className="space-y-3">
-          {items.map((item, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <span className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg text-[11px] font-bold ${iconBg} ${iconColor}`}>
-                {i + 1}
-              </span>
-              <span className="text-sm leading-relaxed text-gray-700">{item}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="py-4 text-center text-sm text-gray-400">{emptyText || "Chưa có dữ liệu"}</p>
-      )}
-    </div>
+    <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
   </div>
 );
 
-// ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 const ChatAnalytics = () => {
   const [days, setDays] = useState(7);
+  
+  // Real-time Stats
+  const [stats, setStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // AI Insights
   const [insights, setInsights] = useState(null);
-  const [meta, setMeta] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoadingStats(true);
+      try {
+        const res = await userRequest.get(`/analytics/chatbot-stats?days=${days}`);
+        setStats(res.data);
+      } catch (err) {
+        toast.error("Không thể tải số liệu thống kê");
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    fetchStats();
+  }, [days]);
 
   const handleAnalyze = async () => {
-    setIsLoading(true);
-    setError(null);
-    setInsights(null);
-    setMeta(null);
-
+    setLoadingInsights(true);
     try {
       const res = await userRequest.get(`/analytics/chat-insights?days=${days}`);
       setInsights(res.data.insights);
-      setMeta(res.data.meta);
+      toast.success("Phân tích dữ liệu thành công!");
     } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        "Không thể phân tích dữ liệu. Vui lòng thử lại.";
-      setError(msg);
+      toast.error(err.response?.data?.message || "Lỗi phân tích AI");
     } finally {
-      setIsLoading(false);
+      setLoadingInsights(false);
     }
   };
 
-  // Sentiment badge color
-  const sentimentStyle = (sentiment) => {
-    if (!sentiment) return "bg-gray-100 text-gray-500";
-    const s = sentiment.toLowerCase();
-    if (s.includes("tích cực")) return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    if (s.includes("tiêu cực")) return "bg-red-50 text-red-700 border-red-200";
-    return "bg-amber-50 text-amber-700 border-amber-200";
+  const getPriorityColor = (priority) => {
+    const p = priority?.toLowerCase() || "";
+    if (p.includes("cao")) return { bg: "bg-red-50", text: "text-red-600", icon: "🔥" };
+    if (p.includes("trung")) return { bg: "bg-amber-50", text: "text-amber-600", icon: "🟡" };
+    return { bg: "bg-emerald-50", text: "text-emerald-600", icon: "🟢" };
   };
 
   return (
     <div className="space-y-6">
       {/* ── PAGE HEADER ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md">
-              <FaRobot className="text-white text-lg" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
-                AI Chat Insights
-              </h1>
-              <p className="text-sm text-gray-500">
-                Phân tích hành vi khách hàng từ dữ liệu chatbot
-              </p>
-            </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-md">
+            <FaRobot className="text-white text-xl" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">Dashboard Chatbot</h1>
+            <p className="text-sm text-gray-500 font-medium">Giám sát hiệu quả và phân tích hành vi khách hàng bằng AI</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-1.5 rounded-xl border border-gray-200 bg-gray-50 p-1.5 shadow-inner">
+          {PERIOD_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setDays(opt.value)}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                days === opt.value
+                  ? "bg-white text-orange-600 shadow-md ring-1 ring-orange-200"
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── REAL-TIME STATS CARDS ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <MetricCard
+          title="Tổng phiên chat"
+          value={loadingStats ? "..." : stats?.current?.totalSessions?.toLocaleString()}
+          icon={FaComments}
+          bgGradient="bg-gradient-to-br from-orange-500 to-amber-500"
+          trendValue={stats?.trend?.totalSessions}
+        />
+        <MetricCard
+          title="Đang hoạt động"
+          value={loadingStats ? "..." : stats?.current?.activeSessions?.toLocaleString()}
+          icon={FaCircleNotch}
+          bgGradient="bg-gradient-to-br from-emerald-500 to-teal-500"
+          trendValue={stats?.trend?.activeSessions}
+        />
+        <MetricCard
+          title="Tổng tin nhắn"
+          value={loadingStats ? "..." : stats?.current?.totalMessages?.toLocaleString()}
+          icon={FaCommentDots}
+          bgGradient="bg-gradient-to-br from-blue-500 to-cyan-500"
+          trendValue={stats?.trend?.totalMessages}
+        />
+        <MetricCard
+          title="Khách đăng nhập"
+          value={loadingStats ? "..." : stats?.current?.totalUsers?.toLocaleString()}
+          icon={FaUsers}
+          bgGradient="bg-gradient-to-br from-violet-500 to-purple-500"
+          trendValue={stats?.trend?.totalUsers}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* ── LINE CHART: TIN NHẮN THEO THỜI GIAN ── */}
+        <div className="lg:col-span-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <FaChartLine className="text-orange-500" />
+            <h3 className="font-extrabold text-gray-900">Lưu lượng tin nhắn</h3>
+          </div>
+          <div className="h-[250px] w-full">
+            {loadingStats ? (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium">Đang tải biểu đồ...</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={stats?.chartData || []}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="date" tick={{fontSize: 10, fill: '#64748b', fontWeight: 600}} tickFormatter={(v) => moment(v).format('DD/MM')} axisLine={false} tickLine={false} />
+                  <YAxis tick={{fontSize: 11, fill: '#64748b', fontWeight: 600}} axisLine={false} tickLine={false} />
+                  <RechartsTooltip 
+                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                    labelFormatter={(v) => moment(v).format('DD/MM/YYYY')}
+                  />
+                  <Line type="monotone" dataKey="messages" name="Tin nhắn" stroke="#f97316" strokeWidth={3} dot={{r: 4, fill: '#f97316', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 6}} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* ── FUNNEL CHART ── */}
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col">
+          <div className="flex items-center gap-2 mb-4">
+            <FaFilter className="text-emerald-500" />
+            <h3 className="font-extrabold text-gray-900">Hiệu quả tư vấn (Funnel)</h3>
+          </div>
+          <div className="flex-1 flex flex-col justify-center gap-4">
+            {loadingStats ? (
+              <div className="text-center text-gray-400 font-medium">Đang tải...</div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 group">
+                  <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform"><FaRobot size={18} /></div>
+                  <div className="flex-1">
+                    <div className="flex justify-between text-sm font-bold mb-1.5"><span className="text-gray-700">Chatbot đề xuất</span><span className="text-orange-600 font-black">{stats?.funnel?.recommendations || 0}</span></div>
+                    <div className="w-full bg-gray-100 rounded-full h-3"><div className="bg-orange-300 h-3 rounded-full w-full"></div></div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 group">
+                  <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform"><FaMousePointer size={18} /></div>
+                  <div className="flex-1">
+                    <div className="flex justify-between text-sm font-bold mb-1.5"><span className="text-gray-700">Khách Click xem</span><span className="text-orange-600 font-black">{stats?.funnel?.clicks || 0}</span></div>
+                    <div className="w-full bg-gray-100 rounded-full h-3"><div className="bg-orange-400 h-3 rounded-full" style={{width: `${(stats?.funnel?.clicks / (stats?.funnel?.recommendations || 1)) * 100}%`}}></div></div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 group">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform"><FaShoppingCart size={18} /></div>
+                  <div className="flex-1">
+                    <div className="flex justify-between text-sm font-bold mb-1.5"><span className="text-gray-700">Thêm vào giỏ</span><span className="text-orange-600 font-black">{stats?.funnel?.addToCart || 0}</span></div>
+                    <div className="w-full bg-gray-100 rounded-full h-3"><div className="bg-orange-500 h-3 rounded-full shadow-sm" style={{width: `${(stats?.funnel?.addToCart / (stats?.funnel?.recommendations || 1)) * 100}%`}}></div></div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── CONTROL BAR ── */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        {/* Period Selector */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-gray-600">Phân tích trong:</span>
-          <div className="flex gap-1.5 rounded-xl border border-gray-200 bg-gray-50 p-1">
-            {PERIOD_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setDays(opt.value)}
-                disabled={isLoading}
-                className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                  days === opt.value
-                    ? "bg-white text-primary-hover shadow-sm border border-gray-200"
-                    : "text-gray-500 hover:text-gray-800"
-                } disabled:opacity-50`}
-              >
-                {opt.label}
-              </button>
-            ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── TOP SÁCH CHATBOT ĐỀ XUẤT ── */}
+        <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+          <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white px-6 py-4">
+            <div className="bg-orange-100 p-2 rounded-lg"><FaBookOpen className="text-orange-600" /></div>
+            <h3 className="font-extrabold text-gray-900">Top Sách Chatbot Đề Xuất</h3>
           </div>
+          <ul className="p-4 space-y-2">
+            {loadingStats ? <li className="text-sm text-gray-400 font-medium text-center py-4">Đang tải...</li> : 
+              stats?.topRecommendedBooks?.length > 0 ? stats.topRecommendedBooks.map((b, i) => (
+              <li key={i} className="flex justify-between items-center text-sm p-3 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors">
+                <span className="font-bold text-gray-700">{b.title}</span>
+                <span className="font-black text-orange-600 bg-orange-50 border border-orange-100 px-2 py-1 rounded-md">{b.count} lần</span>
+              </li>
+            )) : <li className="text-sm text-gray-400 text-center py-4 font-medium">Chưa có đề xuất nào</li>}
+          </ul>
         </div>
 
-        {/* Run Button */}
-        <button
-          id="btn-run-analysis"
-          onClick={handleAnalyze}
-          disabled={isLoading}
-          className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg hover:shadow-xl hover:from-violet-700 hover:to-purple-700 active:scale-[0.97] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isLoading ? (
-            <>
-              <FaSync className="animate-spin" />
-              <span>Đang phân tích... (có thể mất 15-30s)</span>
-            </>
+        {/* ── TOP SÁCH KHÁCH TÌM NHƯNG THIẾU ── */}
+        <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+          <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-rose-50 to-white px-6 py-4">
+            <div className="bg-rose-100 p-2 rounded-lg"><FaExclamationTriangle className="text-rose-600" /></div>
+            <h3 className="font-extrabold text-gray-900">Sách Khách Tìm Nhưng Thiếu</h3>
+          </div>
+          {insights ? (
+            <div className="overflow-x-auto p-4">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="text-[11px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                    <th className="py-2 px-3">Tên sách / Chủ đề</th>
+                    <th className="py-2 px-3 text-right">Lượt hỏi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {insights.topRequestedMissingBooks?.map((b, i) => (
+                    <tr key={i} className="hover:bg-rose-50/30 transition-colors">
+                      <td className="py-3 px-3 font-bold text-gray-700">{b.bookName || b}</td>
+                      <td className="py-3 px-3 text-right font-black text-rose-500">{b.count || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <>
-              <FaChartLine />
-              <span>Chạy Phân Tích ({days} Ngày Qua)</span>
-            </>
+            <div className="h-[200px] flex items-center justify-center p-4">
+              <p className="text-sm text-gray-400 font-medium bg-gray-50 px-4 py-2 rounded-lg">Vui lòng chạy Phân tích AI để xem dữ liệu</p>
+            </div>
           )}
+        </div>
+      </div>
+
+      {/* ── AI INSIGHTS BAR ── */}
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-6 text-white shadow-md">
+        <div className="mb-4 sm:mb-0">
+          <h2 className="text-xl font-extrabold flex items-center gap-2"><FaLightbulb className="text-yellow-200" /> Phân tích Chuyên sâu (AI)</h2>
+          <p className="text-sm text-orange-50 mt-1 font-medium">Sử dụng Gemini AI để đọc hiểu hàng trăm tin nhắn và đưa ra chiến lược.</p>
+        </div>
+        <button
+          onClick={handleAnalyze}
+          disabled={loadingInsights}
+          className="bg-white text-orange-600 px-6 py-2.5 rounded-xl font-black tracking-wide hover:bg-orange-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-70 disabled:scale-100 shadow-sm"
+        >
+          {loadingInsights ? <FaSync className="animate-spin" /> : <FaRobot />}
+          {loadingInsights ? "ĐANG XỬ LÝ..." : "CHẠY PHÂN TÍCH AI"}
         </button>
       </div>
 
-      {/* ── ERROR ── */}
-      {error && (
-        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
-          <FaExclamationTriangle className="text-red-500 flex-shrink-0" />
-          <p className="text-sm font-medium text-red-700">{error}</p>
-        </div>
-      )}
-
-      {/* ── LOADING STATE ── */}
-      {isLoading && (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-gray-200 bg-white py-16 shadow-sm">
-          {/* Animated AI brain */}
-          <div className="relative">
-            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center">
-              <FaRobot className="text-3xl text-violet-600 animate-pulse" />
-            </div>
-            <div className="absolute inset-0 rounded-full border-2 border-violet-300 border-t-transparent animate-spin"></div>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-gray-800">Gemini đang phân tích...</p>
-            <p className="mt-1 text-sm text-gray-400">
-              Đang gom {days} ngày dữ liệu chat và tạo báo cáo thông minh
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── RESULTS ── */}
-      {insights && !isLoading && (
-        <div className="space-y-6 animate-in fade-in duration-500">
-          {/* Meta Info Bar */}
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white px-5 py-3.5 shadow-sm">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <FaChartLine className="text-violet-500" />
-              <span className="font-semibold">{meta?.messagesAnalyzed || 0}</span> tin nhắn đã phân tích
-            </div>
-            <span className="text-gray-300">|</span>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <FaFolderOpen className="text-blue-500" />
-              Giai đoạn: <span className="font-semibold">{meta?.period}</span>
-            </div>
-            <span className="text-gray-300">|</span>
-            <div className="flex items-center gap-2 text-sm">
-              <FaSmile className="text-amber-500" />
-              <span className="text-gray-600">Sentiment:</span>
-              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${sentimentStyle(insights.customerSentiment)}`}>
-                {insights.customerSentiment || "N/A"}
-              </span>
-            </div>
-          </div>
-
-          {/* 3 Insight Cards */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* Card 1: Sách Khách Tìm Nhưng Hết Hàng */}
-            <InsightCard
-              icon={FaBookOpen}
-              title="Sách Khách Tìm Nhưng Thiếu"
-              items={insights.topRequestedMissingBooks}
-              borderColor="border-primary/30"
-              iconBg="bg-primary-light"
-              iconColor="text-primary"
-              emptyText="Khách chưa tìm sách nào đặc biệt"
-            />
-
-            {/* Card 2: Vấn Đề Thường Gặp */}
-            <InsightCard
-              icon={FaExclamationTriangle}
-              title="Điểm Nghẽn & Vấn Đề"
-              items={insights.commonIssues}
-              borderColor="border-amber-300/50"
-              iconBg="bg-amber-50"
-              iconColor="text-amber-600"
-              emptyText="Không phát hiện vấn đề nào"
-            />
-
-            {/* Card 3: Đề Xuất Chiến Lược */}
-            <InsightCard
-              icon={FaLightbulb}
-              title="Đề Xuất Chiến Lược Từ AI"
-              items={insights.businessAdvice}
-              borderColor="border-emerald-300/50"
-              iconBg="bg-emerald-50"
-              iconColor="text-emerald-600"
-              emptyText="Chưa có đề xuất"
-            />
-          </div>
-
-          {/* Popular Categories (Optional extra card) */}
-          {insights.popularCategories && insights.popularCategories.length > 0 && (
-            <div className="rounded-2xl border border-blue-200/50 bg-white shadow-sm">
-              <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
-                  <FaFolderOpen className="text-lg text-blue-600" />
-                </div>
-                <h3 className="font-bold text-gray-900">Thể Loại Được Hỏi Nhiều</h3>
-              </div>
-              <div className="flex flex-wrap gap-2 p-5">
-                {insights.popularCategories.map((cat, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-xs font-semibold text-blue-700"
+      {insights && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* PIE CHART SENTIMENT */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col items-center">
+            <h3 className="font-extrabold text-gray-900 mb-2 w-full">Cảm xúc khách hàng</h3>
+            <div className="w-full h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Tích cực', value: insights.sentimentDistribution?.positive || 0 },
+                      { name: 'Trung lập', value: insights.sentimentDistribution?.neutral || 0 },
+                      { name: 'Tiêu cực', value: insights.sentimentDistribution?.negative || 0 }
+                    ]}
+                    cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none"
                   >
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400"></span>
-                    {cat}
-                  </span>
-                ))}
-              </div>
+                    {COLORS.map((color, index) => <Cell key={`cell-${index}`} fill={color} />)}
+                  </Pie>
+                  <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* ── EMPTY STATE (chưa chạy phân tích) ── */}
-      {!insights && !isLoading && !error && (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-20">
-          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center">
-            <FaRobot className="text-2xl text-violet-500" />
+            <div className="flex gap-4 text-xs font-bold mt-2">
+              <span className="text-emerald-500">😊 {insights.sentimentDistribution?.positive || 0}%</span>
+              <span className="text-amber-500">😐 {insights.sentimentDistribution?.neutral || 0}%</span>
+              <span className="text-red-500">😞 {insights.sentimentDistribution?.negative || 0}%</span>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-gray-600">Sẵn sàng phân tích</p>
-            <p className="mt-1 max-w-md text-sm text-gray-400">
-              Nhấn nút <strong>"Chạy Phân Tích"</strong> để AI phân tích dữ liệu chat
-              và đưa ra insights kinh doanh cho bạn.
-            </p>
+
+          {/* ĐIỂM NGHẼN */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h3 className="font-extrabold text-gray-900 mb-4">Điểm nghẽn & Vấn đề</h3>
+            <ul className="space-y-3">
+              {insights.commonIssues?.map((issue, i) => {
+                const style = getPriorityColor(issue.priority);
+                return (
+                  <li key={i} className="flex gap-3 text-sm p-3 rounded-xl bg-gray-50 border border-gray-100 shadow-sm">
+                    <span className="text-xl">{style.icon}</span>
+                    <div>
+                      <p className="font-bold text-gray-800">{issue.issue}</p>
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg text-white mt-1.5 inline-block shadow-sm ${style.bg.replace('50', '500')}`}>
+                        Ưu tiên {issue.priority}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* CHIẾN LƯỢC */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm lg:col-span-3 xl:col-span-1">
+            <h3 className="font-extrabold text-gray-900 mb-4">AI Đề xuất Chiến lược</h3>
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              {insights.businessAdvice?.map((adv, i) => (
+                <div key={i} className="p-4 rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 shadow-sm">
+                  <h4 className="text-[11px] font-black text-orange-600 uppercase tracking-widest mb-1.5">{adv.category}</h4>
+                  <p className="text-sm text-gray-800 font-medium leading-relaxed">{adv.advice}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

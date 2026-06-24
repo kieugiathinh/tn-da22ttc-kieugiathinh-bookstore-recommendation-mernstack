@@ -44,15 +44,22 @@ def _fit_cf_model() -> CollaborativeRecommender:
     df_interactions = fetch_interactions(days=90)   # 90 ngày implicit signals
     df_purchases   = fetch_purchases()
 
-    print(f"  [CF]    Explicit ratings  : {len(df_ratings)}")
-    print(f"  [CF]    Interactions      : {len(df_interactions)}")
-    print(f"  [CF]    Purchases         : {len(df_purchases)}")
+    data = {
+        "ratings": fetch_ratings(),
+        "interactions": fetch_interactions(days=90),   # 90 ngày implicit signals
+        "purchases": fetch_purchases(),
+    }
+
+    print(f"  [CF]    Explicit ratings  : {len(data['ratings'])}")
+    print(f"  [CF]    Interactions      : {len(data['interactions'])}")
+    print(f"  [CF]    Purchases         : {len(data['purchases'])}")
 
     cf = CollaborativeRecommender(n_factors=50, n_epochs=30)
     cf.fit(
-        df_ratings=df_ratings,
-        df_interactions=df_interactions,
-        df_purchases=df_purchases,
+        df_ratings=data["ratings"],
+        df_interactions=data["interactions"],
+        df_purchases=data["purchases"],
+        weights=data.get("weights"),
     )
 
     return cf

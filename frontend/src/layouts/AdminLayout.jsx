@@ -1,10 +1,9 @@
-import { Outlet, Navigate } from "react-router-dom";
+import { Outlet, Navigate, ScrollRestoration } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import AppSidebar from "../components/admin/AppSidebar";
 import AppHeader from "../components/admin/AppHeader";
 import Backdrop from "../components/admin/Backdrop";
-import ScrollToTop from "../components/common/ScrollToTop";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 
 // Inner component: nằm BÊN TRONG SidebarProvider nên có thể dùng useSidebar()
@@ -22,15 +21,16 @@ const AdminLayoutContent = () => {
 
       {/* Khu vực nội dung chính - flex-1 chiếm phần còn lại */}
       <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${
-          isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
+        className={`flex flex-col flex-1 min-h-screen transition-all duration-300 ease-in-out ${
+          isExpanded || isHovered ? "lg:ml-[272px]" : "lg:ml-[80px]"
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         {/* Header dính trên cùng */}
         <AppHeader />
+        <ScrollRestoration />
 
         {/* Nội dung trang (được inject từ React Router) */}
-        <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
+        <div className="p-4 md:p-6 w-full">
           <Outlet />
         </div>
       </div>
@@ -54,7 +54,6 @@ const AdminLayout = () => {
 
   return (
     <SidebarProvider>
-      <ScrollToTop />
       <AdminLayoutContent />
     </SidebarProvider>
   );

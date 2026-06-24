@@ -2,11 +2,13 @@ import express from "express";
 import {
   createFlashSale,
   addProductToFlashSale,
+  addMultipleProducts,
   getActiveFlashSale,
   getAllFlashSales,
   deleteFlashSale,
   updateFlashSale,
   removeProductFromFlashSale,
+  updateProductInFlashSale,
 } from "../controllers/flashsaleController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
@@ -19,6 +21,7 @@ router.get("/active", getActiveFlashSale);
 router.get("/all", protect, admin, getAllFlashSales);
 router.post("/", protect, admin, createFlashSale);
 router.post("/:id/add-product", protect, admin, addProductToFlashSale);
+router.post("/:id/add-multiple-products", protect, admin, addMultipleProducts);
 router.delete("/:id", protect, admin, deleteFlashSale);
 router.put("/:id", protect, admin, updateFlashSale);
 router.delete(
@@ -26,6 +29,12 @@ router.delete(
   protect,
   admin,
   removeProductFromFlashSale
+);
+router.put(
+  "/:id/update-product/:productId",
+  protect,
+  admin,
+  updateProductInFlashSale
 );
 
 export default router;

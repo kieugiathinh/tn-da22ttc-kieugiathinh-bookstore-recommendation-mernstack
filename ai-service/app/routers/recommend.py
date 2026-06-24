@@ -269,15 +269,18 @@ def _do_retrain(app_state) -> None:
 
     try:
         print("\n[Retrain] >> Bat dau manual retrain CF model...")
+        from app.data_fetcher import fetch_interaction_weights
         df_ratings      = fetch_ratings()
         df_interactions = fetch_interactions(days=90)
         df_purchases    = fetch_purchases()
+        weights         = fetch_interaction_weights()
 
         cf = CollaborativeRecommender(n_factors=50, n_epochs=30)
         cf.fit(
             df_ratings=df_ratings,
             df_interactions=df_interactions,
             df_purchases=df_purchases,
+            weights=weights,
         )
         app_state.cf_model = cf
         print(

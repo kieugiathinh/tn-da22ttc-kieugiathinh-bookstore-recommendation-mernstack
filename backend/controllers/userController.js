@@ -32,7 +32,6 @@ const createUser = asyncHandler(async (req, res) => {
   res.status(201).json({
     _id: user._id,
     fullname: user.fullname,
-    username: user.username,
     email: user.email,
     role: user.role,
   });

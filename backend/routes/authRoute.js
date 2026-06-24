@@ -1,4 +1,5 @@
 import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
 import {
   loginUser,
   LogOut,
@@ -23,6 +24,11 @@ router.post("/forgot-password", forgotPassword);
 
 // Reset Password
 router.post("/reset-password/:token", resetPassword);
+
+// Verify Token/Cookie
+router.get("/verify", protect, (req, res) => {
+  res.status(200).json({ success: true, user: req.user });
+});
 
 // Logout User
 //router.post("/logout", LogOut);

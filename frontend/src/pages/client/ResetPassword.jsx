@@ -62,8 +62,16 @@ const ResetPassword = () => {
 
       <div className="max-w-5xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[550px] z-10 relative">
         {/* --- CỘT TRÁI: TYPOGRAPHY --- */}
-        <div className="hidden md:flex w-1/2 bg-gradient-to-br from-indigo-950 via-primary-hover to-violet-950 relative overflow-hidden justify-center items-center text-white p-12">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+        <div className="hidden md:flex w-1/2 bg-gradient-to-br from-orange-500 via-[#EE4D2D] to-rose-600 relative overflow-hidden justify-center items-center text-white p-12">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+
+          {/* Logo BookBee Glassmorphism */}
+          <div className="absolute top-8 left-8 z-20">
+            <Link to="/" className="bg-white/20 backdrop-blur-md px-3 py-2 rounded-xl shadow-lg border border-white/30 flex items-center gap-2 hover:bg-white/30 transition-all cursor-pointer">
+              <img src="/logobookbee.jpg" alt="BookBee" className="h-8 w-auto rounded-lg object-contain bg-white" />
+              <span className="text-white font-extrabold tracking-wider text-xl drop-shadow-md">BookBee</span>
+            </Link>
+          </div>
 
           <div className="relative z-10 text-center flex flex-col items-center w-full">
             <div className="mb-8 p-4 bg-white/10 rounded-full backdrop-blur-sm border border-white/20 shadow-inner">
@@ -123,7 +131,7 @@ const ResetPassword = () => {
                   type="password"
                   required
                   minLength={6}
-                  className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-primary outline-none transition-all text-sm font-semibold bg-gray-50/50"
+                  className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-orange-500 outline-none transition-all text-sm font-semibold bg-gray-50/50"
                   placeholder="Nhập mật khẩu mới (≥ 6 ký tự)"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -139,22 +147,20 @@ const ResetPassword = () => {
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                   <FaCheck
-                    className={`transition-colors ${
-                      confirmPassword && confirmPassword === newPassword
+                    className={`transition-colors ${confirmPassword && confirmPassword === newPassword
                         ? "text-green-500"
-                        : "text-gray-400 group-focus-within:text-primary"
-                    }`}
+                        : "text-gray-400 group-focus-within:text-orange-500"
+                      }`}
                   />
                 </div>
                 <input
                   type="password"
                   required
                   minLength={6}
-                  className={`w-full pl-14 pr-4 py-4 border-2 rounded-2xl focus:ring-0 outline-none transition-all text-sm font-semibold bg-gray-50/50 ${
-                    confirmPassword && confirmPassword !== newPassword
+                  className={`w-full pl-14 pr-4 py-4 border-2 rounded-2xl focus:ring-0 outline-none transition-all text-sm font-semibold bg-gray-50/50 ${confirmPassword && confirmPassword !== newPassword
                       ? "border-red-300 focus:border-red-500"
-                      : "border-gray-100 focus:border-primary"
-                  }`}
+                      : "border-gray-100 focus:border-orange-500"
+                    }`}
                   placeholder="Nhập lại mật khẩu"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -176,7 +182,7 @@ const ResetPassword = () => {
             <button
               type="submit"
               disabled={isLoading || (confirmPassword && confirmPassword !== newPassword)}
-              className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-primary hover:bg-primary-hover transition-all duration-300 shadow-xl hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+              className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-orange-500 to-[#EE4D2D] hover:from-[#EE4D2D] hover:to-orange-600 transition-all duration-300 shadow-lg shadow-orange-500/30 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -203,7 +209,7 @@ const ResetPassword = () => {
                   ĐANG CẬP NHẬT...
                 </span>
               ) : (
-                <span className="flex items-center gap-2 tracking-widest uppercase">
+                <span className="flex items-center gap-2 tracking-widest uppercase cursor-pointer">
                   Cập nhật mật khẩu <FaShieldAlt className="text-xs" />
                 </span>
               )}
@@ -216,7 +222,7 @@ const ResetPassword = () => {
               Nhớ mật khẩu rồi?{" "}
               <Link
                 to="/login"
-                className="font-bold text-honey-gold hover:text-primary transition-colors"
+                className="font-bold text-[#EE4D2D] hover:text-orange-600 hover:underline transition-colors"
               >
                 Đăng nhập ngay
               </Link>

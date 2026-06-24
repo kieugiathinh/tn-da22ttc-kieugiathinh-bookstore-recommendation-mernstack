@@ -43,3 +43,23 @@ export const getLatestOrders = asyncHandler(async (req, res) => {
   const orders = await statsService.getLatestOrders();
   res.status(200).json(orders);
 });
+
+export const getUserAnalyticsHandler = asyncHandler(async (req, res) => {
+  const data = await statsService.getUserAnalytics(req.query.type);
+  res.status(200).json(data);
+});
+
+export const getOrderAnalyticsHandler = asyncHandler(async (req, res) => {
+  const data = await statsService.getOrderAnalytics(req.query.type);
+  res.status(200).json(data);
+});
+
+export const getProductStatsHandler = asyncHandler(async (req, res) => {
+  const data = await statsService.getProductStatsAnalytics();
+  res.status(200).json(data);
+});
+
+export const getFlashSaleStatsHandler = asyncHandler(async (req, res) => {
+  const data = await statsService.getFlashSaleStatsAnalytics();
+  res.status(200).json(data);
+});

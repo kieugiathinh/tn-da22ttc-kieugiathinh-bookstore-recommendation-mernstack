@@ -1,4 +1,4 @@
-﻿import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import { useEffect, useState } from "react";
@@ -84,21 +84,32 @@ const Banner = () => {
     getBanners();
   }, []);
 
+  // Phân loại banner sau khi tải
+  const mainBanners = banners.filter((b) => b.type === "main" || !b.type);
+  const subBanners = banners.filter((b) => b.type === "sub");
+
   // Nếu đang tải hoặc không có banner nào, hiển thị Banner Mặc định
-  const displayBanners =
-    banners.length > 0
-      ? banners
+  const displayMainBanners =
+    mainBanners.length > 0
+      ? mainBanners
       : [
-        { _id: 1, img: "/banner1.png" },
-        {
-          _id: 2,
-          img: "https://nhasachphuongnam.com/images/promo/262/banner-trang-chu-8-3-1920x640.jpg",
-        },
-        {
-          _id: 3,
-          img: "https://cdn0.fahasa.com/media/magentothem/banner7/Manga_Week_T324_Slide_840x320.jpg",
-        },
-      ];
+          { _id: 1, img: "/banner1.png" },
+          {
+            _id: 2,
+            img: "https://nhasachphuongnam.com/images/promo/262/banner-trang-chu-8-3-1920x640.jpg",
+          },
+        ];
+
+  const displaySubBanners =
+    subBanners.length >= 2
+      ? subBanners.slice(0, 2) // Chỉ lấy đúng 2 banner phụ
+      : [
+          ...subBanners,
+          ...[
+            { _id: "sub1", img: "https://cdn0.fahasa.com/media/magentothem/banner7/VNPAY_315x115.png" },
+            { _id: "sub2", img: "https://cdn0.fahasa.com/media/magentothem/banner7/Zalopay_315x115.jpg" },
+          ].slice(0, 2 - subBanners.length), // Bù phần thiếu bằng banner mẫu
+        ];
 
   if (loading) {
     return (
@@ -107,30 +118,50 @@ const Banner = () => {
   }
 
   return (
-    // Dùng group để hiệu ứng hover mũi tên (nếu bạn muốn mũi tên chỉ hiện khi di chuột vào slider thì thêm CSS group-hover)
-    <div className="rounded-xl overflow-hidden shadow-md my-4 relative group">
-      <Slider {...settings}>
-        {displayBanners.map((banner, index) => (
-          <div key={banner._id || index} className="outline-none relative">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+      {/* CỘT TRÁI (2/3) - SLIDER BANNER CHÍNH */}
+      <div className="md:col-span-2 rounded-xl overflow-hidden shadow-md relative group h-full">
+        <Slider {...settings} className="h-full [&_.slick-list]:h-full [&_.slick-track]:h-full [&_.slick-slide]:h-full [&_.slick-slide>div]:h-full">
+          {displayMainBanners.map((banner, index) => (
+            <div key={banner._id || index} className="outline-none relative h-full w-full">
+              <img
+                src={banner.img}
+                alt={banner.title || `banner-main-${index}`}
+                className="block w-full h-full object-cover"
+              />
+              {/* Hiển thị Title đè lên ảnh */}
+              {banner.title && (
+                <div className="absolute bottom-12 left-10 bg-white/80 px-4 py-2 rounded-lg shadow-sm hidden md:block backdrop-blur-md">
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {banner.title}
+                  </h3>
+                  {banner.subtitle && (
+                    <p className="text-sm text-gray-600">{banner.subtitle}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </Slider>
+      </div>
+
+      {/* CỘT PHẢI (1/3) - 2 BANNER PHỤ XẾP CHỒNG (CHỈ HIỂN THỊ TRÊN DESKTOP) */}
+      <div className="hidden md:flex flex-col gap-4 h-full">
+        {displaySubBanners.map((banner, index) => (
+          <div key={banner._id || index} className="flex-1 rounded-xl overflow-hidden shadow-md relative group aspect-[392/156] w-full">
             <img
               src={banner.img}
-              alt={banner.title || `banner-${index}`}
-              className="w-full h-[200px] md:h-[400px] object-cover"
+              alt={banner.title || `banner-sub-${index}`}
+              className="block w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            {/* Hiển thị Title đè lên ảnh */}
             {banner.title && (
-              <div className="absolute bottom-12 left-10 bg-white/80 px-4 py-2 rounded-lg shadow-sm hidden md:block backdrop-blur-md">
-                <h3 className="text-xl font-bold text-gray-800">
-                  {banner.title}
-                </h3>
-                {banner.subtitle && (
-                  <p className="text-sm text-gray-600">{banner.subtitle}</p>
-                )}
+              <div className="absolute bottom-4 left-4 bg-white/80 px-3 py-1.5 rounded-md shadow-sm backdrop-blur-sm pointer-events-none">
+                <h4 className="text-sm font-bold text-gray-800">{banner.title}</h4>
               </div>
             )}
           </div>
         ))}
-      </Slider>
+      </div>
     </div>
   );
 };

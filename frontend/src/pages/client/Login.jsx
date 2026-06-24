@@ -63,8 +63,16 @@ const Login = () => {
 
       <div className="max-w-5xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[650px] z-10 relative">
         {/* --- CỘT TRÁI: TYPOGRAPHY TRUYỀN ĐỘNG LỰC --- */}
-        <div className="hidden md:flex w-1/2 bg-gradient-to-br from-indigo-950 via-primary-hover to-violet-950 relative overflow-hidden justify-center items-center text-white p-12">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+        <div className="hidden md:flex w-1/2 bg-gradient-to-br from-orange-500 via-[#EE4D2D] to-rose-600 relative overflow-hidden justify-center items-center text-white p-12">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+
+          {/* Logo BookBee Glassmorphism */}
+          <div className="absolute top-8 left-8 z-20">
+            <Link to="/" className="bg-white/20 backdrop-blur-md px-3 py-2 rounded-xl shadow-lg border border-white/30 flex items-center gap-2 hover:bg-white/30 transition-all cursor-pointer">
+              <img src="/logobookbee.jpg" alt="BookBee" className="h-8 w-auto rounded-lg object-contain bg-white" />
+              <span className="text-white font-extrabold tracking-wider text-xl drop-shadow-md">BookBee</span>
+            </Link>
+          </div>
 
           <div className="relative z-10 text-center flex flex-col items-center w-full">
             <div className="mb-8 p-4 bg-white/10 rounded-full backdrop-blur-sm border border-white/20 shadow-inner">
@@ -116,7 +124,7 @@ const Login = () => {
                 <input
                   type="email"
                   required
-                  className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-primary outline-none transition-all text-sm font-semibold bg-gray-50/50"
+                  className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-orange-500 outline-none transition-all text-sm font-semibold bg-gray-50/50"
                   placeholder="your-email@gmail.com"
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -130,7 +138,7 @@ const Login = () => {
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs font-bold text-honey-gold hover:text-primary transition-colors"
+                  className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
                 >
                   Quên mật khẩu?
                 </Link>
@@ -142,7 +150,7 @@ const Login = () => {
                 <input
                   type="password"
                   required
-                  className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-primary outline-none transition-all text-sm font-semibold bg-gray-50/50"
+                  className="w-full pl-14 pr-4 py-4 border-2 border-gray-100 rounded-2xl focus:ring-0 focus:border-orange-500 outline-none transition-all text-sm font-semibold bg-gray-50/50"
                   placeholder="••••••••"
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -152,12 +160,12 @@ const Login = () => {
             <button
               type="submit"
               disabled={isFetching}
-              className="w-full flex justify-center py-4 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-slate-900 hover:bg-primary-hover transition-all duration-300 shadow-xl hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+              className="w-full flex justify-center py-4 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-orange-500 to-[#EE4D2D] hover:from-[#EE4D2D] hover:to-orange-600 transition-all duration-300 shadow-lg shadow-orange-500/30 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
             >
               {isFetching ? (
                 "ĐANG XỬ LÝ..."
               ) : (
-                <span className="flex items-center gap-2 tracking-widest uppercase">
+                <span className="flex items-center gap-2 tracking-widest uppercase cursor-pointer">
                   Đăng nhập <FaArrowRight className="text-xs" />
                 </span>
               )}
@@ -186,7 +194,7 @@ const Login = () => {
                 Bạn chưa có tài khoản?{" "}
                 <Link
                   to="/register"
-                  className="font-bold text-primary-hover hover:underline"
+                  className="font-bold text-[#EE4D2D] hover:text-orange-600 hover:underline transition-colors"
                 >
                   Đăng ký ngay
                 </Link>

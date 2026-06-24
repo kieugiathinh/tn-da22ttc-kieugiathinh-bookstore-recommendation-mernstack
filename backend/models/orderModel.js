@@ -3,14 +3,16 @@ import mongoose from "mongoose";
 // ─── Enum trạng thái đơn hàng ────────────────────────────────────────────────
 /**
  * Dùng constant thay vì "số ma thuật" (magic number) trong code.
- * Python Recommendation Service lọc: chỉ lấy đơn DELIVERED (2)
+ * Python Recommendation Service lọc: chỉ lấy đơn DELIVERED (4)
  * làm tín hiệu "purchase" cho Implicit Collaborative Filtering.
  */
 export const ORDER_STATUS = Object.freeze({
-  PENDING: 0,     // Chờ xác nhận / Chờ thanh toán
-  PROCESSING: 1,  // Đã thanh toán / Đang xử lý / Đang giao
-  DELIVERED: 2,   // Giao thành công ← dùng làm implicit feedback
-  CANCELLED: 3,   // Đã hủy          ← loại khỏi training data
+  PENDING: 0,     // Chờ xác nhận
+  CONFIRMED: 1,   // Đã xác nhận
+  PREPARING: 2,   // Đang chuẩn bị
+  DELIVERING: 3,  // Đang giao
+  DELIVERED: 4,   // Giao thành công ← dùng làm implicit feedback
+  CANCELLED: 5,   // Đã hủy          ← loại khỏi training data
 });
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -65,6 +67,7 @@ const OrderSchema = mongoose.Schema(
         // Snapshot tên & ảnh tại thời điểm mua (giá trị lịch sử)
         title: { type: String },
         img: { type: String },
+        isFlashSale: { type: Boolean, default: false },
         quantity: {
           type: Number,
           default: 1,
@@ -97,7 +100,7 @@ const OrderSchema = mongoose.Schema(
 
     /**
      * [FIX] Dùng enum rõ ràng thay vì comment giải thích số.
-     * Sử dụng Object.values(ORDER_STATUS) → [0, 1, 2, 3]
+     * Sử dụng Object.values(ORDER_STATUS) → [0, 1, 2, 3, 4, 5]
      */
     status: {
       type: Number,

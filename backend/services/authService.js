@@ -12,14 +12,8 @@ const registerUser = async (userData) => {
     throw new Error("Email này đã được sử dụng");
   }
 
-  // Auto-generate username từ email (chỉ dùng nội bộ, không dùng để đăng nhập)
-  const baseUsername = email.split("@")[0];
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  const username = `${baseUsername}${randomSuffix}`;
-
   const user = await User.create({
     fullname,
-    username,
     email,
     password,
     phone,
@@ -65,14 +59,8 @@ const loginWithGoogle = async (idToken) => {
     }
   } else {
     // 3. Nếu user chưa tồn tại -> Tạo user mới
-    // Sinh username ngẫu nhiên từ email để tránh trùng lặp
-    const baseUsername = email.split('@')[0];
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const username = `${baseUsername}${randomSuffix}`;
-
     user = await User.create({
       fullname: name,
-      username: username,
       email: email,
       googleId: googleId,
       avatar: picture,

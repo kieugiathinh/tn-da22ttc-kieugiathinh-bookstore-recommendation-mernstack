@@ -13,51 +13,84 @@ import {
   FaHeadset,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { publicRequest } from "../../requestMethods";
+import { toast } from "react-toastify";
 
 /**
- * Footer — Vibrant Garden Edition
- * - Trust bar: gradient violet → indigo → blue (premium look)
- * - Main body: white canvas với typography slate-800
- * - Bottom bar: gradient dark slate → indigo (modern dark mode feel)
- * - Newsletter CTA: gradient amber → orange (brand honey-gold identity)
+ * Footer — BookBee Professional Edition v2
+ * - Tầng 1: Newsletter Bar (bg-white)
+ * - Tầng 2: Trust bar (gradient orange → amber)
+ * - Tầng 3: Main body (white canvas)
+ * - Tầng 4: Partners Layer (GHN & Stripe on one line with grayscale)
+ * - Tầng 5: Bottom bar (dark slate)
  */
 const Footer = () => {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Vui lòng nhập email của bạn");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const res = await publicRequest.post("/newsletter/subscribe", { email });
+      toast.success(res.data.message || "Đăng ký thành công!");
+      setEmail("");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Đăng ký thất bại");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <footer className="mt-16">
-      {/* ============ TRUST BAR — Vibrant Gradient ============ */}
-      <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600">
+    <footer className="mt-16 font-sans border-t border-slate-100">
+      
+      {/* ============ TẦNG 1: NEWSLETTER BAR ============ */}
+      <div className="bg-gradient-to-r from-orange-500 to-amber-500 py-5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 py-6">
-            <TrustItem
-              icon={<FaTruck />}
-              title="Giao hàng nhanh"
-              desc="Toàn quốc từ 2–5 ngày"
-              color="text-sky-300"
-            />
-            <TrustItem
-              icon={<FaUndo />}
-              title="Đổi trả miễn phí"
-              desc="Trong 7 ngày đầu tiên"
-              color="text-emerald-300"
-            />
-            <TrustItem
-              icon={<FaHeadset />}
-              title="Hỗ trợ 24/7"
-              desc="Luôn sẵn sàng phục vụ"
-              color="text-amber-300"
-            />
-            <TrustItem
-              icon={<FaShieldAlt />}
-              title="Thanh toán an toàn"
-              desc="Bảo mật tuyệt đối"
-              color="text-rose-300"
-            />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            
+            {/* Cột trái: Tiêu đề */}
+            <div className="flex items-center gap-3 text-white md:w-1/3">
+              <FaEnvelope className="text-3xl drop-shadow-sm" />
+              <h3 className="text-base font-extrabold uppercase tracking-wider drop-shadow-sm">Đăng ký nhận bản tin</h3>
+            </div>
+
+            {/* Cột phải: Form nhập */}
+            <form onSubmit={handleSubscribe} className="w-full md:w-2/3 flex bg-white p-1 rounded-2xl shadow-lg border border-orange-200/50">
+              <input
+                type="email"
+                placeholder="Nhập địa chỉ email của bạn..."
+                className="flex-1 px-5 py-3 text-sm text-slate-700 bg-transparent focus:outline-none font-medium rounded-l-2xl"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                required
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`px-8 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-sm uppercase tracking-wide flex items-center justify-center ${
+                  isLoading 
+                    ? "bg-slate-400 text-white cursor-not-allowed" 
+                    : "bg-slate-800 hover:bg-slate-900 text-white cursor-pointer hover:shadow-md active:scale-95"
+                }`}
+              >
+                {isLoading ? "Đang xử lý..." : "Đăng ký"}
+              </button>
+            </form>
           </div>
         </div>
       </div>
 
-      {/* ============ MAIN FOOTER — White Canvas ============ */}
-      <div className="bg-white border-t border-slate-100">
+      {/* ============ TẦNG 2: MAIN CANVAS (Thông tin) ============ */}
+      <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
 
@@ -70,7 +103,7 @@ const Footer = () => {
                   className="h-12 object-contain"
                 />
               </Link>
-              <p className="text-sm leading-relaxed text-slate-500">
+              <p className="text-sm leading-relaxed text-slate-500 font-medium">
                 BookBee.com — Nhà sách trực tuyến hàng đầu. Nơi hội tụ những
                 cuốn sách hay nhất để nuôi dưỡng tâm hồn và trí tuệ của bạn.
               </p>
@@ -80,7 +113,7 @@ const Footer = () => {
                 <SocialIcon
                   icon={<FaFacebookF size={14} />}
                   link="https://www.facebook.com/kieugiathinh"
-                  gradient="from-blue-500 to-indigo-500"
+                  gradient="from-blue-500 to-indigo-600"
                 />
                 <SocialIcon
                   icon={<FaInstagram size={14} />}
@@ -90,7 +123,7 @@ const Footer = () => {
                 <SocialIcon
                   icon={<FaYoutube size={14} />}
                   link="#"
-                  gradient="from-red-500 to-rose-500"
+                  gradient="from-red-500 to-rose-600"
                 />
                 <SocialIcon
                   icon={<FaTwitter size={14} />}
@@ -102,11 +135,11 @@ const Footer = () => {
 
             {/* CỘT 2: DỊCH VỤ */}
             <div>
-              <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-1 h-4 bg-gradient-to-b from-violet-500 to-indigo-500 rounded-full inline-block"></span>
-                Dịch vụ
+              <h3 className="text-slate-800 text-sm font-extrabold mb-5 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1 h-4 bg-orange-500 rounded-full inline-block"></span>
+                Dịch vụ khách hàng
               </h3>
-              <ul className="space-y-3 text-sm">
+              <ul className="space-y-3 text-sm font-medium">
                 <FooterLink to="/shipping" text="Điều khoản sử dụng" />
                 <FooterLink to="/shipping" text="Chính sách bảo mật" />
                 <FooterLink to="/returns" text="Chính sách đổi trả & hoàn tiền" />
@@ -117,11 +150,11 @@ const Footer = () => {
 
             {/* CỘT 3: HỖ TRỢ */}
             <div>
-              <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-1 h-4 bg-gradient-to-b from-emerald-500 to-teal-500 rounded-full inline-block"></span>
-                Hỗ trợ
+              <h3 className="text-slate-800 text-sm font-extrabold mb-5 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1 h-4 bg-orange-500 rounded-full inline-block"></span>
+                Về chúng tôi
               </h3>
-              <ul className="space-y-3 text-sm">
+              <ul className="space-y-3 text-sm font-medium">
                 <FooterLink to="/about" text="Giới thiệu BookBee" />
                 <FooterLink to="/faq" text="Câu hỏi thường gặp" />
                 <FooterLink to="/contact" text="Liên hệ hợp tác" />
@@ -130,81 +163,75 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* CỘT 4: LIÊN HỆ + NEWSLETTER */}
+            {/* CỘT 4: LIÊN HỆ */}
             <div>
-              <h3 className="text-slate-800 text-sm font-bold mb-5 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-1 h-4 bg-gradient-to-b from-amber-400 to-orange-400 rounded-full inline-block"></span>
+              <h3 className="text-slate-800 text-sm font-extrabold mb-5 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1 h-4 bg-orange-500 rounded-full inline-block"></span>
                 Liên hệ
               </h3>
-              <ul className="space-y-3 text-sm text-slate-500 mb-6">
+              <ul className="space-y-4 text-sm text-slate-500 font-medium">
                 <li className="flex items-start gap-3">
-                  <FaMapMarkerAlt className="text-amber-500 mt-0.5 flex-shrink-0" size={14} />
-                  <span>Long Hòa, Châu Thành, Vĩnh Long</span>
+                  <FaMapMarkerAlt className="text-orange-500 mt-0.5 flex-shrink-0" size={16} />
+                  <span className="leading-relaxed">Long Hòa, Châu Thành, Vĩnh Long</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <FaPhoneAlt className="text-amber-500 flex-shrink-0" size={13} />
+                  <FaPhoneAlt className="text-orange-500 flex-shrink-0" size={15} />
                   <span>0339 601 263</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <FaEnvelope className="text-amber-500 flex-shrink-0" size={13} />
+                  <FaEnvelope className="text-orange-500 flex-shrink-0" size={15} />
                   <span>bookbee.store@gmail.com</span>
                 </li>
               </ul>
-
-              {/* Newsletter */}
-              <div>
-                <p className="text-xs text-slate-500 mb-2.5 font-medium">
-                  📬 Đăng ký nhận tin khuyến mãi
-                </p>
-                <div className="flex gap-1">
-                  <input
-                    type="email"
-                    placeholder="Nhập email của bạn..."
-                    className="flex-1 px-3 py-2.5 text-sm text-slate-700 bg-slate-50
-                               border border-slate-200 rounded-xl
-                               focus:outline-none focus:border-violet-400
-                               focus:ring-1 focus:ring-violet-300/50 transition-all"
-                  />
-                  <button
-                    className="bg-gradient-to-r from-amber-400 to-orange-400
-                               hover:from-amber-500 hover:to-orange-500
-                               text-white px-4 py-2.5 rounded-xl
-                               transition-all shadow-sm shadow-amber-300/40
-                               hover:shadow-md hover:shadow-amber-400/30"
-                  >
-                    <FaPaperPlane size={13} />
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ============ BOTTOM BAR — Dark Gradient ============ */}
-      <div className="bg-gradient-to-br from-slate-900 to-indigo-950">
+      {/* ============ TẦNG 4: ĐỐI TÁC (Partners) ============ */}
+      <div className="bg-slate-50 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            
+            {/* Đơn Vị Vận Chuyển */}
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+                Đơn vị vận chuyển
+              </span>
+              <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm hover:border-orange-300 transition-colors cursor-pointer group">
+                <img 
+                  src="https://cdn.hstatic.net/themes/200000472237/1001423864/14/logo.png?v=2874" 
+                  alt="Giao Hàng Nhanh" 
+                  className="h-6 object-contain transition-all duration-300"
+                />
+              </div>
+            </div>
+
+            {/* Thanh Toán */}
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+                Thanh toán an toàn
+              </span>
+              <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors cursor-pointer group">
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" 
+                  alt="Stripe" 
+                  className="h-5 object-contain transition-all duration-300"
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* ============ TẦNG 5: BOTTOM BAR (Copyright) ============ */}
+      <div className="bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-slate-400">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+            <p className="text-xs text-slate-400 font-medium">
               &copy; {new Date().getFullYear()} BookBee.com — Đồ án tốt nghiệp Kiểu Gia Thịnh. All rights reserved.
             </p>
-
-            {/* Payment methods */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-500 mr-1">Thanh toán:</span>
-              <PaymentIcon
-                src="https://cdn-icons-png.flaticon.com/512/196/196578.png"
-                alt="Visa"
-              />
-              <PaymentIcon
-                src="https://cdn-icons-png.flaticon.com/512/196/196565.png"
-                alt="Mastercard"
-              />
-              <PaymentIcon
-                src="https://cdn-icons-png.flaticon.com/512/196/196566.png"
-                alt="PayPal"
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -214,12 +241,12 @@ const Footer = () => {
 
 // ---- SUB-COMPONENTS ----
 
-const TrustItem = ({ icon, title, desc, color }) => (
+const TrustItem = ({ icon, title, desc }) => (
   <div className="flex items-center gap-3 text-white">
-    <div className={`text-xl ${color}`}>{icon}</div>
+    <div className="text-3xl text-white/90 drop-shadow-sm">{icon}</div>
     <div>
-      <p className="text-sm font-semibold leading-tight">{title}</p>
-      <p className="text-xs text-white/65">{desc}</p>
+      <p className="text-sm font-extrabold leading-tight tracking-wide">{title}</p>
+      <p className="text-xs text-white/80 font-medium">{desc}</p>
     </div>
   </div>
 );
@@ -228,7 +255,7 @@ const FooterLink = ({ to, text }) => (
   <li>
     <Link
       to={to}
-      className="text-slate-500 hover:text-violet-600 hover:translate-x-1 transition-all duration-200 inline-block"
+      className="text-slate-500 hover:text-orange-500 hover:translate-x-1 transition-all duration-200 inline-block"
     >
       {text}
     </Link>
@@ -247,15 +274,6 @@ const SocialIcon = ({ icon, link, gradient }) => (
   >
     {icon}
   </a>
-);
-
-const PaymentIcon = ({ src, alt }) => (
-  <img
-    src={src}
-    alt={alt}
-    className="h-7 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity
-               filter brightness-0 invert"
-  />
 );
 
 export default Footer;

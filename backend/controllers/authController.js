@@ -18,9 +18,10 @@ const registerUser = asyncHandler(async (req, res) => {
   res.status(201).json({
     _id: user._id,
     fullname: user.fullname,
-    username: user.username,
     email: user.email,
     role: user.role,
+    addresses: user.addresses || [],
+    wallet: user.wallet || [],
   });
 });
 
@@ -35,12 +36,12 @@ const loginUser = asyncHandler(async (req, res) => {
   res.status(200).json({
     _id: user._id,
     fullname: user.fullname,
-    username: user.username,
     email: user.email,
     phone: user.phone,
-    address: user.address,
     role: user.role,
     avatar: user.avatar,
+    addresses: user.addresses || [],
+    wallet: user.wallet || [],
   });
 });
 
@@ -71,12 +72,12 @@ const loginWithGoogle = asyncHandler(async (req, res) => {
   res.status(200).json({
     _id: user._id,
     fullname: user.fullname,
-    username: user.username,
     email: user.email,
     phone: user.phone,
-    address: user.address,
     role: user.role,
     avatar: user.avatar,
+    addresses: user.addresses || [],
+    wallet: user.wallet || [],
   });
 });
 

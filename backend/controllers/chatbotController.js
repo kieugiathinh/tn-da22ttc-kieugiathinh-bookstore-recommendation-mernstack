@@ -28,6 +28,7 @@ const askChatbot = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     reply: result.reply,
+    books: result.books,
     meta: {
       booksFound: result.booksFound,
       keywords: result.keywords,

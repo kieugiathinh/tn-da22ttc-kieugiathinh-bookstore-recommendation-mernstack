@@ -228,61 +228,63 @@ const AddressBook = () => {
   );
 
   return (
-    <section className="border-t border-gray-100 pt-8">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-bold text-gray-800 flex items-center">
-          <FaMapMarkerAlt className="mr-2 text-primary" />
-          Sổ địa chỉ
-        </h2>
+    <div className="flex flex-col h-full">
+      <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-gradient-to-b from-orange-500 to-amber-500 rounded-full" />
+          <h2 className="text-xl font-extrabold text-slate-800">Sổ Địa Chỉ</h2>
+        </div>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center text-sm font-semibold text-primary hover:text-primary-hover transition cursor-pointer"
+            className="flex items-center text-sm font-bold text-orange-600 hover:text-orange-700 transition cursor-pointer bg-orange-50 hover:bg-orange-100 px-4 py-2 rounded-xl border border-orange-200"
           >
-            <FaPlus className="mr-1" /> Thêm địa chỉ
+            <FaPlus className="mr-1.5" /> Thêm Mới
           </button>
         )}
       </div>
 
+      <div className="p-6 md:p-8">
+
       {/* DANH SÁCH ĐỊA CHỈ */}
       {addresses.length === 0 && !showForm && (
-        <div className="text-center py-8 text-gray-400">
-          <FaMapMarkerAlt className="mx-auto text-3xl mb-2" />
-          <p className="text-sm">Bạn chưa có địa chỉ nào.</p>
+        <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
+          <FaMapMarkerAlt className="mx-auto text-4xl text-slate-300 mb-3" />
+          <p className="text-sm font-medium text-slate-500">Bạn chưa có địa chỉ nhận hàng nào.</p>
           <button
             onClick={() => setShowForm(true)}
-            className="mt-3 text-primary font-semibold text-sm hover:underline cursor-pointer"
+            className="mt-4 text-orange-600 font-bold text-sm hover:underline cursor-pointer flex items-center justify-center mx-auto"
           >
-            + Thêm địa chỉ đầu tiên
+            <FaPlus className="mr-1.5" /> Thêm địa chỉ đầu tiên
           </button>
         </div>
       )}
 
-      <div className="space-y-3 mb-6">
+      <div className="space-y-4 mb-6">
         {addresses.map((addr) => (
           <div
             key={addr._id}
-            className={`relative p-4 rounded-lg border transition ${
+            className={`relative p-5 rounded-xl border-2 transition-all ${
               addr.isDefault
-                ? "border-primary bg-primary-light/50"
-                : "border-gray-200 bg-white hover:border-gray-300"
+                ? "border-orange-400 bg-orange-50/50 shadow-sm"
+                : "border-slate-100 bg-white hover:border-orange-200"
             }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="font-bold text-gray-800 text-sm">
+                <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
+                  <span className="font-extrabold text-slate-800 text-base">
                     {addr.name}
                   </span>
-                  <span className="text-gray-400">|</span>
-                  <span className="text-gray-600 text-sm">{addr.phone}</span>
+                  <span className="text-slate-300 text-sm">|</span>
+                  <span className="text-slate-600 text-sm font-medium">{addr.phone}</span>
                   {addr.isDefault && (
-                    <span className="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded-full border border-primary/20">
+                    <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2.5 py-0.5 rounded-md border border-orange-200">
                       Mặc định
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <p className="text-sm text-slate-500 leading-relaxed font-medium">
                   {addr.street}, {addr.wardName}, {addr.districtName},{" "}
                   {addr.provinceName}
                 </p>
@@ -292,7 +294,7 @@ const AddressBook = () => {
                   <button
                     onClick={() => handleSetDefault(addr._id)}
                     title="Đặt mặc định"
-                    className="text-xs text-gray-400 hover:text-primary transition cursor-pointer p-1"
+                    className="text-sm text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition cursor-pointer p-2"
                   >
                     <FaStar />
                   </button>
@@ -300,7 +302,7 @@ const AddressBook = () => {
                 <button
                   onClick={() => handleDelete(addr._id)}
                   title="Xóa"
-                  className="text-xs text-gray-400 hover:text-red-500 transition cursor-pointer p-1"
+                  className="text-sm text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer p-2"
                 >
                   <FaTrash />
                 </button>
@@ -314,9 +316,9 @@ const AddressBook = () => {
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="border border-gray-200 rounded-xl p-5 bg-gray-50 space-y-4 animate-fadeIn"
+          className="border-2 border-slate-100 rounded-2xl p-6 bg-slate-50/50 space-y-5 animate-fadeIn"
         >
-          <h3 className="font-bold text-gray-800 text-sm mb-2">
+          <h3 className="font-extrabold text-slate-800 text-base mb-2">
             Thêm địa chỉ mới
           </h3>
 
@@ -436,18 +438,18 @@ const AddressBook = () => {
             </span>
           </label>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 mt-6">
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+              className="px-6 py-2.5 text-sm font-bold text-slate-600 bg-white border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition cursor-pointer"
             >
-              <FaTimes className="inline mr-1" /> Hủy
+              <FaTimes className="inline mr-1.5" /> Hủy
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg transition flex items-center disabled:opacity-50 cursor-pointer"
+              className="px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl shadow-sm transition flex items-center disabled:opacity-50 cursor-pointer"
             >
               {isSaving ? (
                 <>
@@ -462,7 +464,8 @@ const AddressBook = () => {
           </div>
         </form>
       )}
-    </section>
+      </div>
+    </div>
   );
 };
 

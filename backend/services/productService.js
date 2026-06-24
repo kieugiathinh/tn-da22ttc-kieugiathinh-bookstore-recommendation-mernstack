@@ -1,7 +1,9 @@
 import Product from "../models/productModel.js";
+import Order from "../models/orderModel.js";
 import mongoose from "mongoose";
 import axios from "axios";
 import dotenv from "dotenv";
+import * as flashsaleService from "./flashsaleService.js";
 
 dotenv.config();
 
@@ -88,7 +90,7 @@ const deleteProduct = async (id) => {
 const getProductById = async (id) => {
   const product = await Product.findById(id).populate("category").lean();
   if (!product) throw new Error("Sản phẩm không tồn tại");
-  return product;
+  return await flashsaleService.attachFlashSaleToProducts(product);
 };
 
 const getAllProducts = async (queryParms) => {
@@ -100,7 +102,7 @@ const getAllProducts = async (queryParms) => {
   } 
   
   if (qTopRated) {
-    return await Product.find({
+    const products = await Product.find({
       rating: { $gte: 4.0 },
       numReviews: { $gt: 0 },
     })
@@ -108,11 +110,47 @@ const getAllProducts = async (queryParms) => {
       .limit(10)
       .populate("category")
       .lean();
-  } 
-  
+    return await flashsaleService.attachFlashSaleToProducts(products);
+  }
+  // Xử lý Tìm kiếm với MongoDB Atlas Search
+  if (qSearch) {
+    const pipeline = [
+      {
+        $search: {
+          index: "product_search_index",
+          text: {
+            query: qSearch,
+            path: ["title", "author"],
+            fuzzy: { maxEdits: 1, prefixLength: 0 }
+          }
+        }
+      }
+    ];
+
+    if (qCategory) {
+      const categories = qCategory.split(",");
+      pipeline.push({
+        $match: { category: { $in: categories.map(c => new mongoose.Types.ObjectId(c)) } }
+      });
+    }
+
+    if (qNew) {
+      pipeline.push({ $sort: { createdAt: -1 } });
+    } else if (qBestSeller) {
+      pipeline.push({ $sort: { sold: -1 } });
+    }
+
+    let products = await Product.aggregate(pipeline);
+    products = await Product.populate(products, { path: "category" });
+    return await flashsaleService.attachFlashSaleToProducts(products);
+  }
+
+  // Luồng xử lý bình thường không có tìm kiếm
   let filter = {};
-  if (qCategory) filter.category = qCategory;
-  if (qSearch) filter.title = { $regex: qSearch, $options: "i" };
+  if (qCategory) {
+    const categories = qCategory.split(",");
+    filter.category = { $in: categories };
+  }
 
   let query = Product.find(filter).populate("category").lean();
 
@@ -123,15 +161,17 @@ const getAllProducts = async (queryParms) => {
   } else {
     query = query.sort({ createdAt: -1 });
   }
-  return await query;
+  const products = await query;
+  return await flashsaleService.attachFlashSaleToProducts(products);
 };
 
 const getNewProducts = async () => {
-  return await Product.find()
+  const products = await Product.find()
     .sort({ createdAt: -1 })
     .limit(10)
     .populate("category")
     .lean();
+  return await flashsaleService.attachFlashSaleToProducts(products);
 };
 
 const getRelatedProducts = async (categoryId, productId) => {
@@ -149,7 +189,64 @@ const getRelatedProducts = async (categoryId, productId) => {
     { $sample: { size: 5 } },
   ]);
 
-  return await Product.populate(products, { path: "category" });
+  const populatedProducts = await Product.populate(products, { path: "category" });
+  return await flashsaleService.attachFlashSaleToProducts(populatedProducts);
+};
+
+const getTrendingProducts = async (period) => {
+  // Trạng thái đơn hàng: 1 (CONFIRMED), 2 (PREPARING), 3 (DELIVERING), 4 (DELIVERED)
+  let matchStage = { status: { $in: [1, 2, 3, 4] } };
+  
+  if (period && period !== "all") {
+    const now = new Date();
+    let startDate = new Date();
+    if (period === "day") startDate.setDate(now.getDate() - 1);
+    else if (period === "week") startDate.setDate(now.getDate() - 7);
+    else if (period === "month") startDate.setMonth(now.getMonth() - 1);
+    else if (period === "year") startDate.setFullYear(now.getFullYear() - 1);
+    
+    matchStage.createdAt = { $gte: startDate };
+  }
+
+  const trendingAggregation = await Order.aggregate([
+    { $match: matchStage },
+    { $unwind: "$products" },
+    {
+      $group: {
+        _id: "$products.productId",
+        totalSold: { $sum: "$products.quantity" }
+      }
+    },
+    { $sort: { totalSold: -1 } },
+    { $limit: 10 }
+  ]);
+
+  // Fallback: Nếu không có đơn hàng nào trong khoảng thời gian đó, lấy best seller mặc định
+  if (trendingAggregation.length === 0) {
+    const fallbackProducts = await Product.find()
+      .sort({ sold: -1 })
+      .limit(10)
+      .populate("category")
+      .lean();
+    return await flashsaleService.attachFlashSaleToProducts(fallbackProducts);
+  }
+
+  const productIds = trendingAggregation.map(item => item._id);
+  const products = await Product.find({ _id: { $in: productIds } })
+    .populate("category")
+    .lean();
+
+  // Map lại mảng theo đúng thứ tự đã sort
+  const sortedProducts = trendingAggregation.map(item => {
+    const p = products.find(p => p._id.toString() === item._id.toString());
+    if (p) {
+      // Clone object to avoid modifying the original if it's cached, though lean() makes it a plain object
+      return { ...p, periodSold: item.totalSold };
+    }
+    return null;
+  }).filter(p => p != null);
+
+  return await flashsaleService.attachFlashSaleToProducts(sortedProducts);
 };
 
 export {
@@ -161,4 +258,5 @@ export {
   getNewProducts,
   getRelatedProducts,
   fetchBookInfoFromGoogle,
+  getTrendingProducts,
 };

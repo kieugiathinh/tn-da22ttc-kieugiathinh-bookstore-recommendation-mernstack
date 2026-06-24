@@ -14,16 +14,15 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { useLocation, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { userRequest } from "../../requestMethods";
 import { useDispatch } from "react-redux";
 import { addProduct } from "../../redux/cartRedux";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import moment from "moment";
-import RelatedProducts from "../../components/client/RelatedProducts";
+import "moment/locale/vi"; // Import locale tiếng Việt
 import SimilarProducts from "../../components/client/SimilarProducts";
-import RecommendedForYou from "../../components/client/RecommendedForYou";
 
 // --- Star Rating Component ---
 const StarRating = ({ rating, size = "text-sm" }) => {
@@ -56,6 +55,12 @@ const Product = () => {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [timeLeft, setTimeLeft] = useState({ days: "00", hours: "00", minutes: "00", seconds: "00" });
+
+  // UI States
+  const [showFullDesc, setShowFullDesc] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [activeTab, setActiveTab] = useState("description"); // "description" or "reviews"
 
   const dispatch = useDispatch();
 
@@ -74,23 +79,56 @@ const Product = () => {
     getProduct();
   }, [id]);
 
-  // Trigger CF retrain sau khi user đã đăng nhập xem sản phẩm
-  // → cập nhật danh sách "Dành Riêng Cho Bạn" khi quay lại trang chủ
+  const trackedProductId = useRef(null);
+
+  // Tracking hành vi (view hoặc search_click)
   useEffect(() => {
     if (!user || !id) return;
+    
+    // Nếu ID này đã được ghi nhận thành công thì bỏ qua
+    if (trackedProductId.current === id) return; 
 
-    // Fire and forget — không await, không hiện loading, không block UX
+    // Lấy source từ query string (?source=search)
+    const queryParams = new URLSearchParams(location.search);
+    const source = queryParams.get("source") || "direct";
+    // Nếu source = search, ghi nhận là search_click, ngược lại là view
+    const interactionType = source === "search" ? "search_click" : "view";
+
+    const trackInteraction = async () => {
+      try {
+        await userRequest.post("/interactions/track", {
+          productId: id,
+          interactionType,
+          source
+        });
+        // Đánh dấu là đã tracking thành công cho sản phẩm này
+        trackedProductId.current = id;
+      } catch (err) {
+        console.error("Lỗi tracking:", err);
+      }
+    };
+
+    // Thiết lập đếm ngược 10 giây mới tính là 1 lượt xem hợp lệ
+    const timerId = setTimeout(() => {
+      trackInteraction();
+    }, 10000);
+
     userRequest
       .post("/recommend/refresh", {}, { withCredentials: true })
       .then((res) => {
         if (res.data?.status !== "SKIPPED") {
-          console.log("[CF] Retrain triggered — gợi ý sẽ cập nhật sau vài giây.");
+          console.log("[CF] Retrain triggered.");
         }
       })
       .catch(() => {
-        // Silent fail — không làm hỏng trải nghiệm xem sản phẩm
       });
-  }, [id, user?._id]);
+
+    // Dọn dẹp (Cleanup function): Nếu người dùng thoát trang hoặc chuyển sang 
+    // sản phẩm khác trước 10s, tiến trình này sẽ bị hủy và không ghi nhận lượt xem.
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [id, user, location.search]);
 
   // Fetch Reviews
   const fetchReviews = async () => {
@@ -108,29 +146,78 @@ const Product = () => {
     fetchReviews();
   }, [id]);
 
-  const flashSaleRemaining = product.isFlashSale
-    ? product.flashSaleLimit - product.flashSaleSold
+  // Countdown timer logic
+  useEffect(() => {
+    if (!product.flashSale?.endTime) return;
+    
+    const interval = setInterval(() => {
+      const now = moment();
+      const end = moment(product.flashSale.endTime);
+      const diff = end.diff(now);
+      
+      if (diff <= 0) {
+        clearInterval(interval);
+        setTimeLeft({ days: "00", hours: "00", minutes: "00", seconds: "00" });
+      } else {
+        const duration = moment.duration(diff);
+        const days = String(Math.floor(duration.asDays())).padStart(2, '0');
+        const hours = String(duration.hours()).padStart(2, '0');
+        const minutes = String(duration.minutes()).padStart(2, '0');
+        const seconds = String(duration.seconds()).padStart(2, '0');
+        setTimeLeft({ days, hours, minutes, seconds });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [product.flashSale?.endTime]);
+
+  const flashSaleRemaining = product.flashSale
+    ? product.flashSale.quantityLimit - product.flashSale.soldCount
     : 0;
+  const isFsSoldOut = product.flashSale && flashSaleRemaining <= 0;
 
   const handleQuantity = (action) => {
+    let currentQty = quantity === "" ? 1 : quantity;
     if (action === "dec") {
-      setQuantity(quantity === 1 ? 1 : quantity - 1);
+      setQuantity(currentQty === 1 ? 1 : currentQty - 1);
     }
     if (action === "inc") {
-      if (product.countInStock && quantity >= product.countInStock) {
+      if (product.countInStock && currentQty >= product.countInStock) {
         toast.warning(`Kho chỉ còn ${product.countInStock} sản phẩm!`);
         return;
       }
-      if (product.isFlashSale && quantity >= flashSaleRemaining) {
-        toast.warning(`Bạn chỉ có thể mua tối đa ${flashSaleRemaining} suất giá sốc!`);
-        return;
+      if (product.flashSale && !isFsSoldOut && currentQty === flashSaleRemaining) {
+        toast.info(`Từ sản phẩm thứ ${flashSaleRemaining + 1} sẽ được tính giá gốc!`);
       }
-      setQuantity(quantity + 1);
+      setQuantity(currentQty + 1);
+    }
+  };
+
+  const handleQuantityInputChange = (e) => {
+    const val = e.target.value;
+    if (val === "") {
+      setQuantity("");
+      return;
+    }
+    const num = parseInt(val);
+    if (isNaN(num)) return;
+    
+    if (product.countInStock && num > product.countInStock) {
+      toast.warning(`Kho chỉ còn ${product.countInStock} sản phẩm!`);
+      setQuantity(product.countInStock);
+      return;
+    }
+    setQuantity(num);
+  };
+
+  const handleQuantityBlur = () => {
+    if (quantity === "" || quantity < 1) {
+      setQuantity(1);
     }
   };
 
   const calculatePrice = () => {
-    if (product.isFlashSale) return product.discountedPrice;
+    if (product.flashSale && !isFsSoldOut) return product.flashSale.discountPrice;
     if (product.wholesalePrice && quantity >= product.wholesaleMinimumQuantity)
       return product.wholesalePrice;
     if (product.discountedPrice > 0) return product.discountedPrice;
@@ -142,38 +229,79 @@ const Product = () => {
     ? Math.round((1 - finalPrice / product.originalPrice) * 100)
     : 0;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product.countInStock === 0) {
       toast.error("Sản phẩm đã hết hàng!");
       return;
     }
 
-    const remainingFS = product.isFlashSale
-      ? product.flashSaleLimit - product.flashSaleSold
+    try {
+      if (user) {
+        await userRequest.post('/interactions/track', {
+          productId: id,
+          interactionType: "add_to_cart",
+          source: "direct"
+        });
+      }
+    } catch (err) {
+      console.log("Track error:", err);
+    }
+
+    const remainingFS = product.flashSale
+      ? product.flashSale.quantityLimit - product.flashSale.soldCount
       : 0;
 
-    if (!product.isFlashSale || remainingFS <= 0) {
-      dispatch(addProduct({ ...product, price: product.originalPrice, quantity, isFlashSale: false }));
-      toast.success(`Đã thêm ${quantity} cuốn vào giỏ`);
+    const finalQty = quantity === "" ? 1 : quantity;
+
+    if (!product.flashSale || remainingFS <= 0) {
+      dispatch(addProduct({ ...product, price: finalPrice, regularPrice: product.originalPrice, quantity: finalQty, isFlashSale: false }));
+      toast.success(`Đã thêm ${finalQty} cuốn vào giỏ`);
       return;
     }
 
-    if (quantity <= remainingFS) {
-      dispatch(addProduct({ ...product, price: product.discountedPrice, quantity, isFlashSale: true }));
-      toast.success(`Đã thêm ${quantity} cuốn giá Flash Sale`);
+    if (finalQty <= remainingFS) {
+      dispatch(
+        addProduct({
+          ...product,
+          price: product.flashSale.discountPrice,
+          regularPrice: calculateNormalPrice(),
+          quantity: finalQty,
+          isFlashSale: true,
+          flashSaleQuantityLimit: product.flashSale.quantityLimit,
+          flashSaleSoldCount: product.flashSale.soldCount,
+        })
+      );
+      toast.success(`Đã thêm ${finalQty} cuốn giá Flash Sale`);
     } else {
-      const normalQty = quantity - remainingFS;
-      dispatch(addProduct({ ...product, price: product.discountedPrice, quantity: remainingFS, isFlashSale: true }));
-      dispatch(addProduct({ ...product, price: product.originalPrice, quantity: normalQty, isFlashSale: false }));
+      const normalQty = finalQty - remainingFS;
+      dispatch(
+        addProduct({
+          ...product,
+          price: product.flashSale.discountPrice,
+          regularPrice: calculateNormalPrice(),
+          quantity: remainingFS,
+          isFlashSale: true,
+          flashSaleQuantityLimit: product.flashSale.quantityLimit,
+          flashSaleSoldCount: product.flashSale.soldCount,
+        })
+      );
+      dispatch(addProduct({ ...product, price: calculateNormalPrice(), regularPrice: product.originalPrice, quantity: normalQty, isFlashSale: false }));
       toast.info("Đã tách đơn hàng do vượt quá suất Flash Sale");
     }
+  };
+
+  const calculateNormalPrice = () => {
+    if (product.wholesalePrice && quantity >= product.wholesaleMinimumQuantity)
+      return product.wholesalePrice;
+    if (product.discountedPrice > 0) return product.discountedPrice;
+    return product.originalPrice;
   };
 
   // Loading skeleton
   if (loading)
     return (
       <div className="bg-slate-50 min-h-screen py-10">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-sm p-10 flex gap-10 animate-pulse">
             <div className="w-2/5 aspect-[3/4] bg-slate-100 rounded-xl" />
             <div className="w-3/5 space-y-4">
@@ -189,7 +317,7 @@ const Product = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ===== MAIN CARD ===== */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10 flex flex-col md:flex-row gap-10">
@@ -199,17 +327,16 @@ const Product = () => {
             <div className="relative w-full max-w-sm aspect-[3/4] rounded-2xl overflow-hidden
                             shadow-lg border border-slate-100 bg-slate-50">
               {/* Flash Sale badge overlay */}
-              {product.isFlashSale && (
-                <div className="absolute top-3 left-3 z-10
-                               bg-gradient-to-r from-rose-500 to-orange-500
+              {product.flashSale && (
+                <div className={`absolute top-3 left-3 z-10
                                text-white px-3 py-1.5 rounded-full
                                font-bold text-xs flex items-center gap-1.5
-                               shadow-lg shadow-rose-300/40 animate-pulse">
-                  <FaBolt className="text-yellow-200" /> FLASH SALE
+                               shadow-lg ${isFsSoldOut ? 'bg-slate-400' : 'bg-gradient-to-r from-rose-500 to-orange-500 shadow-rose-300/40 animate-pulse'}`}>
+                  <FaBolt className="text-yellow-200" /> {isFsSoldOut ? "ĐÃ HẾT SUẤT" : "FLASH SALE"}
                 </div>
               )}
               {/* Discount badge */}
-              {discountPercent > 0 && !product.isFlashSale && (
+              {discountPercent > 0 && !product.flashSale && (
                 <div className="absolute top-3 right-3 z-10
                                bg-rose-100 text-rose-600 font-bold
                                text-sm px-2.5 py-1 rounded-full shadow-sm">
@@ -236,14 +363,14 @@ const Product = () => {
             <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 mb-4">
               <span>
                 Tác giả:{" "}
-                <span className="text-violet-600 font-semibold">
+                <span className="text-orange-600 font-semibold">
                   {product.author || "Đang cập nhật"}
                 </span>
               </span>
               <span className="text-slate-300">|</span>
               <span>
                 NXB:{" "}
-                <span className="text-violet-600 font-semibold">
+                <span className="text-orange-600 font-semibold">
                   {product.publisher || "Đang cập nhật"}
                 </span>
               </span>
@@ -257,7 +384,7 @@ const Product = () => {
               </span>
               <span
                 className="text-sm text-slate-500 underline underline-offset-2 cursor-pointer
-                            hover:text-violet-600 transition-colors"
+                            hover:text-orange-600 transition-colors"
               >
                 ({product.numReviews || 0} đánh giá)
               </span>
@@ -271,22 +398,46 @@ const Product = () => {
             {/* ===== KHU VỰC GIÁ ===== */}
             <div
               className={`rounded-2xl p-5 mb-6 ${
-                product.isFlashSale
+                product.flashSale && !isFsSoldOut
                   ? "bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200"
                   : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100"
               }`}
             >
-              {product.isFlashSale && (
-                <div className="flex items-center gap-2 text-rose-600 font-bold mb-3 text-sm uppercase tracking-wide">
-                  <FaClock className="animate-pulse" />
-                  <span>Kết thúc sớm — Số lượng có hạn</span>
+              {product.flashSale && !isFsSoldOut && (
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 text-rose-600 font-bold text-sm uppercase tracking-wide">
+                    <FaClock className="animate-pulse" />
+                    <span>Kết thúc sau</span>
+                  </div>
+                  {/* Countdown Timer */}
+                  <div className="flex items-center gap-1.5 font-bold text-white text-base">
+                    {timeLeft.days !== "00" && (
+                      <>
+                        <div className="bg-black px-2 py-1 rounded shadow-md min-w-[36px] text-center">
+                          {timeLeft.days}
+                        </div>
+                        <span className="text-black">:</span>
+                      </>
+                    )}
+                    <div className="bg-black px-2 py-1 rounded shadow-md min-w-[36px] text-center">
+                      {timeLeft.hours}
+                    </div>
+                    <span className="text-black">:</span>
+                    <div className="bg-black px-2 py-1 rounded shadow-md min-w-[36px] text-center">
+                      {timeLeft.minutes}
+                    </div>
+                    <span className="text-black">:</span>
+                    <div className="bg-black px-2 py-1 rounded shadow-md min-w-[36px] text-center">
+                      {timeLeft.seconds}
+                    </div>
+                  </div>
                 </div>
               )}
 
               <div className="flex items-end gap-3 mb-1">
                 <span
                   className={`text-4xl font-black ${
-                    product.isFlashSale ? "text-rose-600" : "text-amber-600"
+                    product.flashSale ? "text-rose-600" : "text-amber-600"
                   }`}
                 >
                   {finalPrice?.toLocaleString("vi-VN")} ₫
@@ -304,20 +455,28 @@ const Product = () => {
               </div>
 
               {/* Flash Sale progress bar */}
-              {product.isFlashSale && (
+              {product.flashSale && (
                 <div className="mt-4">
                   <div className="flex justify-between text-xs font-bold text-rose-500 mb-1.5">
-                    <span className="flex items-center gap-1">
-                      <FaFire /> Đã bán {product.flashSaleSold}
-                    </span>
-                    <span>Chỉ còn {flashSaleRemaining} suất</span>
+                    {isFsSoldOut ? (
+                      <span className="flex items-center gap-1 text-slate-500">
+                        <FaFire /> Đã hết suất Flash Sale
+                      </span>
+                    ) : (
+                      <>
+                        <span className="flex items-center gap-1">
+                          <FaFire /> Đã bán {product.flashSale.soldCount}
+                        </span>
+                        <span>Chỉ còn {flashSaleRemaining} suất</span>
+                      </>
+                    )}
                   </div>
-                  <div className="w-full bg-rose-100 rounded-full h-3 overflow-hidden">
+                  <div className={`w-full ${isFsSoldOut ? 'bg-slate-200' : 'bg-rose-100'} rounded-full h-3 overflow-hidden`}>
                     <div
-                      className="bg-gradient-to-r from-rose-400 to-orange-500 h-3 rounded-full transition-all duration-1000"
+                      className={`${isFsSoldOut ? 'bg-slate-400' : 'bg-gradient-to-r from-rose-400 to-orange-500'} h-3 rounded-full transition-all duration-1000`}
                       style={{
                         width: `${Math.min(
-                          (product.flashSaleSold / product.flashSaleLimit) * 100,
+                          (product.flashSale.soldCount / product.flashSale.quantityLimit) * 100,
                           100
                         )}%`,
                       }}
@@ -351,9 +510,13 @@ const Product = () => {
                 >
                   <FaMinus size={11} />
                 </button>
-                <span className="px-5 py-3 font-bold text-slate-800 min-w-[48px] text-center">
-                  {quantity}
-                </span>
+                <input
+                  type="text"
+                  value={quantity}
+                  onChange={handleQuantityInputChange}
+                  onBlur={handleQuantityBlur}
+                  className="px-2 py-3 font-bold text-slate-800 w-16 text-center outline-none focus:bg-slate-50"
+                />
                 <button
                   onClick={() => handleQuantity("inc")}
                   className="px-4 py-3 hover:bg-slate-50 transition-colors text-slate-600
@@ -393,102 +556,151 @@ const Product = () => {
           </div>
         </div>
 
-        {/* ===== MÔ TẢ & REVIEWS ===== */}
-        <div className="mt-8 space-y-6">
-
-          {/* Mô tả sản phẩm */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10">
-            <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
-              <div className="w-1 h-6 bg-gradient-to-b from-violet-500 to-indigo-500 rounded-full" />
-              <h2 className="text-xl font-extrabold text-slate-800">Mô tả sản phẩm</h2>
-            </div>
-            <div className="text-slate-700 leading-loose whitespace-pre-line text-sm">
-              {product.desc || "Chưa có mô tả chi tiết."}
-            </div>
-          </div>
-
-          {/* Đánh giá */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10">
-            <div className="flex items-center justify-between mb-6 pb-5 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-6 bg-gradient-to-b from-amber-400 to-orange-500 rounded-full" />
-                <h2 className="text-xl font-extrabold text-slate-800">
-                  Đánh giá của khách hàng
-                </h2>
-              </div>
-              <span className="text-sm font-bold bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full">
-                {reviews.length} đánh giá
+        {/* ===== MÔ TẢ & REVIEWS (TABS) ===== */}
+        <div className="mt-8 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10">
+          
+          {/* Tabs Navigation */}
+          <div className="flex border-b border-slate-200 mb-8 overflow-x-auto hide-scrollbar">
+            <button
+              onClick={() => setActiveTab("description")}
+              className={`pb-4 px-6 text-lg font-bold whitespace-nowrap transition-all duration-300 border-b-4 ${
+                activeTab === "description"
+                  ? "text-orange-600 border-orange-500"
+                  : "text-slate-400 border-transparent hover:text-slate-600"
+              }`}
+            >
+              Mô tả sản phẩm
+            </button>
+            <button
+              onClick={() => setActiveTab("reviews")}
+              className={`pb-4 px-6 text-lg font-bold whitespace-nowrap transition-all duration-300 border-b-4 flex items-center gap-2 ${
+                activeTab === "reviews"
+                  ? "text-orange-600 border-orange-500"
+                  : "text-slate-400 border-transparent hover:text-slate-600"
+              }`}
+            >
+              Đánh giá khách hàng
+              <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === "reviews" ? "bg-orange-100 text-orange-600" : "bg-slate-100 text-slate-500"}`}>
+                {reviews.length}
               </span>
-            </div>
-
-            {loadingReviews ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-4 animate-pulse">
-                    <div className="w-10 h-10 bg-slate-100 rounded-full flex-shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-slate-100 rounded w-1/4" />
-                      <div className="h-3 bg-slate-100 rounded w-3/4" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : reviews.length > 0 ? (
-              <div className="space-y-6">
-                {reviews.map((rev) => (
-                  <div key={rev._id} className="flex gap-4 pb-6 border-b border-slate-100 last:border-0">
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0
-                                   bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center">
-                      {rev.user?.avatar ? (
-                        <img src={rev.user.avatar} alt="Ava" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-white font-bold text-sm">
-                          {rev.user?.fullname ? rev.user.fullname.charAt(0).toUpperCase() : "U"}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <h4 className="font-bold text-slate-800">{rev.user?.fullname || "Người dùng ẩn danh"}</h4>
-                        <span className="text-xs text-slate-400">{moment(rev.createdAt).fromNow()}</span>
-                      </div>
-                      <div className="mb-2.5">
-                        <StarRating rating={rev.rating} size="text-xs" />
-                      </div>
-                      <p className="text-slate-600 text-sm bg-slate-50 p-3.5 rounded-xl leading-relaxed">
-                        {rev.comment}
-                      </p>
-                      {rev.reply && (
-                        <div className="mt-3 ml-4 bg-violet-50 p-3.5 rounded-xl border-l-4 border-violet-400">
-                          <p className="text-xs font-bold text-violet-700 mb-1">
-                            💬 Phản hồi của Nhà sách:
-                          </p>
-                          <p className="text-sm text-slate-700">{rev.reply}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-14 text-slate-400">
-                <div className="text-5xl mb-3">📚</div>
-                <p className="font-medium">Chưa có đánh giá nào</p>
-                <p className="text-sm">Hãy là người đầu tiên nhận xét về cuốn sách này!</p>
-              </div>
-            )}
+            </button>
           </div>
+
+          {/* Tab Content: Mô tả */}
+          {activeTab === "description" && (
+            <div className="animate-fade-in">
+              <div className={`relative transition-all duration-500 ease-in-out ${!showFullDesc ? "max-h-[400px] overflow-hidden" : ""}`}>
+                <div className="text-slate-700 text-justify leading-loose whitespace-pre-line text-sm pb-4">
+                  {product.desc ? (
+                    <div dangerouslySetInnerHTML={{ __html: product.desc }} />
+                  ) : (
+                    "Chưa có mô tả chi tiết cho sản phẩm này."
+                  )}
+                </div>
+                
+                {/* Lớp gradient che phủ khi bị thu gọn */}
+                {!showFullDesc && product.desc && (
+                  <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+                )}
+              </div>
+
+              {/* Nút Xem thêm */}
+              {product.desc && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => setShowFullDesc(!showFullDesc)}
+                    className="px-8 py-2.5 rounded-full border-2 border-orange-200 text-orange-600 hover:bg-orange-50 font-bold text-sm transition-colors shadow-sm"
+                  >
+                    {showFullDesc ? "Thu gọn mô tả" : "Xem toàn bộ nội dung"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab Content: Đánh giá */}
+          {activeTab === "reviews" && (
+            <div className="animate-fade-in">
+              {loadingReviews ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-4 animate-pulse">
+                      <div className="w-10 h-10 bg-slate-100 rounded-full flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-slate-100 rounded w-1/4" />
+                        <div className="h-3 bg-slate-100 rounded w-3/4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : reviews.length > 0 ? (
+                <div className="space-y-6">
+                  {(showAllReviews ? reviews : reviews.slice(0, 3)).map((rev) => (
+                    <div key={rev._id} className="flex gap-4 pb-6 border-b border-slate-100 last:border-0">
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0
+                                     bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+                        {rev.user?.avatar ? (
+                          <img src={rev.user.avatar} alt="Ava" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-white font-bold text-sm">
+                            {rev.user?.fullname ? rev.user.fullname.charAt(0).toUpperCase() : "U"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <h4 className="font-bold text-slate-800">{rev.user?.fullname || "Người dùng ẩn danh"}</h4>
+                          <span className="text-xs text-slate-400">{moment(rev.createdAt).fromNow()}</span>
+                        </div>
+                        <div className="mb-2.5">
+                          <StarRating rating={rev.rating} size="text-xs" />
+                        </div>
+                        <p className="text-slate-600 text-sm bg-slate-50 p-3.5 rounded-xl leading-relaxed text-justify">
+                          {rev.comment}
+                        </p>
+                        {rev.reply && (
+                          <div className="mt-3 ml-4 bg-orange-50 p-3.5 rounded-xl border-l-4 border-orange-400">
+                            <p className="text-xs font-bold text-orange-700 mb-1">
+                              💬 Phản hồi của Nhà sách:
+                            </p>
+                            <p className="text-sm text-slate-700">{rev.reply}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Nút Xem tất cả đánh giá */}
+                  {reviews.length > 3 && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setShowAllReviews(!showAllReviews)}
+                        className="px-8 py-2.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 font-bold text-sm transition-colors border border-orange-200"
+                      >
+                        {showAllReviews ? "Thu gọn đánh giá" : `Xem tất cả ${reviews.length} đánh giá`}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-14 text-slate-400">
+                  <div className="text-5xl mb-3">📚</div>
+                  <p className="font-medium">Chưa có đánh giá nào</p>
+                  <p className="text-sm">Hãy là người đầu tiên nhận xét về cuốn sách này!</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* AI Similar Products — Content-Based Filtering */}
-        {/* Gộp cả SimilarProducts + RelatedProducts thành 1 section duy nhất.
-            SimilarProducts đã có fallback query cùng category khi AI unavailable. */}
-        {product._id && <SimilarProducts productId={product._id} topK={10} />}
-
-        {/* Gợi ý cá nhân hóa — chỉ hiện khi đăng nhập, giống Fahasa */}
+        {/* --- LỌC NỘI DUNG: SÁCH TƯƠNG TỰ --- */}
+        <SimilarProducts productId={product._id} topK={10} />
+        {/*
         <RecommendedForYou topK={10} />
+        */}
+
       </div>
     </div>
   );

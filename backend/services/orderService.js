@@ -1,18 +1,42 @@
-import Order from "../models/orderModel.js";
+import Order, { ORDER_STATUS } from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import Review from "../models/reviewModel.js";
 import Coupon from "../models/couponModel.js";
 import User from "../models/userModel.js";
+import FlashSale from "../models/flashsaleModel.js";
+import { sendOrderConfirmationEmail } from "./emailService.js";
 
 const createOrder = async (orderData, userId) => {
   const { products, couponCode } = orderData;
 
-  // 1. KIỂM TRA TỒN KHO
+  // 1. KIỂM TRA TỒN KHO VÀ FLASH SALE
+  const now = new Date();
+  const activeSale = await FlashSale.findOne({
+    isActive: true,
+    startTime: { $lte: now },
+    endTime: { $gte: now },
+  });
+
   for (const item of products) {
     const product = await Product.findById(item.productId).lean();
     if (!product) throw new Error(`Sản phẩm ${item.title} không tồn tại`);
     if (product.countInStock < item.quantity) {
       throw new Error(`Sản phẩm "${product.title}" không đủ hàng`);
+    }
+
+    if (item.isFlashSale) {
+      if (!activeSale) {
+        throw new Error(`Đợt Flash Sale đã kết thúc. Vui lòng cập nhật giỏ hàng.`);
+      }
+      const fsItem = activeSale.products.find(
+        (p) => p.product.toString() === item.productId.toString()
+      );
+      if (!fsItem) {
+        throw new Error(`Sản phẩm "${product.title}" không nằm trong đợt Flash Sale.`);
+      }
+      if (fsItem.soldCount + item.quantity > fsItem.quantityLimit) {
+        throw new Error(`Số lượng mua giá Flash Sale cho "${product.title}" đã vượt giới hạn.`);
+      }
     }
   }
 
@@ -27,6 +51,13 @@ const createOrder = async (orderData, userId) => {
     await Product.findByIdAndUpdate(item.productId, {
       $inc: { countInStock: -item.quantity, sold: item.quantity },
     });
+
+    if (item.isFlashSale && activeSale) {
+      await FlashSale.updateOne(
+        { _id: activeSale._id, "products.product": item.productId },
+        { $inc: { "products.$.soldCount": item.quantity } }
+      );
+    }
   }
 
   if (couponCode) {
@@ -39,6 +70,12 @@ const createOrder = async (orderData, userId) => {
       );
     }
   }
+
+  // 4. GỬI EMAIL XÁC NHẬN
+  // Chạy bất đồng bộ, không đợi để tránh làm chậm response
+  sendOrderConfirmationEmail(savedOrder.email, savedOrder).catch((err) => {
+    console.error("❌ Lỗi gửi email xác nhận đơn hàng:", err.message);
+  });
 
   return savedOrder;
 };
@@ -72,15 +109,22 @@ const cancelOrder = async (id, userId) => {
   const order = await Order.findById(id);
   if (!order) throw new Error("Không tìm thấy đơn hàng");
   if (order.userId.toString() !== userId.toString()) throw new Error("Không có quyền");
-  if (order.status !== 0) throw new Error("Không thể hủy");
+  if (order.status !== ORDER_STATUS.PENDING) throw new Error("Không thể hủy");
 
   for (const item of order.products) {
     await Product.findByIdAndUpdate(item.productId, {
       $inc: { countInStock: item.quantity, sold: -item.quantity },
     });
+
+    if (item.isFlashSale) {
+      await FlashSale.updateOne(
+        { "products.product": item.productId },
+        { $inc: { "products.$.soldCount": -item.quantity } }
+      );
+    }
   }
   
-  order.status = 3;
+  order.status = ORDER_STATUS.CANCELLED;
   return await order.save();
 };
 

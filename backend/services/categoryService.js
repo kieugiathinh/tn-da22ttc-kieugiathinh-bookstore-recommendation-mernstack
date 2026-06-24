@@ -32,7 +32,7 @@ const updateCategory = async (id, categoryData) => {
   }
 
   if (name) category.name = name;
-  if (description) category.description = description;
+  if (description !== undefined) category.description = description;
   if (img !== undefined) category.img = img;
   if (status !== undefined) category.status = status;
 

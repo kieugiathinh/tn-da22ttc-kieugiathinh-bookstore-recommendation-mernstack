@@ -32,6 +32,14 @@ const Success = () => {
       const tempShipping =
         JSON.parse(localStorage.getItem("tempOrderData")) || {};
 
+      // Xây dựng địa chỉ fallback từ Address Book nếu tempShipping không có
+      const defaultAddr =
+        currentUser.addresses?.find((a) => a.isDefault) ||
+        currentUser.addresses?.[0];
+      const fallbackAddress = defaultAddr
+        ? `${defaultAddr.street}, ${defaultAddr.wardName}, ${defaultAddr.districtName}, ${defaultAddr.provinceName}`
+        : "";
+
       const orderData = {
         userId: currentUser._id,
         products: cart.products.map((item) => ({
@@ -44,7 +52,7 @@ const Success = () => {
         total: cart.total,
         name: tempShipping.name || currentUser.fullname,
         email: tempShipping.email || currentUser.email,
-        address: tempShipping.address || currentUser.address,
+        address: tempShipping.address || fallbackAddress,
         phone: tempShipping.phone || currentUser.phone,
         paymentMethod: "Stripe",
         status: 1,

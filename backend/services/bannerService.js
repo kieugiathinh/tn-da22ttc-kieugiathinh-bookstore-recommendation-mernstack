@@ -14,9 +14,12 @@ const updateBanner = async (id, bannerData) => {
   if (!banner) {
     throw new Error("Banner not found");
   }
-  if (bannerData.isActive !== undefined) {
-    banner.isActive = bannerData.isActive;
-  }
+  if (bannerData.isActive !== undefined) banner.isActive = bannerData.isActive;
+  if (bannerData.title !== undefined) banner.title = bannerData.title;
+  if (bannerData.subtitle !== undefined) banner.subtitle = bannerData.subtitle;
+  if (bannerData.img !== undefined) banner.img = bannerData.img;
+  if (bannerData.type !== undefined) banner.type = bannerData.type;
+  
   return await banner.save();
 };
 

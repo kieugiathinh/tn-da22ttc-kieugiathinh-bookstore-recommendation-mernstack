@@ -6,10 +6,10 @@
    Philosophy: 60% Clean Canvas | 30% Brand Gold | 10% Accents
    ========================================================= */
 @theme {
-  /* Primary — Indigo (Interactive elements, links) */
-  --color-primary: #4F46E5;
-  --color-primary-hover: #4338CA;
-  --color-primary-light: #EEF2FF;
+  /* Primary — Orange (Interactive elements, links) */
+  --color-primary: #EE4D2D;
+  --color-primary-hover: #D73F22;
+  --color-primary-light: #FFF0ED;
 
   /* Honey Gold — CTA Brand Color (30% brand identity) */
   --color-honey-gold: #F59E0B;
@@ -31,8 +31,10 @@
 
 @layer base {
   body {
-    background-color: #f8fafc; /* slate-50 — Clean Canvas */
-    color: #1e293b; /* slate-800 — Sophisticated dark text */
+    background-color: #e2e8f0;
+    /* slate-100 — Slightly darker canvas to pop out components */
+    color: #1e293b;
+    /* slate-800 — Sophisticated dark text */
     font-family: 'Inter', system-ui, sans-serif;
   }
 }
@@ -53,6 +55,11 @@
 
 /* Smooth card lift animation */
 @keyframes cardLift {
-  from { transform: translateY(0); }
-  to   { transform: translateY(-6px); }
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-6px);
+  }
 }

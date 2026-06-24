@@ -18,11 +18,13 @@ import MyAccount from "./pages/client/MyAccount";
 import Order from "./pages/client/Order";
 import Success from "./pages/client/Success";
 import Checkout from "./pages/client/Checkout";
+import VNPayReturn from "./pages/client/VNPayReturn";
 import ProductList from "./pages/client/ProductList";
 import FlashSale from "./pages/client/FlashSale";
 import MyVouchers from "./pages/client/MyVouchers";
 import About from "./pages/client/About";
 import Contact from "./pages/client/Contact";
+import AllCoupons from "./pages/client/AllCoupons";
 import ForgotPassword from "./pages/client/ForgotPassword";
 import ResetPassword from "./pages/client/ResetPassword";
 import { FAQ, ShippingPolicy, PrivacyPolicy, Terms } from "./pages/client/PolicyPages";
@@ -41,7 +43,15 @@ import AdminCategories from "./pages/admin/Categories";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminCoupon from "./pages/admin/CouponList";
 import AdminChatAnalytics from "./pages/admin/ChatAnalytics";
+import AdminChatHistory from "./pages/admin/ChatHistory";
 import AdminRecommendations from "./pages/admin/AIRecommendations";
+import AdminAIConfig from "./pages/admin/AIConfig";
+import AdminAIInteractions from "./pages/admin/AIInteractions";
+import AdminEmailCampaign from "./pages/admin/EmailCampaign";
+import AdminUserStats from "./pages/admin/UserStats";
+import AdminOrderStats from "./pages/admin/OrderStats";
+import AdminProductStats from "./pages/admin/ProductStats";
+import AdminFlashSaleStats from "./pages/admin/FlashSaleStats";
 
 // ── Router Configuration ─────────────────────────────────────────────────────
 const router = createBrowserRouter([
@@ -56,6 +66,7 @@ const router = createBrowserRouter([
       { path: "/products", element: <ProductList /> },
       { path: "/products/:category", element: <ProductList /> },
       { path: "/checkout", element: <Checkout /> },
+      { path: "/vnpay-return", element: <VNPayReturn /> },
       { path: "/success", element: <Success /> },
       { path: "/flash-sale", element: <FlashSale /> },
       { path: "/about", element: <About /> },
@@ -65,6 +76,7 @@ const router = createBrowserRouter([
       { path: "/privacy", element: <PrivacyPolicy /> },
       { path: "/terms", element: <Terms /> },
       { path: "/recommendations", element: <Recommendations /> },
+      { path: "/coupons", element: <AllCoupons /> },
 
       // ── Guest-only routes (đã đăng nhập → redirect về /) ──────────────
       { path: "/login", element: <GuestRoute><Login /></GuestRoute> },
@@ -96,7 +108,15 @@ const router = createBrowserRouter([
       { path: "reviews", element: <AdminReviews /> },
       { path: "coupons", element: <AdminCoupon /> },
       { path: "chat-analytics", element: <AdminChatAnalytics /> },
+      { path: "chat-history", element: <AdminChatHistory /> },
       { path: "ai-recommendations", element: <AdminRecommendations /> },
+      { path: "ai-recommendations/config", element: <AdminAIConfig /> },
+      { path: "ai-recommendations/interactions", element: <AdminAIInteractions /> },
+      { path: "email-marketing", element: <AdminEmailCampaign /> },
+      { path: "user-stats", element: <AdminUserStats /> },
+      { path: "order-stats", element: <AdminOrderStats /> },
+      { path: "product-stats", element: <AdminProductStats /> },
+      { path: "flashsale-stats", element: <AdminFlashSaleStats /> },
     ],
   },
 ]);
