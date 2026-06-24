@@ -58,7 +58,7 @@ const RecommendedForYou = ({ topK = 20 }) => {
   if (!loading && products.length === 0 && !error) return null;
 
   return (
-    <section className="rounded-2xl shadow-sm mb-8 overflow-hidden bg-gradient-to-b from-emerald-500 to-white border border-emerald-100">
+    <section className="rounded-2xl shadow-sm overflow-hidden bg-gradient-to-b from-emerald-500 to-white border border-emerald-100">
       {/* Header */}
       <div className="px-6 py-6 flex justify-center items-center border-b border-white/20">
         <h2 className="text-2xl font-extrabold text-white flex items-center gap-3 uppercase tracking-tight drop-shadow-md">

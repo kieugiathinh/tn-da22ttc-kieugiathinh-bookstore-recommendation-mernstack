@@ -9,10 +9,10 @@ const NextArrow = (props) => {
   const { onClick } = props;
   return (
     <div
-      className="absolute right-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer bg-white/50 hover:bg-white text-gray-800 w-10 h-10 flex items-center justify-center rounded-full shadow-md transition-all duration-300 backdrop-blur-sm"
+      className="absolute right-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer bg-white/80 hover:bg-primary hover:text-white text-primary w-10 h-10 flex items-center justify-center rounded-full shadow-lg transition-all duration-300 backdrop-blur-sm"
       onClick={onClick}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-5 h-5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
       </svg>
     </div>
@@ -24,10 +24,10 @@ const PrevArrow = (props) => {
   const { onClick } = props;
   return (
     <div
-      className="absolute left-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer bg-white/50 hover:bg-white text-gray-800 w-10 h-10 flex items-center justify-center rounded-full shadow-md transition-all duration-300 backdrop-blur-sm"
+      className="absolute left-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer bg-white/80 hover:bg-primary hover:text-white text-primary w-10 h-10 flex items-center justify-center rounded-full shadow-lg transition-all duration-300 backdrop-blur-sm"
       onClick={onClick}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-5 h-5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
       </svg>
     </div>
@@ -62,7 +62,7 @@ const Banner = () => {
     // Tùy chỉnh thiết kế của từng chấm tròn
     customPaging: (i) => (
       <div
-        className={`h-2.5 rounded-full transition-all duration-300 shadow-sm ${i === currentSlide ? "w-8 bg-blue-600" : "w-2.5 bg-white/70 hover:bg-white"
+        className={`h-2.5 rounded-full transition-all duration-300 shadow-sm ${i === currentSlide ? "w-8 bg-primary" : "w-2.5 bg-white/70 hover:bg-white"
           }`}
       ></div>
     ),
@@ -113,14 +113,14 @@ const Banner = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-[300px] md:h-[400px] bg-gray-200 animate-pulse rounded-xl my-4"></div>
+      <div className="w-full h-[300px] md:h-[400px] bg-slate-100 animate-pulse rounded-2xl"></div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* CỘT TRÁI (2/3) - SLIDER BANNER CHÍNH */}
-      <div className="md:col-span-2 rounded-xl overflow-hidden shadow-md relative group h-full">
+      <div className="md:col-span-2 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group h-[300px] md:h-[400px]">
         <Slider {...settings} className="h-full [&_.slick-list]:h-full [&_.slick-track]:h-full [&_.slick-slide]:h-full [&_.slick-slide>div]:h-full">
           {displayMainBanners.map((banner, index) => (
             <div key={banner._id || index} className="outline-none relative h-full w-full">
@@ -146,9 +146,9 @@ const Banner = () => {
       </div>
 
       {/* CỘT PHẢI (1/3) - 2 BANNER PHỤ XẾP CHỒNG (CHỈ HIỂN THỊ TRÊN DESKTOP) */}
-      <div className="hidden md:flex flex-col gap-4 h-full">
+      <div className="hidden md:flex flex-col gap-4 h-[400px]">
         {displaySubBanners.map((banner, index) => (
-          <div key={banner._id || index} className="flex-1 rounded-xl overflow-hidden shadow-md relative group aspect-[392/156] w-full">
+          <div key={banner._id || index} className="flex-1 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group w-full">
             <img
               src={banner.img}
               alt={banner.title || `banner-sub-${index}`}

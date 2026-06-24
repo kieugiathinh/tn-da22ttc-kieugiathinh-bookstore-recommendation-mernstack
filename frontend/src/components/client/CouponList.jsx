@@ -53,7 +53,7 @@ const CouponList = () => {
 
   return (
     /* Đổi sang Orange theme — đồng bộ với navbar */
-    <div className="my-12 relative rounded-3xl
+    <div className="relative rounded-3xl
                     bg-gradient-to-br from-orange-50 via-white to-red-50
                     p-6 md:p-10 border border-orange-100 shadow-xl shadow-orange-100/40">
       {/* Background blobs */}

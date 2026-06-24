@@ -22,7 +22,7 @@ const NewProducts = () => {
   if (products.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-3xl p-6 shadow-md mb-8">
+    <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-3xl p-6 shadow-md">
       {/* Section Header */}
       <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/20">
         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">

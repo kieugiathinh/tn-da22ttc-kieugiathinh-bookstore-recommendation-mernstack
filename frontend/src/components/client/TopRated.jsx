@@ -22,7 +22,7 @@ const TopRated = () => {
   if (products.length === 0) return null;
 
   return (
-    <div className="bg-orange-600 rounded-3xl p-6 shadow-xl mb-10 relative overflow-hidden">
+    <div className="bg-orange-600 rounded-3xl p-6 shadow-xl relative overflow-hidden">
       {/* Header — Left Aligned, White text on Orange bg */}
       <div className="flex items-center gap-3 mb-6 pb-4 border-b border-orange-500 relative z-10">
         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md">

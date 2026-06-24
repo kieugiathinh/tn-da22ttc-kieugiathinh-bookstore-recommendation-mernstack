@@ -53,7 +53,7 @@ const Category = () => {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm p-6 mb-8 border border-slate-100">
+    <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-100">
       {/* Section Header */}
       <div className="flex items-center gap-3 mb-6 pb-4 border-b border-orange-100">
         <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-300/40">

@@ -49,7 +49,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="mt-16 font-sans border-t border-slate-100">
+    <footer className="mt-10 font-sans border-t border-slate-100">
 
       {/* ============ TẦNG 1: NEWSLETTER BAR ============ */}
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 py-5">

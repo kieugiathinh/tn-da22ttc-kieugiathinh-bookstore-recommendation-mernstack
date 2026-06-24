@@ -32,7 +32,7 @@ const BestSeller = () => {
   if (products.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 mb-8 overflow-hidden">
+    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
       {/* ===== HEADER & TABS (Dark Slate + Amber Theme) ===== */}
       <div className="bg-slate-900 px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
