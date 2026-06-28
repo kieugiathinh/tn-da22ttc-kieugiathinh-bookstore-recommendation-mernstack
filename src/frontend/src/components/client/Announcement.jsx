@@ -30,7 +30,7 @@ const Announcement = () => {
           <img
             src={topBanner.img}
             alt={topBanner.title || "Top Banner"}
-            className="h-full w-full max-w-[1263px] object-cover object-center"
+            className="h-full w-full max-w-[1263px] object-fill object-center"
           />
         </Link>
       ) : (

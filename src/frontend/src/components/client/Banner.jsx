@@ -127,7 +127,7 @@ const Banner = () => {
               <img
                 src={banner.img}
                 alt={banner.title || `banner-main-${index}`}
-                className="block w-full h-full object-cover"
+                className="block w-full h-full object-fill rounded-2xl"
               />
               {/* Hiển thị Title đè lên ảnh */}
               {banner.title && (
@@ -152,7 +152,7 @@ const Banner = () => {
             <img
               src={banner.img}
               alt={banner.title || `banner-sub-${index}`}
-              className="block w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="block w-full h-full object-fill rounded-2xl transition-transform duration-500 group-hover:scale-105"
             />
             {banner.title && (
               <div className="absolute bottom-4 left-4 bg-white/80 px-3 py-1.5 rounded-md shadow-sm backdrop-blur-sm pointer-events-none">
