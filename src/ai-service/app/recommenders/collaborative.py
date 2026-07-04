@@ -35,6 +35,7 @@ IMPLICIT_WEIGHTS = {
     "view":         1.0,
     "search_click": 2.0,
     "add_to_cart":  3.0,
+    "favorite":     3.5,
     "review":       4.0,
     "purchase":     5.0,
 }

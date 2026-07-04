@@ -22,6 +22,7 @@ import VNPayReturn from "./pages/client/VNPayReturn";
 import ProductList from "./pages/client/ProductList";
 import FlashSale from "./pages/client/FlashSale";
 import MyVouchers from "./pages/client/MyVouchers";
+import Wishlist from "./pages/client/Wishlist";
 import About from "./pages/client/About";
 import Contact from "./pages/client/Contact";
 import AllCoupons from "./pages/client/AllCoupons";
@@ -90,6 +91,7 @@ const router = createBrowserRouter([
       { path: "/myaccount", element: <ProtectedRoute><MyAccount /></ProtectedRoute> },
       { path: "/myorders", element: <ProtectedRoute><Order /></ProtectedRoute> },
       { path: "/my-vouchers", element: <ProtectedRoute><MyVouchers /></ProtectedRoute> },
+      { path: "/wishlist", element: <ProtectedRoute><Wishlist /></ProtectedRoute> },
     ],
   },
 

@@ -12,6 +12,7 @@ export const INTERACTION_TYPE = Object.freeze({
   VIEW: "view",               // Xem trang chi tiết sản phẩm
   SEARCH_CLICK: "search_click", // Click vào sp từ kết quả search/gợi ý
   ADD_TO_CART: "add_to_cart", // Thêm vào giỏ hàng
+  FAVORITE: "favorite",       // Thêm vào sách yêu thích
   REVIEW: "review",           // Gửi đánh giá (viết review)
   PURCHASE: "purchase",       // Mua thành công (đơn DELIVERED)
 });
@@ -32,6 +33,7 @@ export const INTERACTION_WEIGHT = Object.freeze({
   view: 1,
   search_click: 2,
   add_to_cart: 3,
+  favorite: 3.5,
   review: 4,
   purchase: 5,
 });

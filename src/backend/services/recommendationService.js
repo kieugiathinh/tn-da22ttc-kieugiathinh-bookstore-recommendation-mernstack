@@ -151,6 +151,7 @@ const getPopularBooks = async (limit = 10, days = 30) => {
                 { case: { $eq: ["$interactionType", "view"] }, then: 1 },
                 { case: { $eq: ["$interactionType", "search_click"] }, then: 2 },
                 { case: { $eq: ["$interactionType", "add_to_cart"] }, then: 3 },
+                { case: { $eq: ["$interactionType", "favorite"] }, then: 3.5 },
                 { case: { $eq: ["$interactionType", "purchase"] }, then: 5 },
                 { case: { $eq: ["$interactionType", "review"] }, then: 4 },
               ],

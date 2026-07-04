@@ -387,8 +387,8 @@ const Checkout = () => {
   const inputCls  = "w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-300/50 text-sm text-slate-700 transition-all";
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 py-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
 
         {/* ── Page Header ── */}
         <div className="text-center mb-8">

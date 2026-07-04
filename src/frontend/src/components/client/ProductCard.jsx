@@ -1,5 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
-import { FaFire, FaStar, FaLeaf, FaBolt } from "react-icons/fa";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { FaFire, FaStar, FaLeaf, FaBolt, FaHeart, FaRegHeart } from "react-icons/fa";
+import { useWishlist } from "../../context/WishlistContext";
+import { useAuth } from "../../context/AuthContext";
+import { toast } from "sonner";
 
 const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller = false }) => {
   const location = useLocation();
@@ -12,18 +15,39 @@ const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller
   const fsQuantityLimit = product.flashSale ? product.flashSale.quantityLimit : (product.countInStock || 1);
   const isFsSoldOut = hasFlashSale && fsSoldCount >= fsQuantityLimit;
 
-  const displayPrice = hasFlashSale && !isFsSoldOut 
+  const displayPrice = hasFlashSale && !isFsSoldOut
     ? (product.flashSale ? product.flashSale.discountPrice : product.discountedPrice)
     : product.discountedPrice;
 
   // Tính phần trăm giảm giá
   const discountPercent = product.originalPrice
     ? Math.round(
-        ((product.originalPrice - displayPrice) /
-          product.originalPrice) *
-          100
-      )
+      ((product.originalPrice - displayPrice) /
+        product.originalPrice) *
+      100
+    )
     : 0;
+
+  const { currentUser } = useAuth();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const navigate = useNavigate();
+  const isWished = isInWishlist(product._id);
+
+  const handleWishlistClick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!currentUser) {
+      toast.error("Vui lòng đăng nhập để thêm vào yêu thích");
+      navigate("/login");
+      return;
+    }
+
+    const success = await toggleWishlist(product._id);
+    if (success) {
+      toast.success(isWished ? "Đã xóa khỏi yêu thích" : "Đã thêm vào yêu thích");
+    }
+  };
 
   return (
     <div
@@ -52,11 +76,21 @@ const ProductCard = ({ product, isFlashSale = false, isNew = false, isBestSeller
       </div>
 
       {/* Discount badge — soft-solid style */}
-      {discountPercent > 0 && (
-        <div className="absolute top-2 right-2 z-10 bg-rose-100 text-rose-600 font-bold text-[11px] px-2 py-0.5 rounded-full">
-          -{discountPercent}%
-        </div>
-      )}
+      <div className="absolute top-2 right-2 z-10 flex flex-col gap-2 items-end">
+        {discountPercent > 0 && (
+          <div className="bg-rose-100 text-rose-600 font-bold text-[11px] px-2 py-0.5 rounded-full">
+            -{discountPercent}%
+          </div>
+        )}
+
+        {/* Wishlist Button */}
+        <button
+          onClick={handleWishlistClick}
+          className="p-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-rose-500 hover:bg-rose-50 transition-colors"
+        >
+          {isWished ? <FaHeart size={14} /> : <FaRegHeart size={14} />}
+        </button>
+      </div>
 
       <Link to={`/product/${product._id}${isSearchContext ? "?source=search" : ""}`} className="flex-1 flex flex-col">
         {/* Ảnh sản phẩm */}

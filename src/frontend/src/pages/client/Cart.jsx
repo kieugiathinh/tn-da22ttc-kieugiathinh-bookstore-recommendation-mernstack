@@ -188,8 +188,8 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8 flex items-center">
           Giỏ Hàng
           <span className="text-lg font-normal text-gray-500 ml-2">

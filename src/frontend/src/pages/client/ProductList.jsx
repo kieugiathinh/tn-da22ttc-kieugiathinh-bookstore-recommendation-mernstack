@@ -148,7 +148,7 @@ const ProductList = () => {
 
   return (
     <div className="min-h-screen bg-orange-50/30 py-8">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         {/* Breadcrumb */}
         <div className="flex items-center text-sm text-slate-500 mb-6">
           <Link to="/" className="hover:text-orange-500 transition-colors">

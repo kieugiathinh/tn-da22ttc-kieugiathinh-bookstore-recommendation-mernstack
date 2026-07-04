@@ -52,7 +52,7 @@ const Recommendations = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-16">
-      <div className="max-w-7xl mx-auto px-4 pt-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
           <Link to="/" className="hover:text-emerald-600 transition-colors">

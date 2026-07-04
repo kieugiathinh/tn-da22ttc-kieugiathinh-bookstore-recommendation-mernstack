@@ -166,8 +166,8 @@ const MyAccount = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 py-10 font-sans">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* CỘT TRÁI (Avatar + Đổi Mật Khẩu) */}

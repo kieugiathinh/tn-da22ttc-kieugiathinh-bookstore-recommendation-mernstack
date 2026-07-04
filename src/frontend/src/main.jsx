@@ -8,6 +8,7 @@ import { store, persistor } from "./redux/store";
 import { Toaster } from "sonner";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "./context/AuthContext";
+import { WishlistProvider } from "./context/WishlistContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -15,8 +16,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <AuthProvider>
-            <App />
-            <Toaster position="top-right" richColors />
+            <WishlistProvider>
+              <App />
+              <Toaster position="top-right" richColors />
+            </WishlistProvider>
           </AuthProvider>
         </PersistGate>
       </Provider>

@@ -62,7 +62,7 @@ const Register = () => {
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-light rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10"></div>
 
-      <div className="max-w-5xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[700px] z-10 relative">
+      <div className="max-w-7xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[700px] z-10 relative">
         {/* --- CỘT TRÁI: TYPOGRAPHY TRUYỀN ĐỘNG LỰC (Đồng bộ BookBee Theme) --- */}
         <div className="hidden md:flex w-1/2 bg-gradient-to-br from-orange-500 via-[#EE4D2D] to-rose-600 relative overflow-hidden justify-center items-center text-white p-12">
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>

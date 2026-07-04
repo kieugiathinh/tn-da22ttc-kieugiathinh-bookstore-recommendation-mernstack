@@ -103,7 +103,7 @@ const FlashSale = () => {
 
   return (
     <div className="bg-primary py-12 shadow-sm w-full">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         {/* ===== HEADER — White bar ===== */}
         <div className="bg-white rounded-full px-6 py-4 flex flex-col md:flex-row items-center justify-between mb-6 shadow-md">
           <div className="flex items-center gap-6 mb-2 md:mb-0">
