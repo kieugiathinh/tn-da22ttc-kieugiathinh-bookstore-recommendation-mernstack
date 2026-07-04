@@ -89,8 +89,13 @@ const deleteProduct = async (id) => {
 
 const getProductById = async (id) => {
   const product = await Product.findById(id).populate("category").lean();
+  
   if (!product) throw new Error("Sản phẩm không tồn tại");
   return await flashsaleService.attachFlashSaleToProducts(product);
+};
+
+const incrementViewCount = async (id) => {
+  await Product.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
 };
 
 const getAllProducts = async (queryParms) => {
@@ -254,6 +259,7 @@ export {
   updateProduct,
   deleteProduct,
   getProductById,
+  incrementViewCount,
   getAllProducts,
   getNewProducts,
   getRelatedProducts,

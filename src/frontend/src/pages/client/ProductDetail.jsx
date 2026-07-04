@@ -79,6 +79,26 @@ const Product = () => {
     getProduct();
   }, [id]);
 
+  // View count increment logic (10s timer)
+  useEffect(() => {
+    if (!id) return;
+    
+    let hasViewed = false;
+
+    const timer = setTimeout(async () => {
+      if (hasViewed) return;
+      try {
+        await userRequest.post(`/products/view/${id}`);
+        hasViewed = true;
+      } catch (error) {
+        console.error("Lỗi khi đếm view:", error);
+      }
+    }, 10000); // 10 giây
+
+    return () => clearTimeout(timer);
+  }, [id]);
+
+
   const trackedProductId = useRef(null);
 
   // Tracking hành vi (view hoặc search_click)
@@ -392,6 +412,11 @@ const Product = () => {
               <span className="text-sm text-slate-500 hidden sm:inline">
                 Đã bán:{" "}
                 <span className="text-slate-800 font-semibold">{product.sold || 0}</span>
+              </span>
+              <span className="text-slate-300 hidden sm:inline">|</span>
+              <span className="text-sm text-slate-500 hidden sm:inline">
+                Lượt xem:{" "}
+                <span className="text-slate-800 font-semibold">{product.viewCount || 0}</span>
               </span>
             </div>
 

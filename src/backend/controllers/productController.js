@@ -21,6 +21,11 @@ const getProduct = asyncHandler(async (req, res) => {
   res.status(200).json(product);
 });
 
+const trackProductView = asyncHandler(async (req, res) => {
+  await productService.incrementViewCount(req.params.id);
+  res.status(200).json({ success: true, message: "View count updated" });
+});
+
 const getAllProducts = asyncHandler(async (req, res) => {
   const queryParms = {
     qNew: req.query.new,
@@ -70,6 +75,7 @@ const autoFillBook = asyncHandler(async (req, res) => {
 export {
   getAllProducts,
   getProduct,
+  trackProductView,
   createProduct,
   updateProduct,
   deleteProduct,

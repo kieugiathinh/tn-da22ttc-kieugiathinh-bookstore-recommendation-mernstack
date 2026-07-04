@@ -2,6 +2,7 @@ import express from "express";
 import {
   getAllProducts,
   getProduct,
+  trackProductView,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -26,6 +27,7 @@ router.delete("/:id", protect, admin, deleteProduct);
 
 // optionalProtect: xác thực user nếu có token, không chặn nếu là guest
 router.get("/find/:id", optionalProtect, getProduct);
+router.post("/view/:id", trackProductView);
 
 router.get("/", getAllProducts);
 

@@ -59,6 +59,11 @@ const ProductSchema = mongoose.Schema(
       default: 0,
     },
 
+    viewCount: {
+      type: Number,
+      default: 0,
+    },
+
     sold: {
       type: Number,
       default: 0,
