@@ -38,28 +38,26 @@ def _fit_cf_model() -> CollaborativeRecommender:
     Raises:
         Exception: Nếu không đủ dữ liệu hoặc Node.js không phản hồi.
     """
+    from app.data_fetcher import fetch_interaction_weights
+
     print("\n  [CF]    >> Bat dau fetch data va fit CF model...")
 
-    df_ratings     = fetch_ratings()
-    df_interactions = fetch_interactions(days=90)   # 90 ngày implicit signals
-    df_purchases   = fetch_purchases()
+    # Fetch 1 lần duy nhất, tránh double-request gây WinError 10054
+    df_ratings      = fetch_ratings()
+    df_interactions = fetch_interactions(days=90)
+    df_purchases    = fetch_purchases()
+    weights         = fetch_interaction_weights()
 
-    data = {
-        "ratings": fetch_ratings(),
-        "interactions": fetch_interactions(days=90),   # 90 ngày implicit signals
-        "purchases": fetch_purchases(),
-    }
-
-    print(f"  [CF]    Explicit ratings  : {len(data['ratings'])}")
-    print(f"  [CF]    Interactions      : {len(data['interactions'])}")
-    print(f"  [CF]    Purchases         : {len(data['purchases'])}")
+    print(f"  [CF]    Explicit ratings  : {len(df_ratings)}")
+    print(f"  [CF]    Interactions      : {len(df_interactions)}")
+    print(f"  [CF]    Purchases         : {len(df_purchases)}")
 
     cf = CollaborativeRecommender(n_factors=50, n_epochs=30)
     cf.fit(
-        df_ratings=data["ratings"],
-        df_interactions=data["interactions"],
-        df_purchases=data["purchases"],
-        weights=data.get("weights"),
+        df_ratings=df_ratings,
+        df_interactions=df_interactions,
+        df_purchases=df_purchases,
+        weights=weights,
     )
 
     return cf

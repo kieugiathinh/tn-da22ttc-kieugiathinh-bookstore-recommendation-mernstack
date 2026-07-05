@@ -17,8 +17,12 @@ const AIConfig = () => {
     view: 1,
     search_click: 2,
     add_to_cart: 3,
+    favorite: 3.5,
     review: 4,
-    purchase: 5
+    purchase: 5,
+    remove_cart: -3,
+    remove_favorite: -3.5,
+    low_rating: -4
   });
 
   const fetchConfigs = async () => {
@@ -31,9 +35,9 @@ const AIConfig = () => {
 
       const hybrid = hybridRes.data.value;
       if (hybrid) {
-        setCfWeight(hybrid.cf || 40);
-        setCbfWeight(hybrid.cbf || 30);
-        setPopWeight(hybrid.pop || 30);
+        setCfWeight(hybrid.cf ?? 40);
+        setCbfWeight(hybrid.cbf ?? 30);
+        setPopWeight(hybrid.pop ?? 30);
       }
 
       const interactions = interactionRes.data.value;
@@ -83,7 +87,7 @@ const AIConfig = () => {
 
   const handleInteractionChange = (key, value) => {
     let newVal = parseFloat(value);
-    if (isNaN(newVal) || newVal < 0) newVal = 0;
+    if (isNaN(newVal)) newVal = 0;
     setInteractionWeights(prev => ({ ...prev, [key]: newVal }));
   };
 
@@ -230,8 +234,12 @@ const AIConfig = () => {
               { key: "view", label: "Xem sản phẩm (View)", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
               { key: "search_click", label: "Click từ tìm kiếm", color: "text-cyan-600", bg: "bg-cyan-50", border: "border-cyan-200" },
               { key: "add_to_cart", label: "Thêm vào giỏ hàng", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
-              { key: "review", label: "Đánh giá sách", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
-              { key: "purchase", label: "Mua hàng (Purchase)", color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" }
+              { key: "favorite", label: "Yêu thích (Favorite)", color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-200" },
+              { key: "review", label: "Đánh giá sách (Tốt)", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
+              { key: "purchase", label: "Mua hàng (Purchase)", color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" },
+              { key: "remove_cart", label: "Xóa khỏi giỏ hàng", color: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
+              { key: "remove_favorite", label: "Bỏ yêu thích", color: "text-pink-600", bg: "bg-pink-50", border: "border-pink-200" },
+              { key: "low_rating", label: "Đánh giá thấp (1-2 sao)", color: "text-gray-600", bg: "bg-gray-50", border: "border-gray-200" }
             ].map(item => (
               <div key={item.key} className={`p-4 rounded-xl border ${item.bg} ${item.border}`}>
                 <label className={`block text-xs font-black uppercase tracking-wider ${item.color} mb-2`}>
@@ -241,7 +249,7 @@ const AIConfig = () => {
                   <div className={`flex items-center border ${item.border} rounded-lg overflow-hidden bg-white shadow-sm`}>
                     <button
                       type="button"
-                      onClick={() => handleInteractionChange(item.key, Math.max(0, (parseFloat(interactionWeights[item.key]) || 0) - 0.5))}
+                      onClick={() => handleInteractionChange(item.key, ((parseFloat(interactionWeights[item.key]) || 0) - 0.5).toFixed(1))}
                       className={`px-3 py-1.5 ${item.bg} ${item.color} hover:opacity-80 font-black border-r ${item.border} transition-colors`}
                     >
                       -
@@ -249,14 +257,13 @@ const AIConfig = () => {
                     <input
                       type="number"
                       step="0.5"
-                      min="0"
                       value={interactionWeights[item.key]}
                       onChange={(e) => handleInteractionChange(item.key, e.target.value)}
                       className="w-14 px-2 py-1.5 text-center font-bold text-gray-800 border-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <button
                       type="button"
-                      onClick={() => handleInteractionChange(item.key, (parseFloat(interactionWeights[item.key]) || 0) + 0.5)}
+                      onClick={() => handleInteractionChange(item.key, ((parseFloat(interactionWeights[item.key]) || 0) + 0.5).toFixed(1))}
                       className={`px-3 py-1.5 ${item.bg} ${item.color} hover:opacity-80 font-black border-l ${item.border} transition-colors`}
                     >
                       +

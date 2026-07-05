@@ -261,6 +261,7 @@ def get_model_status(request: Request) -> Dict[str, Any]:
 def _do_retrain(app_state) -> None:
     """
     Background task: retrain CF model với toàn bộ data mới nhất.
+    Nếu CBF model chưa load được (startup fail), tự động refit luôn.
     Chạy trong thread riêng để không block HTTP response.
     """
     if not _retrain_lock.acquire(blocking=False):
@@ -268,6 +269,22 @@ def _do_retrain(app_state) -> None:
         return
 
     try:
+        # ── Refit CBF model nếu đang bị None (startup thất bại) ────────────────
+        cbf_model = getattr(app_state, "cbf_model", None)
+        if cbf_model is None or not cbf_model.is_fitted:
+            print("[Retrain] >> CBF model chua san sang, dang refit...")
+            try:
+                from app.data_fetcher import fetch_products
+                from app.recommenders.content_based import ContentBasedRecommender
+                df_products = fetch_products()
+                new_cbf = ContentBasedRecommender()
+                new_cbf.fit(df_products)
+                app_state.cbf_model = new_cbf
+                print(f"[Retrain] CBF model san sang. Da index {new_cbf.product_count} san pham.")
+            except Exception as cbf_err:
+                print(f"[Retrain] Refit CBF that bai: {cbf_err}")
+
+        # ── Retrain CF model ──────────────────────────────────────────────────
         print("\n[Retrain] >> Bat dau manual retrain CF model...")
         from app.data_fetcher import fetch_interaction_weights
         df_ratings      = fetch_ratings()

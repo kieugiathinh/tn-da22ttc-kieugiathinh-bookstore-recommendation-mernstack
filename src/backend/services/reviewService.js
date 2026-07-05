@@ -1,6 +1,7 @@
 import Review from "../models/reviewModel.js";
 import Product from "../models/productModel.js";
 import Order from "../models/orderModel.js";
+import UserInteraction from "../models/userInteractionModel.js";
 
 const createReview = async (userId, productId, data) => {
   const { rating, comment, orderId } = data;
@@ -40,6 +41,18 @@ const createReview = async (userId, productId, data) => {
   const averageRating = reviews.reduce((acc, item) => item.rating + acc, 0) / numReviews;
 
   await Product.findByIdAndUpdate(productId, { numReviews, rating: averageRating });
+
+  try {
+    const interactionType = Number(rating) <= 2 ? "low_rating" : "review";
+    await UserInteraction.create({
+      userId,
+      productId,
+      interactionType,
+      source: "direct",
+    });
+  } catch (err) {
+    console.error("Lỗi ghi nhận review interaction:", err.message);
+  }
 
   return review;
 };

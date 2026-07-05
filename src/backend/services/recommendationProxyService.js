@@ -237,11 +237,15 @@ const getHybridRecommendationsData = async (userId, topK = 20) => {
     const SystemConfig = (await import("../models/systemConfigModel.js")).default;
     const config = await SystemConfig.findOne({ key: "HYBRID_WEIGHTS" }).lean();
     if (config && config.value) {
-      const total = (config.value.cf || 0) + (config.value.cbf || 0) + (config.value.pop || 0);
+      // Dùng ?? thay || để giá trị 0 không bị coi là falsy
+      const rawCf  = config.value.cf  ?? 0;
+      const rawCbf = config.value.cbf ?? 0;
+      const rawPop = config.value.pop ?? 0;
+      const total  = rawCf + rawCbf + rawPop;
       if (total > 0) {
-        cfRatio = config.value.cf / total;
-        cbfRatio = config.value.cbf / total;
-        popRatio = config.value.pop / total;
+        cfRatio  = rawCf  / total;
+        cbfRatio = rawCbf / total;
+        popRatio = rawPop / total;
       }
     }
   } catch (err) {
@@ -282,11 +286,12 @@ const getHybridRecommendationsData = async (userId, topK = 20) => {
     }
   }
 
-  // 3. Lấy Popularity điền vào chỗ trống
-  const remaining = topK - hybridProducts.length;
-  if (remaining > 0) {
+  // 3. Chỉ lấy Popularity nếu popRatio > 0 (admin cấu hình cho phép)
+  if (popRatio > 0) {
+    const popLimit = Math.ceil(topK * popRatio);
+    const remaining = Math.max(popLimit, topK - hybridProducts.length);
     try {
-      const fallback = await getBestSellerFallback(remaining + 5); // Lấy dư để trừ trùng
+      const fallback = await getBestSellerFallback(remaining + 5);
       addProducts(fallback);
     } catch (e) {
       console.error("[Hybrid] Popularity Error:", e.message);

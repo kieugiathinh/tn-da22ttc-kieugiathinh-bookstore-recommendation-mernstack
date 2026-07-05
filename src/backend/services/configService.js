@@ -5,8 +5,12 @@ const DEFAULT_CONFIGS = {
     view: 1,
     search_click: 2,
     add_to_cart: 3,
+    favorite: 3.5,
     review: 4,
     purchase: 5,
+    remove_cart: -3,
+    remove_favorite: -3.5,
+    low_rating: -4,
   },
   HYBRID_WEIGHTS: {
     cf: 40,

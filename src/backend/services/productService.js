@@ -117,36 +117,61 @@ const getAllProducts = async (queryParms) => {
       .lean();
     return await flashsaleService.attachFlashSaleToProducts(products);
   }
-  // Xử lý Tìm kiếm với MongoDB Atlas Search
+  // Xử lý Tìm kiếm
   if (qSearch) {
-    const pipeline = [
-      {
-        $search: {
-          index: "product_search_index",
-          text: {
-            query: qSearch,
-            path: ["title", "author"],
-            fuzzy: { maxEdits: 1, prefixLength: 0 }
+    let products = [];
+
+    // Thử Atlas Search trước (nếu index đã được tạo trên Atlas)
+    try {
+      const pipeline = [
+        {
+          $search: {
+            index: "product_search_index",
+            text: {
+              query: qSearch,
+              path: ["title", "author"],
+              fuzzy: { maxEdits: 1, prefixLength: 0 }
+            }
           }
         }
+      ];
+
+      if (qCategory) {
+        const categories = qCategory.split(",");
+        pipeline.push({
+          $match: { category: { $in: categories.map(c => new mongoose.Types.ObjectId(c)) } }
+        });
       }
-    ];
 
-    if (qCategory) {
-      const categories = qCategory.split(",");
-      pipeline.push({
-        $match: { category: { $in: categories.map(c => new mongoose.Types.ObjectId(c)) } }
-      });
+      if (qNew) pipeline.push({ $sort: { createdAt: -1 } });
+      else if (qBestSeller) pipeline.push({ $sort: { sold: -1 } });
+
+      products = await Product.aggregate(pipeline);
+    } catch (searchErr) {
+      console.warn("[Search] Atlas Search lỗi, dùng fallback $regex:", searchErr.message);
+      products = [];
     }
 
-    if (qNew) {
-      pipeline.push({ $sort: { createdAt: -1 } });
-    } else if (qBestSeller) {
-      pipeline.push({ $sort: { sold: -1 } });
+    // Fallback: Nếu Atlas Search không trả về kết quả, dùng $regex
+    if (products.length === 0) {
+      const safeSearch = qSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regexFilter = {
+        $or: [
+          { title: { $regex: safeSearch, $options: "i" } },
+          { author: { $regex: safeSearch, $options: "i" } },
+          { publisher: { $regex: safeSearch, $options: "i" } },
+        ],
+      };
+      if (qCategory) {
+        const categories = qCategory.split(",");
+        regexFilter.category = { $in: categories.map(c => new mongoose.Types.ObjectId(c)) };
+      }
+      const sortOpt = qNew ? { createdAt: -1 } : qBestSeller ? { sold: -1 } : { createdAt: -1 };
+      products = await Product.find(regexFilter).sort(sortOpt).populate("category").lean();
+    } else {
+      products = await Product.populate(products, { path: "category" });
     }
 
-    let products = await Product.aggregate(pipeline);
-    products = await Product.populate(products, { path: "category" });
     return await flashsaleService.attachFlashSaleToProducts(products);
   }
 

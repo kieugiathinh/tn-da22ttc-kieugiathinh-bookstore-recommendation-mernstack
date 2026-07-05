@@ -38,6 +38,9 @@ IMPLICIT_WEIGHTS = {
     "favorite":     3.5,
     "review":       4.0,
     "purchase":     5.0,
+    "remove_cart": -3.0,
+    "remove_favorite": -3.5,
+    "low_rating": -4.0,
 }
 
 # Time decay: λ ~ 0.01 → interaction 70 ngày trước ≈ còn 50% giá trị
@@ -136,20 +139,26 @@ def build_implicit_ratings(
         .reset_index()
     )
 
-    # Chuẩn hóa raw_score → [IMPLICIT_RATING_MIN, IMPLICIT_RATING_MAX]
-    score_min = combined["raw_score"].min()
+    # Triệt tiêu các điểm số xung quanh 0 (do cộng trừ bù trừ nhau)
+    # Lọc bỏ để model coi như chưa từng tương tác
+    combined = combined[combined["raw_score"].abs() >= 0.1].copy()
+
+    # Khóa sổ điểm sàn (tránh hố đen âm vô cực)
+    combined["raw_score"] = combined["raw_score"].clip(lower=-5.0)
+
     score_max = combined["raw_score"].max()
+    if pd.isna(score_max) or score_max <= 0:
+        score_max = 5.0
 
-    if score_max > score_min:
-        combined["rating"] = IMPLICIT_RATING_MIN + (
-            (combined["raw_score"] - score_min) / (score_max - score_min)
-            * (IMPLICIT_RATING_MAX - IMPLICIT_RATING_MIN)
-        )
-    else:
-        # Tất cả bằng nhau → gán trung bình
-        combined["rating"] = (IMPLICIT_RATING_MIN + IMPLICIT_RATING_MAX) / 2
+    def normalize_score(x):
+        if x > 0:
+            # Điểm dương: Chuẩn hóa về [3.5, 5.0] (coi view/click là hành động tích cực nhẹ)
+            return 3.5 + (x / score_max) * 1.5
+        else:
+            # Điểm âm: Dùng trực tiếp giá trị âm (từ -5.0 đến 0) để tạo penalty mạnh
+            return x
 
-    combined["rating"] = combined["rating"].round(3)
+    combined["rating"] = combined["raw_score"].apply(normalize_score).round(3)
     return combined[["userId", "productId", "rating"]]
 
 

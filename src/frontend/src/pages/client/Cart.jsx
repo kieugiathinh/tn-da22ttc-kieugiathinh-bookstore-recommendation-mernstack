@@ -81,6 +81,15 @@ const Cart = () => {
 
   // --- HANDLERS CŨ ---
   const handleRemoveProduct = (cartItemId) => {
+    const product = cart.products.find(p => p.cartItemId === cartItemId);
+    if (user && product) {
+      userRequest.post('/interactions/track', {
+        productId: product._id || product.product,
+        interactionType: "remove_cart",
+        source: "direct"
+      }).catch(err => console.log("Track error:", err));
+    }
+
     dispatch(removeProduct(cartItemId));
     // Xóa khỏi danh sách đã chọn nếu đang chọn
     setSelectedIds((prev) => prev.filter((id) => id !== cartItemId));

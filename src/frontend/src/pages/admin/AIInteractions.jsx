@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { userRequest } from "../../requestMethods";
 import { toast } from "react-toastify";
-import { FaHistory, FaFilter, FaSync, FaEye, FaCartPlus, FaShoppingCart, FaStar, FaSearch, FaTrash, FaChevronDown } from "react-icons/fa";
+import { FaHistory, FaFilter, FaSync, FaEye, FaCartPlus, FaShoppingCart, FaStar, FaSearch, FaTrash, FaChevronDown, FaHeart } from "react-icons/fa";
 import Pagination from "../../components/admin/Pagination";
 import PageHeader from "../../components/admin/PageHeader";
 import { format } from "timeago.js";
@@ -10,16 +10,24 @@ const interactionIcons = {
   view: <FaEye className="text-blue-500" />,
   search_click: <FaSearch className="text-cyan-500" />,
   add_to_cart: <FaCartPlus className="text-amber-500" />,
+  favorite: <FaHeart className="text-rose-500" />,
   review: <FaStar className="text-purple-500" />,
-  purchase: <FaShoppingCart className="text-emerald-500" />
+  purchase: <FaShoppingCart className="text-emerald-500" />,
+  remove_cart: <FaTrash className="text-red-500" />,
+  remove_favorite: <FaHeart className="text-pink-300" />,
+  low_rating: <FaStar className="text-gray-400" />
 };
 
 const interactionLabels = {
   view: "Xem sản phẩm",
   search_click: "Click từ Tìm kiếm",
   add_to_cart: "Thêm Giỏ hàng",
+  favorite: "Sách yêu thích",
   review: "Đánh giá sách",
-  purchase: "Mua thành công"
+  purchase: "Mua thành công",
+  remove_cart: "Xóa khỏi giỏ",
+  remove_favorite: "Bỏ yêu thích",
+  low_rating: "Đánh giá thấp"
 };
 
 const AIInteractions = () => {
@@ -160,8 +168,12 @@ const AIInteractions = () => {
               <option value="view">Chỉ Xem (View)</option>
               <option value="search_click">Từ Tìm kiếm</option>
               <option value="add_to_cart">Thêm Giỏ hàng</option>
+              <option value="favorite">Sách yêu thích</option>
               <option value="purchase">Mua hàng</option>
               <option value="review">Đánh giá sách</option>
+              <option value="remove_cart">Xóa khỏi giỏ</option>
+              <option value="remove_favorite">Bỏ yêu thích</option>
+              <option value="low_rating">Đánh giá thấp</option>
             </select>
             <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
           </div>

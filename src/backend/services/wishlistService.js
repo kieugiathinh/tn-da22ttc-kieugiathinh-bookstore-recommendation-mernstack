@@ -39,6 +39,18 @@ const removeFromWishlist = async (userId, productId) => {
   if (!result) {
     throw new Error("Sản phẩm không có trong danh sách yêu thích");
   }
+
+  try {
+    await UserInteraction.create({
+      userId,
+      productId,
+      interactionType: "remove_favorite",
+      source: "direct",
+    });
+  } catch (err) {
+    console.error("Lỗi ghi nhận remove_favorite interaction:", err.message);
+  }
+
   return result;
 };
 
