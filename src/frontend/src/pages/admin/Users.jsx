@@ -135,7 +135,7 @@ const Users = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng tài khoản</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{users.length}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{users.length}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => { setFilterRole("customer"); setCurrentPage(1); }}>
@@ -144,7 +144,7 @@ const Users = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Khách hàng</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{totalCustomer}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{totalCustomer}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => { setFilterRole("admin"); setCurrentPage(1); }}>
@@ -153,7 +153,7 @@ const Users = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Quản trị viên</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{totalAdmin}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{totalAdmin}</p>
           </div>
         </div>
       </div>

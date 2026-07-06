@@ -143,7 +143,7 @@ const AdminCoupon = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng Số Mã</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{coupons.length}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{coupons.length}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => {setFilterStatus("active"); setCurrentPage(1);}}>
@@ -152,7 +152,7 @@ const AdminCoupon = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đang Hoạt Động</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{activeCount}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{activeCount}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group">
@@ -161,7 +161,7 @@ const AdminCoupon = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đã Hết Hạn</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{expiredCount}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{expiredCount}</p>
           </div>
         </div>
       </div>

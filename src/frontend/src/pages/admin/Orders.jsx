@@ -517,7 +517,7 @@ const Orders = () => {
                 </div>
                 <div className="flex justify-between items-center border-t border-orange-200/50 pt-2 mt-1">
                   <span className="font-bold text-gray-800">Tổng thanh toán</span>
-                  <span className="text-xl font-black text-primary">
+                  <span className="text-xl font-bold text-primary">
                     {(selectedOrder.total ?? 0).toLocaleString("vi-VN")}₫
                   </span>
                 </div>

@@ -169,7 +169,7 @@ const Categories = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng thể loại</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{categories.length}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{categories.length}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group">
@@ -178,7 +178,7 @@ const Categories = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Nhiều sách nhất</p>
-            <p className="mt-0.5 text-lg font-black text-gray-900 truncate max-w-[140px]">{topBooksCat?._id || "—"}</p>
+            <p className="mt-0.5 text-lg font-bold text-gray-900 truncate max-w-[140px]">{topBooksCat?._id || "—"}</p>
             <p className="text-[11px] text-gray-400 font-semibold">{topBooksCat?.count || 0} đầu sách</p>
           </div>
         </div>
@@ -188,7 +188,7 @@ const Categories = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Bán chạy nhất</p>
-            <p className="mt-0.5 text-lg font-black text-gray-900 truncate max-w-[140px]">{topSalesCat?._id || "—"}</p>
+            <p className="mt-0.5 text-lg font-bold text-gray-900 truncate max-w-[140px]">{topSalesCat?._id || "—"}</p>
             <p className="text-[11px] text-gray-400 font-semibold">{topSalesCat?.totalSold || 0} cuốn đã bán</p>
           </div>
         </div>

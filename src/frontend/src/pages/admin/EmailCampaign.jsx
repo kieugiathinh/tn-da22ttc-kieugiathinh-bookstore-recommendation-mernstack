@@ -1,3 +1,4 @@
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { useState, useEffect, useMemo } from "react";
 import { 
   FaPaperPlane, 
@@ -10,7 +11,6 @@ import {
 import { toast } from "sonner";
 import { userRequest } from "../../requestMethods";
 import PageHeader from "../../components/admin/PageHeader";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const EMAIL_TEMPLATES = {
   custom: {
@@ -165,7 +165,7 @@ const EmailCampaign = () => {
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
               <FaEnvelopeOpenText size={14} />
             </div>
-            <h2 className="text-base font-black text-gray-800 tracking-wide">Soạn Nội Dung Email</h2>
+            <h2 className="text-base font-bold text-gray-800 tracking-wide">Soạn Nội Dung Email</h2>
           </div>
 
           <form id="emailForm" onSubmit={handleSubmit} className="p-6 space-y-5 flex-1 flex flex-col">
@@ -222,7 +222,7 @@ const EmailCampaign = () => {
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
               <FaUsers size={14} />
             </div>
-            <h2 className="text-base font-black text-gray-800 tracking-wide">Người Nhận</h2>
+            <h2 className="text-base font-bold text-gray-800 tracking-wide">Người Nhận</h2>
           </div>
 
           <div className="p-6 flex-1 flex flex-col space-y-5">

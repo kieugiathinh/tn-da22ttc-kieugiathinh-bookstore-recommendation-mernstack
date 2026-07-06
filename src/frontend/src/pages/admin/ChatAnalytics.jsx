@@ -42,7 +42,7 @@ const MetricCard = ({ title, value, icon: Icon, bgGradient, subtitle, trendValue
           <p className="text-xs font-bold uppercase tracking-widest opacity-80">{title}</p>
           <TrendIndicator value={trendValue} />
         </div>
-        <h3 className="text-3xl font-black tracking-tight leading-none drop-shadow-sm">{value}</h3>
+        <h3 className="text-3xl font-bold tracking-tight leading-none drop-shadow-sm">{value}</h3>
         {subtitle && <p className="mt-2 text-sm font-medium opacity-90">{subtitle}</p>}
       </div>
       <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm shadow-inner group-hover:scale-110 transition-transform">
@@ -108,7 +108,7 @@ const ChatAnalytics = () => {
             <FaRobot className="text-white text-xl" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">Dashboard Chatbot</h1>
+            <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">Dashboard Chatbot</h1>
             <p className="text-sm text-gray-500 font-medium">Giám sát hiệu quả và phân tích hành vi khách hàng bằng AI</p>
           </div>
         </div>
@@ -167,7 +167,7 @@ const ChatAnalytics = () => {
         <div className="lg:col-span-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <FaChartLine className="text-orange-500" />
-            <h3 className="font-extrabold text-gray-900">Lưu lượng tin nhắn</h3>
+            <h3 className="font-bold text-gray-900">Lưu lượng tin nhắn</h3>
           </div>
           <div className="h-[250px] w-full">
             {loadingStats ? (
@@ -193,7 +193,7 @@ const ChatAnalytics = () => {
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col">
           <div className="flex items-center gap-2 mb-4">
             <FaFilter className="text-emerald-500" />
-            <h3 className="font-extrabold text-gray-900">Hiệu quả tư vấn (Funnel)</h3>
+            <h3 className="font-bold text-gray-900">Hiệu quả tư vấn (Funnel)</h3>
           </div>
           <div className="flex-1 flex flex-col justify-center gap-4">
             {loadingStats ? (
@@ -232,7 +232,7 @@ const ChatAnalytics = () => {
         <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
           <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white px-6 py-4">
             <div className="bg-orange-100 p-2 rounded-lg"><FaBookOpen className="text-orange-600" /></div>
-            <h3 className="font-extrabold text-gray-900">Top Sách Chatbot Đề Xuất</h3>
+            <h3 className="font-bold text-gray-900">Top Sách Chatbot Đề Xuất</h3>
           </div>
           <ul className="p-4 space-y-2">
             {loadingStats ? <li className="text-sm text-gray-400 font-medium text-center py-4">Đang tải...</li> : 
@@ -249,7 +249,7 @@ const ChatAnalytics = () => {
         <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
           <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-rose-50 to-white px-6 py-4">
             <div className="bg-rose-100 p-2 rounded-lg"><FaExclamationTriangle className="text-rose-600" /></div>
-            <h3 className="font-extrabold text-gray-900">Sách Khách Tìm Nhưng Thiếu</h3>
+            <h3 className="font-bold text-gray-900">Sách Khách Tìm Nhưng Thiếu</h3>
           </div>
           {insights ? (
             <div className="overflow-x-auto p-4">
@@ -281,7 +281,7 @@ const ChatAnalytics = () => {
       {/* ── AI INSIGHTS BAR ── */}
       <div className="flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-6 text-white shadow-md">
         <div className="mb-4 sm:mb-0">
-          <h2 className="text-xl font-extrabold flex items-center gap-2"><FaLightbulb className="text-yellow-200" /> Phân tích Chuyên sâu (AI)</h2>
+          <h2 className="text-xl font-bold flex items-center gap-2"><FaLightbulb className="text-yellow-200" /> Phân tích Chuyên sâu (AI)</h2>
           <p className="text-sm text-orange-50 mt-1 font-medium">Sử dụng Gemini AI để đọc hiểu hàng trăm tin nhắn và đưa ra chiến lược.</p>
         </div>
         <button
@@ -298,7 +298,7 @@ const ChatAnalytics = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* PIE CHART SENTIMENT */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col items-center">
-            <h3 className="font-extrabold text-gray-900 mb-2 w-full">Cảm xúc khách hàng</h3>
+            <h3 className="font-bold text-gray-900 mb-2 w-full">Cảm xúc khách hàng</h3>
             <div className="w-full h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -325,7 +325,7 @@ const ChatAnalytics = () => {
 
           {/* ĐIỂM NGHẼN */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h3 className="font-extrabold text-gray-900 mb-4">Điểm nghẽn & Vấn đề</h3>
+            <h3 className="font-bold text-gray-900 mb-4">Điểm nghẽn & Vấn đề</h3>
             <ul className="space-y-3">
               {insights.commonIssues?.map((issue, i) => {
                 const style = getPriorityColor(issue.priority);
@@ -346,7 +346,7 @@ const ChatAnalytics = () => {
 
           {/* CHIẾN LƯỢC */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm lg:col-span-3 xl:col-span-1">
-            <h3 className="font-extrabold text-gray-900 mb-4">AI Đề xuất Chiến lược</h3>
+            <h3 className="font-bold text-gray-900 mb-4">AI Đề xuất Chiến lược</h3>
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               {insights.businessAdvice?.map((adv, i) => (
                 <div key={i} className="p-4 rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 shadow-sm">

@@ -131,7 +131,7 @@ const AIInteractions = () => {
           <div className="flex items-center gap-2 mb-4">
             <div className="bg-indigo-100 p-2 rounded-lg"><FaFunnelDollar className="text-indigo-600 text-lg" /></div>
             <div>
-              <h2 className="font-extrabold text-gray-900">Funnel Chuyển Đổi: Xem → Giỏ → Mua</h2>
+              <h2 className="font-bold text-gray-900">Funnel Chuyển Đổi: Xem → Giỏ → Mua</h2>
               <p className="text-xs text-gray-400 font-medium">Tỷ lệ chuyển đổi giữa các bước quan trọng trong hành trình mua hàng</p>
             </div>
           </div>
@@ -162,7 +162,7 @@ const AIInteractions = () => {
                     <p className="text-xs font-bold text-gray-600">{item.label}</p>
                     <p className="text-[11px] text-gray-400">{(item.from || 0).toLocaleString()} → {(item.to || 0).toLocaleString()} lượt</p>
                   </div>
-                  <span className={`text-2xl font-black ${item.color}`}>{item.rate}%</span>
+                  <span className={`text-2xl font-bold ${item.color}`}>{item.rate}%</span>
                 </div>
               ))}
             </div>

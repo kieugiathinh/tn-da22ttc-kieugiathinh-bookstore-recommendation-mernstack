@@ -1,3 +1,4 @@
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { useState, useEffect } from "react";
 import { userRequest } from "../../requestMethods";
 import { toast } from "react-toastify";
@@ -117,14 +118,8 @@ const AIConfig = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center gap-3 text-indigo-500">
-        <FaSync className="animate-spin text-3xl" />
-        <span className="font-bold text-lg">Đang tải cấu hình...</span>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSpinner text="Đang tải cấu hình..." />;
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -134,7 +129,7 @@ const AIConfig = () => {
             <FaCogs className="text-white text-xl" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
               Cấu hình Thuật toán AI
             </h1>
             <p className="mt-1 text-sm text-gray-500 font-medium">
@@ -158,7 +153,7 @@ const AIConfig = () => {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-6 border-b pb-4">
             <FaBalanceScale className="text-indigo-500 text-xl" />
-            <h2 className="text-lg font-extrabold text-gray-900">Tỉ lệ Thuật toán (Hybrid)</h2>
+            <h2 className="text-lg font-bold text-gray-900">Tỉ lệ Thuật toán (Hybrid)</h2>
           </div>
           <p className="text-sm text-gray-500 mb-6">
             Điều chỉnh số lượng sách mà mỗi thuật toán sẽ đóng góp vào danh sách gợi ý. Tổng phải là 100%.
@@ -213,7 +208,7 @@ const AIConfig = () => {
           
           <div className="mt-8 pt-4 border-t flex justify-between items-center">
             <span className="text-sm font-bold text-gray-500">Tổng cộng:</span>
-            <span className={`text-lg font-black ${cfWeight + cbfWeight + popWeight === 100 ? "text-emerald-500" : "text-rose-500"}`}>
+            <span className={`text-lg font-bold ${cfWeight + cbfWeight + popWeight === 100 ? "text-emerald-500" : "text-rose-500"}`}>
               {cfWeight + cbfWeight + popWeight}%
             </span>
           </div>
@@ -223,7 +218,7 @@ const AIConfig = () => {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-6 border-b pb-4">
             <FaSlidersH className="text-indigo-500 text-xl" />
-            <h2 className="text-lg font-extrabold text-gray-900">Trọng số Hành vi (Implicit Signals)</h2>
+            <h2 className="text-lg font-bold text-gray-900">Trọng số Hành vi (Implicit Signals)</h2>
           </div>
           <p className="text-sm text-gray-500 mb-6">
             Mức điểm mà AI sẽ gán cho mỗi loại hành vi của người dùng khi huấn luyện mô hình.

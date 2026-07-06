@@ -1,3 +1,4 @@
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { FaSave, FaCloudUploadAlt, FaArrowLeft, FaMagic } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -9,7 +10,6 @@ import PageHeader from "../../components/admin/PageHeader";
 import Card from "../../components/common/Card";
 import InputField from "../../components/common/InputField";
 import Button from "../../components/common/Button";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const Product = () => {
   const navigate = useNavigate();
@@ -165,9 +165,7 @@ const Product = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner />;
-
-  const isProcessing = uploadStatus.includes("Đang");
+  if (loading) return <LoadingSpinner text="Đang tải dữ liệu..." />;const isProcessing = uploadStatus.includes("Đang");
 
   // Xác định ảnh preview hiển thị
   const previewImgSrc = newSelectedImage

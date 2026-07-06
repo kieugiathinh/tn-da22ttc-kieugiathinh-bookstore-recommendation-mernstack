@@ -127,7 +127,7 @@ const AdminReviews = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng đánh giá</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{reviews.length}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{reviews.length}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group">
@@ -136,7 +136,7 @@ const AdminReviews = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đánh giá 5 Sao</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{total5Star}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{total5Star}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => {setFilterReplyStatus("pending"); setFilterRating("all"); setCurrentPage(1);}}>
@@ -145,7 +145,7 @@ const AdminReviews = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Chờ phản hồi</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{pendingReply}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{pendingReply}</p>
           </div>
         </div>
       </div>

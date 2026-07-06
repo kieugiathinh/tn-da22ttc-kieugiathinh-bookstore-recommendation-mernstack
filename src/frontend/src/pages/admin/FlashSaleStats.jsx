@@ -1,3 +1,4 @@
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { useEffect, useState } from "react";
 import { userRequest } from "../../requestMethods";
 import {
@@ -15,7 +16,7 @@ const MetricCard = ({ title, value, icon: Icon, bgGradient, subtitle, suffix }) 
       <div>
         <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-2">{title}</p>
         <div className="flex items-baseline gap-1.5">
-          <h3 className="text-3xl font-black tracking-tight leading-none drop-shadow-sm">{value}</h3>
+          <h3 className="text-3xl font-bold tracking-tight leading-none drop-shadow-sm">{value}</h3>
           {suffix && <span className="text-lg font-bold opacity-90">{suffix}</span>}
         </div>
         {subtitle && <p className="mt-2 text-sm font-medium opacity-90">{subtitle}</p>}
@@ -48,14 +49,8 @@ const FlashSaleStats = () => {
     fetchStats();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center gap-3 text-orange-500">
-        <FaSync className="animate-spin text-3xl" />
-        <span className="font-bold text-lg">Đang tải thống kê Flash Sale...</span>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSpinner text="Đang tải dữ liệu..." />;
+
 
   if (!stats) return <div className="text-center p-10 text-gray-500 font-medium">Lỗi tải dữ liệu</div>;
 
@@ -78,7 +73,7 @@ const FlashSaleStats = () => {
     <div className="space-y-6">
       {/* ── HEADER ── */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">
+        <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">
           Thống kê Flash Sale & Đề Xuất Xả Kho
         </h1>
         <p className="mt-1 text-sm text-gray-500 font-medium">Phân tích hiệu quả chiến dịch giảm giá</p>
@@ -121,7 +116,7 @@ const FlashSaleStats = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Bar Chart Top bán chạy */}
         <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <h3 className="font-extrabold text-gray-900 mb-1 flex items-center gap-2">
+          <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
             <FaChartBar className="text-orange-500" /> Top 5 sản phẩm bán chạy nhất
           </h3>
           <p className="text-xs text-gray-400 font-semibold mb-4 uppercase tracking-wider">Trong tất cả chiến dịch Flash Sale</p>
@@ -144,7 +139,7 @@ const FlashSaleStats = () => {
 
         {/* Donut Sell-through */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col">
-          <h3 className="font-extrabold text-gray-900 mb-4 flex items-center gap-2">
+          <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
             <FaPercent className="text-violet-500" /> Tỷ lệ chốt đơn
           </h3>
           <div className="flex-1 flex flex-col items-center justify-center">
@@ -158,7 +153,7 @@ const FlashSaleStats = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="text-2xl font-black text-orange-600">{stats.avgSellThroughRate ?? 0}%</span>
+                <span className="text-2xl font-bold text-orange-600">{stats.avgSellThroughRate ?? 0}%</span>
               </div>
             </div>
             <div className="flex gap-6 mt-2">
@@ -181,7 +176,7 @@ const FlashSaleStats = () => {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-white">
             <div className="bg-amber-100 p-2 rounded-lg"><FaTrophy className="text-amber-500 text-lg" /></div>
-            <h3 className="font-extrabold text-gray-900">Top Bán Chạy Nhất</h3>
+            <h3 className="font-bold text-gray-900">Top Bán Chạy Nhất</h3>
           </div>
           <div className="p-4 space-y-3">
             {stats.topSoldProducts.length === 0 ? (
@@ -213,7 +208,7 @@ const FlashSaleStats = () => {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-rose-50 to-white">
             <div className="bg-rose-100 p-2 rounded-lg"><FaFrown className="text-rose-500 text-lg" /></div>
-            <h3 className="font-extrabold text-gray-900">Bán Kém Trong Flash Sale</h3>
+            <h3 className="font-bold text-gray-900">Bán Kém Trong Flash Sale</h3>
           </div>
           <div className="p-4 space-y-3">
             {stats.slowSellingProducts.length === 0 ? (
@@ -244,7 +239,7 @@ const FlashSaleStats = () => {
         <div className="flex items-center justify-between px-6 py-4 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-white">
           <div className="flex items-center gap-2">
             <div className="bg-orange-100 p-2 rounded-lg"><FaWarehouse className="text-orange-600 text-lg" /></div>
-            <h3 className="font-extrabold text-gray-900">AI Đề Xuất Xả Kho</h3>
+            <h3 className="font-bold text-gray-900">AI Đề Xuất Xả Kho</h3>
           </div>
           <span className="text-[10px] font-black text-orange-600 uppercase tracking-wider bg-white px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm">Có thể thêm vào Sale tiếp theo</span>
         </div>

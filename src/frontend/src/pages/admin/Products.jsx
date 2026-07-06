@@ -176,28 +176,28 @@ const Products = () => {
           className={`rounded-xl border p-4 text-left transition-all ${filterStock === "all" ? "border-primary bg-orange-50 shadow-sm" : "border-gray-100 bg-white hover:border-primary/40"}`}
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng đầu sách</p>
-          <p className="mt-1 text-2xl font-black text-gray-900">{products.length}</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{products.length}</p>
         </button>
         <button
           onClick={() => { setFilterStock("low"); setCurrentPage(1); }}
           className={`rounded-xl border p-4 text-left transition-all ${filterStock === "low" ? "border-yellow-400 bg-yellow-50 shadow-sm" : "border-gray-100 bg-white hover:border-yellow-300"}`}
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tồn kho thấp</p>
-          <p className="mt-1 text-2xl font-black text-yellow-600">{lowStock}</p>
+          <p className="mt-1 text-2xl font-bold text-yellow-600">{lowStock}</p>
         </button>
         <button
           onClick={() => { setFilterStock("out"); setCurrentPage(1); }}
           className={`rounded-xl border p-4 text-left transition-all ${filterStock === "out" ? "border-red-400 bg-red-50 shadow-sm" : "border-gray-100 bg-white hover:border-red-300"}`}
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Hết hàng</p>
-          <p className="mt-1 text-2xl font-black text-red-600">{outOfStock}</p>
+          <p className="mt-1 text-2xl font-bold text-red-600">{outOfStock}</p>
         </button>
         <button
           onClick={() => { setFilterStatus("discontinued"); setFilterStock("all"); setCurrentPage(1); }}
           className={`rounded-xl border p-4 text-left transition-all ${filterStatus === "discontinued" ? "border-purple-400 bg-purple-50 shadow-sm" : "border-gray-100 bg-white hover:border-purple-300"}`}
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Ngừng KD</p>
-          <p className="mt-1 text-2xl font-black text-purple-600">{discontinued}</p>
+          <p className="mt-1 text-2xl font-bold text-purple-600">{discontinued}</p>
         </button>
       </div>
 

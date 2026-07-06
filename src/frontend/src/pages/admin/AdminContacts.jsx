@@ -148,21 +148,21 @@ const AdminContacts = () => {
           className={`rounded-xl border p-4 text-left transition-all ${filterStatus === "all" ? "border-primary bg-orange-50 shadow-sm" : "border-gray-100 bg-white hover:border-primary/40"}`}
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng liên hệ</p>
-          <p className="mt-1 text-2xl font-black text-gray-900">{contacts.length}</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{contacts.length}</p>
         </button>
         <button
           onClick={() => { setFilterStatus("pending"); setCurrentPage(1); }}
           className={`rounded-xl border p-4 text-left transition-all ${filterStatus === "pending" ? "border-yellow-400 bg-yellow-50 shadow-sm" : "border-gray-100 bg-white hover:border-yellow-300"}`}
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Chờ phản hồi</p>
-          <p className="mt-1 text-2xl font-black text-yellow-600">{pendingCount}</p>
+          <p className="mt-1 text-2xl font-bold text-yellow-600">{pendingCount}</p>
         </button>
         <button
           onClick={() => { setFilterStatus("replied"); setCurrentPage(1); }}
           className={`rounded-xl border p-4 text-left transition-all ${filterStatus === "replied" ? "border-emerald-400 bg-emerald-50 shadow-sm" : "border-gray-100 bg-white hover:border-emerald-300"}`}
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đã giải quyết</p>
-          <p className="mt-1 text-2xl font-black text-emerald-600">{repliedCount}</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-600">{repliedCount}</p>
         </button>
       </div>
 

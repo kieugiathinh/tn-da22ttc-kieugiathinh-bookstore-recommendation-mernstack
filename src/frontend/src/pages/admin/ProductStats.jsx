@@ -1,3 +1,4 @@
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { useState, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
@@ -18,7 +19,7 @@ const MetricCard = ({ title, value, icon: Icon, bgGradient, subtitle }) => (
     <div className="relative z-10 flex items-start justify-between">
       <div>
         <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-2">{title}</p>
-        <h3 className="text-3xl font-black tracking-tight leading-none drop-shadow-sm">{value}</h3>
+        <h3 className="text-3xl font-bold tracking-tight leading-none drop-shadow-sm">{value}</h3>
         {subtitle && <p className="mt-2 text-sm font-medium opacity-90">{subtitle}</p>}
       </div>
       <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm shadow-inner group-hover:scale-110 transition-transform">
@@ -73,7 +74,7 @@ const SectionCard = ({ icon: Icon, iconClass, title, badge, bgHeader = "bg-gradi
         <div className={`p-2 rounded-lg ${iconClass.includes("red") ? "bg-red-100" : iconClass.includes("amber") ? "bg-amber-100" : iconClass.includes("blue") ? "bg-blue-100" : "bg-gray-100"}`}>
           <Icon className={iconClass + " text-lg"} />
         </div>
-        <h3 className="font-extrabold text-gray-900">{title}</h3>
+        <h3 className="font-bold text-gray-900">{title}</h3>
       </div>
       {badge && <span className="text-[11px] font-bold rounded-lg px-3 py-1 bg-gray-100 text-gray-500 border border-gray-200 shadow-sm">{badge}</span>}
     </div>
@@ -92,14 +93,8 @@ const ProductStats = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center gap-3 text-orange-500">
-        <FaSync className="animate-spin text-3xl" />
-        <span className="font-bold text-lg">Đang tải thống kê sách...</span>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSpinner text="Đang tải dữ liệu..." />;
+
 
   const stockDonut = [
     { name: "Còn hàng tốt", value: data?.inStock ?? 0 },
@@ -117,7 +112,7 @@ const ProductStats = () => {
     <div className="space-y-6">
       {/* ── HEADER ── */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">
+        <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">
           Thống kê Sách
         </h1>
         <p className="mt-1 text-sm text-gray-500 font-medium">Tổng quan hiệu suất và tình trạng kho sách</p>
@@ -137,7 +132,7 @@ const ProductStats = () => {
         <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <FaLayerGroup className="text-violet-500" />
-            <h3 className="font-extrabold text-gray-900">Phân bố theo thể loại</h3>
+            <h3 className="font-bold text-gray-900">Phân bố theo thể loại</h3>
           </div>
           <p className="text-xs text-gray-400 font-semibold mb-4 uppercase tracking-wider">Số đầu sách và tổng cuốn đã bán theo thể loại</p>
           {catBarData.length > 0 ? (
@@ -161,7 +156,7 @@ const ProductStats = () => {
 
         {/* Donut tình trạng kho */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col">
-          <h3 className="font-extrabold text-gray-900 mb-4 flex items-center gap-2">
+          <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
             <FaBoxOpen className="text-emerald-500" /> Tình trạng kho
           </h3>
           <div className="flex-1 flex flex-col items-center justify-center">
@@ -205,7 +200,7 @@ const ProductStats = () => {
 
       {/* ── 4 NHÓM THÔNG MINH MỚI (P1) ── */}
       <div className="mt-2">
-        <h2 className="text-lg font-extrabold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <span className="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500" />
           Phân tích Thông Minh (Smart Insights)
         </h2>

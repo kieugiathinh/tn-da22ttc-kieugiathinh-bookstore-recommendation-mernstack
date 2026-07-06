@@ -1,3 +1,4 @@
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { useState, useEffect } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -33,7 +34,7 @@ const MetricCard = ({ title, value, icon: Icon, bgGradient, subtitle, suffix, ch
           )}
         </div>
         <div className="flex items-baseline gap-1.5">
-          <h3 className="text-3xl font-black tracking-tight leading-none drop-shadow-sm">{value}</h3>
+          <h3 className="text-3xl font-bold tracking-tight leading-none drop-shadow-sm">{value}</h3>
           {suffix && <span className="text-lg font-bold opacity-90">{suffix}</span>}
         </div>
         {subtitle && <p className="mt-2 text-sm font-medium opacity-90">{subtitle}</p>}
@@ -66,14 +67,8 @@ const UserStats = () => {
 
   useEffect(() => { fetchData(timeRange); }, [timeRange]);
 
-  if (loading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center gap-3 text-orange-500">
-        <FaSync className="animate-spin text-3xl" />
-        <span className="font-bold text-lg">Đang tải thống kê khách hàng...</span>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSpinner text="Đang tải dữ liệu..." />;
+
 
   const donutData = [
     { name: "Đã mua hàng", value: data?.totalBuyers ?? 0 },
@@ -85,7 +80,7 @@ const UserStats = () => {
       {/* ── PAGE HEADER ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">
             Thống kê Khách hàng
           </h1>
           <p className="mt-1 text-sm text-gray-500 font-medium">Phân tích hành vi và giá trị khách hàng</p>
@@ -152,7 +147,7 @@ const UserStats = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <FaChartBar className="text-orange-500" />
-              <h3 className="font-extrabold text-gray-900">Phân tích lượng khách mua sắm</h3>
+              <h3 className="font-bold text-gray-900">Phân tích lượng khách mua sắm</h3>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-orange-500"></span><span className="text-xs font-bold text-gray-500">Khách mua mới</span></div>
@@ -187,7 +182,7 @@ const UserStats = () => {
 
         {/* Donut Chart: Đã mua vs Chưa mua */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col">
-          <h3 className="font-extrabold text-gray-900 mb-4">Phân bố khách hàng</h3>
+          <h3 className="font-bold text-gray-900 mb-4">Phân bố khách hàng</h3>
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="h-[180px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -220,7 +215,7 @@ const UserStats = () => {
         <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-amber-50 to-white px-6 py-4">
           <div className="flex items-center gap-2">
             <div className="bg-amber-100 p-2 rounded-lg"><FaCrown className="text-amber-500 text-lg" /></div>
-            <h3 className="font-extrabold text-gray-900">Top Khách hàng VIP</h3>
+            <h3 className="font-bold text-gray-900">Top Khách hàng VIP</h3>
           </div>
           <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1 shadow-sm">Top {data?.topCustomers?.length ?? 0}</span>
         </div>
@@ -284,7 +279,7 @@ const UserStats = () => {
           <div className="flex items-center gap-2">
             <div className="bg-rose-100 p-2 rounded-lg"><FaUserSlash className="text-rose-500 text-lg" /></div>
             <div>
-              <h3 className="font-extrabold text-gray-900">Khách hàng chưa mua hàng</h3>
+              <h3 className="font-bold text-gray-900">Khách hàng chưa mua hàng</h3>
               <p className="text-xs text-gray-400 mt-0.5 font-medium">Đã đăng ký nhưng chưa đặt đơn nào</p>
             </div>
           </div>
