@@ -40,6 +40,8 @@ const AIInteractions = () => {
   const [total, setTotal] = useState(0);
 
   const [filterType, setFilterType] = useState("all");
+  const [filterSource, setFilterSource] = useState("all");
+  const [filterDays, setFilterDays] = useState("all");
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(15);
 
@@ -49,7 +51,7 @@ const AIInteractions = () => {
   const fetchInteractions = async () => {
     try {
       setLoading(true);
-      const res = await userRequest.get(`/interactions?pageNumber=${page}&limit=${limit}&type=${filterType}&keyword=${search}`);
+      const res = await userRequest.get(`/interactions?pageNumber=${page}&limit=${limit}&type=${filterType}&source=${filterSource}&days=${filterDays}&keyword=${search}`);
       setInteractionsList(res.data.interactions);
       setPages(res.data.pages);
       setTotal(res.data.total);
@@ -101,7 +103,7 @@ const AIInteractions = () => {
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filterType, limit, search]);
+  }, [page, filterType, filterSource, filterDays, limit, search]);
 
   const handleFilterChange = (e) => {
     setFilterType(e.target.value);
@@ -218,7 +220,7 @@ const AIInteractions = () => {
             <FaFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={11} />
             <select
               value={filterType}
-              onChange={handleFilterChange}
+              onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
               className={`pl-8 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterType !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
             >
               <option value="all">Tất cả hành vi</option>
@@ -231,6 +233,37 @@ const AIInteractions = () => {
               <option value="remove_cart">Xóa khỏi giỏ</option>
               <option value="remove_favorite">Bỏ yêu thích</option>
               <option value="low_rating">Đánh giá thấp</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
+
+          {/* Lọc nguồn */}
+          <div className="relative">
+            <select
+              value={filterSource}
+              onChange={(e) => { setFilterSource(e.target.value); setPage(1); }}
+              className={`pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterSource !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
+            >
+              <option value="all">Mọi nguồn</option>
+              <option value="homepage">Trang chủ</option>
+              <option value="search">Tìm kiếm</option>
+              <option value="category">Danh mục</option>
+              <option value="recommendation">Gợi ý AI</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
+
+          {/* Lọc thời gian */}
+          <div className="relative">
+            <select
+              value={filterDays}
+              onChange={(e) => { setFilterDays(e.target.value); setPage(1); }}
+              className={`pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterDays !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
+            >
+              <option value="all">Mọi lúc</option>
+              <option value="7">7 ngày qua</option>
+              <option value="30">30 ngày qua</option>
+              <option value="90">90 ngày qua</option>
             </select>
             <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
           </div>
@@ -271,15 +304,41 @@ const AIInteractions = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {loading && interactionsList.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-20 text-center">
-                    <div className="flex items-center justify-center gap-3 text-gray-400">
-                      <FaSync className="animate-spin text-primary" size={24} />
-                      <span className="text-sm font-medium">Đang tải dữ liệu...</span>
-                    </div>
-                  </td>
-                </tr>
+              {loading ? (
+                Array(5).fill(0).map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                        <div className="space-y-2">
+                          <div className="h-3 bg-gray-200 rounded w-24"></div>
+                          <div className="h-2 bg-gray-200 rounded w-32"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-10 bg-gray-200 rounded"></div>
+                        <div className="h-3 bg-gray-200 rounded w-32"></div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+                        <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="h-3 bg-gray-200 rounded w-12"></div>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="h-4 bg-gray-200 rounded w-16 ml-auto"></div>
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <div className="h-6 w-6 bg-gray-200 rounded mx-auto"></div>
+                    </td>
+                  </tr>
+                ))
               ) : interactionsList.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-16 text-center">
@@ -299,7 +358,7 @@ const AIInteractions = () => {
                         <div className="flex items-center gap-3">
                           <img src={item.userId.avatar || "/avatar.png"} alt="" className="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-sm" />
                           <div className="min-w-0">
-                            <p className="truncate max-w-[150px] font-semibold text-gray-900 text-[13px]">{item.userId.name}</p>
+                            <p className="truncate max-w-[150px] font-semibold text-gray-900 text-[13px]">{item.userId.fullname}</p>
                             <p className="text-[11px] text-gray-400">{item.userId.email}</p>
                           </div>
                         </div>

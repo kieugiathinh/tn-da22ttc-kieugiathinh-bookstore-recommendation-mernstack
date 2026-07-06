@@ -1545,17 +1545,42 @@ const getInteractionFunnel = async () => {
 };
 
 // ─── FUNNEL GỢI Ý (Recommendation → Cart → Purchase) ────────────────────────
-const getRecommendationFunnel = async () => {
+const getRecommendationFunnel = async (query = {}) => {
   const UserInteraction = (await import("../models/userInteractionModel.js")).default;
-  const recViews = await UserInteraction.countDocuments({ source: "recommendation" });
-  const recCarts = await UserInteraction.countDocuments({ source: "recommendation", interactionType: "add_to_cart" });
-  const recPurchases = await UserInteraction.countDocuments({ source: "recommendation", interactionType: "purchase" });
+  const days = Number(query.days) || 30; // Mặc định 30 ngày
+  
+  const now = new Date();
+  const currentPeriodStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const previousPeriodStart = new Date(now.getTime() - 2 * days * 24 * 60 * 60 * 1000);
+
+  // Helper để lấy count theo khoảng thời gian
+  const getCount = async (source, type, start, end) => {
+    const q = { source, createdAt: { $gte: start, $lt: end }, isDeleted: { $ne: true } };
+    if (type) q.interactionType = type;
+    return await UserInteraction.countDocuments(q);
+  };
+
+  // Kỳ hiện tại
+  const recViews = await getCount("recommendation", null, currentPeriodStart, now);
+  const recCarts = await getCount("recommendation", "add_to_cart", currentPeriodStart, now);
+  const recPurchases = await getCount("recommendation", "purchase", currentPeriodStart, now);
+
+  // Kỳ trước
+  const prevViews = await getCount("recommendation", null, previousPeriodStart, currentPeriodStart);
+  const prevCarts = await getCount("recommendation", "add_to_cart", previousPeriodStart, currentPeriodStart);
+  const prevPurchases = await getCount("recommendation", "purchase", previousPeriodStart, currentPeriodStart);
+
+  // Tính phần trăm thay đổi
+  const calcTrend = (curr, prev) => {
+    if (prev === 0) return curr > 0 ? 100 : 0;
+    return (((curr - prev) / prev) * 100).toFixed(1);
+  };
 
   return {
     funnel: [
-      { step: "Xem từ Gợi ý", count: recViews, fill: "#8b5cf6" },
-      { step: "Thêm giỏ (từ GY)", count: recCarts, fill: "#f59e0b" },
-      { step: "Mua (từ GY)", count: recPurchases, fill: "#10b981" },
+      { step: "Xem từ Gợi ý", count: recViews, prevCount: prevViews, trend: calcTrend(recViews, prevViews), fill: "#8b5cf6" },
+      { step: "Thêm giỏ (từ GY)", count: recCarts, prevCount: prevCarts, trend: calcTrend(recCarts, prevCarts), fill: "#f59e0b" },
+      { step: "Mua (từ GY)", count: recPurchases, prevCount: prevPurchases, trend: calcTrend(recPurchases, prevPurchases), fill: "#10b981" },
     ],
     viewToCart: recViews > 0 ? ((recCarts / recViews) * 100).toFixed(1) : "0.0",
     cartToPurchase: recCarts > 0 ? ((recPurchases / recCarts) * 100).toFixed(1) : "0.0",

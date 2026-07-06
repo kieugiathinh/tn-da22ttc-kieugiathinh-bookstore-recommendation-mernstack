@@ -20,7 +20,7 @@ import {
 } from "react-icons/fa";
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 
-const COLORS = ['#f59e0b', '#d97706', '#10b981', '#059669', '#3b82f6', '#2563eb', '#8b5cf6', '#6366f1'];
+const COLORS = ['#f59e0b', '#d97706', '#10b981', '#059669', '#f97316', '#ea580c', '#34d399', '#047857']; // Amber, Emerald, Orange, Emerald variants
 
 // ── METRIC CARD COMPONENT ──
 const MetricCard = ({ title, value, icon: Icon, bgGradient, subtitle }) => (
@@ -56,6 +56,7 @@ const AdminRecommendations = () => {
   const [globalStats, setGlobalStats] = useState([]);
   const [userStats, setUserStats] = useState([]);
   const [recFunnel, setRecFunnel] = useState(null);
+  const [funnelDays, setFunnelDays] = useState(30);
 
   const fetchHealth = async () => {
     try {
@@ -92,17 +93,19 @@ const AdminRecommendations = () => {
       }
     };
     fetchGlobalStats();
+  }, []);
 
+  useEffect(() => {
     const fetchRecFunnel = async () => {
       try {
-        const res = await userRequest.get("/stats/recommendation-funnel");
+        const res = await userRequest.get(`/stats/recommendation-funnel?days=${funnelDays}`);
         setRecFunnel(res.data);
       } catch (err) {
         console.error("Lỗi lấy recommendation funnel", err);
       }
     };
     fetchRecFunnel();
-  }, []);
+  }, [funnelDays]);
 
   const handleRetrain = async () => {
     if (!window.confirm("Bạn có chắc chắn muốn buộc AI huấn luyện lại mô hình? Việc này có thể tốn vài phút tùy thuộc vào lượng dữ liệu.")) return;
@@ -190,7 +193,7 @@ const AdminRecommendations = () => {
       </div>
 
       {/* ── ALERTS ── */}
-      {!isOk && health?.errors && (
+      {(!isOk && health?.errors) && (
         <div className="bg-rose-50 border border-rose-200 p-5 rounded-3xl shadow-sm flex gap-3">
           <FaExclamationTriangle className="text-rose-500 text-xl flex-shrink-0 mt-0.5" />
           <div>
@@ -201,6 +204,44 @@ const AdminRecommendations = () => {
           </div>
         </div>
       )}
+
+      {health?.needs_retrain && (
+        <div className="bg-amber-50 border border-amber-200 p-5 rounded-3xl shadow-sm flex gap-3 items-center">
+          <FaExclamationTriangle className="text-amber-500 text-xl flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-amber-800 font-bold">Đã thay đổi cấu hình thuật toán</h3>
+            <p className="text-sm text-amber-700 font-medium mt-1">Cấu hình về trọng số hoặc tỉ lệ thuật toán đã được thay đổi. Vui lòng bấm <b>HUẤN LUYỆN LẠI</b> để cập nhật dữ liệu gợi ý mới nhất cho khách hàng.</p>
+          </div>
+          <button
+            onClick={handleRetrain}
+            disabled={retraining || !isOk}
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-colors shadow-sm whitespace-nowrap"
+          >
+            {retraining ? "Đang xử lý..." : "Huấn luyện ngay"}
+          </button>
+        </div>
+      )}
+
+      {/* ── HOW IT WORKS PANEL ── */}
+      <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <FaRobot className="text-indigo-500" /> Cách thuật toán hoạt động
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl">
+            <h3 className="text-sm font-bold text-indigo-800 mb-2">1. Lọc Cộng tác (CF)</h3>
+            <p className="text-xs text-indigo-700 font-medium">Sử dụng thuật toán SVD (Singular Value Decomposition) để phân tích ma trận tương tác User-Item. AI học thói quen người dùng qua các hành vi Xem, Thêm Giỏ, Mua Hàng để tìm ra sự tương đồng giữa những người dùng khác nhau và đưa ra gợi ý.</p>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
+            <h3 className="text-sm font-bold text-emerald-800 mb-2">2. Lọc Nội dung (CBF)</h3>
+            <p className="text-xs text-emerald-700 font-medium">Phân tích thuộc tính sách (Tác giả, Thể loại, Mô tả, Tags) bằng thuật toán TF-IDF. Gợi ý những cuốn sách có nội dung tương đồng với cuốn sách mà khách hàng đang xem hoặc vừa tương tác gần nhất.</p>
+          </div>
+          <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl">
+            <h3 className="text-sm font-bold text-rose-800 mb-2">3. Bán chạy (Popularity)</h3>
+            <p className="text-xs text-rose-700 font-medium">Kết hợp sách bán chạy và đang trending trong thời gian gần đây. Đây là phương pháp giải quyết vấn đề Cold Start (Thiếu dữ liệu) cho các khách hàng mới chưa từng tương tác với hệ thống.</p>
+          </div>
+        </div>
+      </div>
 
       {/* ── DATA METRICS GRID ── */}
       <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
@@ -240,20 +281,36 @@ const AdminRecommendations = () => {
       {/* ── RECOMMENDATION FUNNEL ── */}
       {recFunnel && (
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
-            <FaChartBar className="text-emerald-500" /> Hiệu Quả Gợi Ý AI
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1 gap-2">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <FaChartBar className="text-emerald-500" /> Hiệu Quả Gợi Ý AI
+            </h2>
+            <select
+              value={funnelDays}
+              onChange={(e) => setFunnelDays(Number(e.target.value))}
+              className="text-xs font-bold border border-gray-200 rounded-xl px-3 py-1.5 bg-gray-50 text-gray-700 outline-none focus:border-emerald-500 cursor-pointer"
+            >
+              <option value={7}>7 ngày qua</option>
+              <option value={30}>30 ngày qua</option>
+              <option value={90}>90 ngày qua</option>
+            </select>
+          </div>
           <p className="text-sm text-gray-500 font-medium mb-5">Funnel: Khách xem sách từ gợi ý → Thêm giỏ → Mua. Chứng minh giá trị của thuật toán cá nhân hóa.</p>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {[
-              { label: "Xem từ Gợi Ý", count: recFunnel.funnel[0]?.count, fill: "#f59e0b", icon: "👁️" },
-              { label: "Thêm giỏ (từ GY)", count: recFunnel.funnel[1]?.count, fill: "#10b981", icon: "🛒" },
-              { label: "Mua (từ GY)", count: recFunnel.funnel[2]?.count, fill: "#059669", icon: "✅" },
+              { label: "Xem từ Gợi Ý", count: recFunnel.funnel[0]?.count, trend: recFunnel.funnel[0]?.trend, fill: "#f59e0b", icon: "👁️" },
+              { label: "Thêm giỏ (từ GY)", count: recFunnel.funnel[1]?.count, trend: recFunnel.funnel[1]?.trend, fill: "#10b981", icon: "🛒" },
+              { label: "Mua (từ GY)", count: recFunnel.funnel[2]?.count, trend: recFunnel.funnel[2]?.trend, fill: "#059669", icon: "✅" },
             ].map((item, i) => (
               <div key={i} className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 text-center transition-all hover:bg-gray-50">
                 <p className="text-3xl mb-2">{item.icon}</p>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{item.label}</p>
-                <p className="text-3xl font-bold" style={{color: item.fill}}>{(item.count || 0).toLocaleString()}</p>
+                <p className="text-3xl font-bold mb-1" style={{color: item.fill}}>{(item.count || 0).toLocaleString()}</p>
+                {item.trend !== undefined && (
+                  <p className={`text-[10px] font-bold ${Number(item.trend) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                    {Number(item.trend) >= 0 ? "▲" : "▼"} {Math.abs(Number(item.trend))}% so với kỳ trước
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -445,8 +502,10 @@ const AdminRecommendations = () => {
                         </div>
                         <h4 className="text-[11px] font-bold text-gray-800 line-clamp-2 mb-1 min-h-[32px]">{p.title}</h4>
                         
-                        <p className="text-[9px] text-teal-600 font-medium mb-2 italic">
-                          Thuật toán lai ghép
+                        <p className="text-[9px] text-teal-600 font-medium mb-2 italic px-2">
+                          Lý do: {p._aiMeta?.source === 'CF' ? 'Gợi ý từ thói quen mua sắm (AI)' : 
+                                 p._aiMeta?.source === 'CBF' ? 'Sách có nội dung tương tự' : 
+                                 p._aiMeta?.source === 'Popularity' ? 'Đang bán chạy / Trending' : 'Thuật toán lai ghép'}
                         </p>
 
                         <div className="mt-auto w-full flex justify-between items-center border-t border-gray-50 pt-2">

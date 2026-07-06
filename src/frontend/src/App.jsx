@@ -43,8 +43,7 @@ import AdminNewProduct from "./pages/admin/NewProduct";
 import AdminCategories from "./pages/admin/Categories";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminCoupon from "./pages/admin/CouponList";
-import AdminChatAnalytics from "./pages/admin/ChatAnalytics";
-import AdminChatHistory from "./pages/admin/ChatHistory";
+
 import AdminRecommendations from "./pages/admin/AIRecommendations";
 import AdminAIConfig from "./pages/admin/AIConfig";
 import AdminAIInteractions from "./pages/admin/AIInteractions";
@@ -111,8 +110,7 @@ const router = createBrowserRouter([
       { path: "flash-sales", element: <AdminFlashSales /> },
       { path: "reviews", element: <AdminReviews /> },
       { path: "coupons", element: <AdminCoupon /> },
-      { path: "chat-analytics", element: <AdminChatAnalytics /> },
-      { path: "chat-history", element: <AdminChatHistory /> },
+
       { path: "ai-recommendations", element: <AdminRecommendations /> },
       { path: "ai-recommendations/config", element: <AdminAIConfig /> },
       { path: "ai-recommendations/interactions", element: <AdminAIInteractions /> },

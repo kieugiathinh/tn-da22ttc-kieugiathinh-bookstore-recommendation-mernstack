@@ -359,7 +359,7 @@ const DashboardHeader = ({
             BookBee Business Dashboard
           </div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
             Tổng quan kinh doanh
           </h1>
 

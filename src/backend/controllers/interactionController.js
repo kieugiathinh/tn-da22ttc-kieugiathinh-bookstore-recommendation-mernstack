@@ -11,7 +11,8 @@ export const getInteractions = asyncHandler(async (req, res) => {
     req.query.limit,
     req.query.type,
     req.query.source,
-    req.query.keyword
+    req.query.keyword,
+    req.query.days
   );
   
   res.status(200).json({

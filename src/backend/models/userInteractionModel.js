@@ -100,6 +100,14 @@ const UserInteractionSchema = mongoose.Schema(
       enum: ["homepage", "search", "category", "recommendation", "direct", "chatbot", "checkout", "order"],
       default: "direct",
     },
+    /**
+     * Chế độ Xóa mềm (Soft Delete).
+     * true: Đã bị admin xóa hoặc user rút lại, không tính vào điểm AI.
+     */
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true, // `createdAt` chính là timestamp của hành vi — rất quan trọng

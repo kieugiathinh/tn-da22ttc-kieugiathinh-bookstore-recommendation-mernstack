@@ -7,6 +7,7 @@
 
 import axios from "axios";
 import Product from "../models/productModel.js";
+import SystemConfig from "../models/systemConfigModel.js";
 import Category from "../models/categoryModel.js";
 import dotenv from "dotenv";
 
@@ -172,6 +173,16 @@ const getUserRecommendationsData = async (userId, topK = 6) => {
  */
 const triggerCFRetrain = async () => {
   const aiRes = await aiClient.post("/recommend/retrain");
+  
+  // Nếu retrain thành công hoặc đã hoàn tất, bỏ cờ NEEDS_RETRAIN
+  if (aiRes.data && (aiRes.data.success || aiRes.data.status === "completed")) {
+    await SystemConfig.findOneAndUpdate(
+      { key: "NEEDS_RETRAIN" },
+      { value: false },
+      { upsert: true }
+    );
+  }
+
   return aiRes.data;
 };
 
@@ -180,7 +191,15 @@ const triggerCFRetrain = async () => {
  */
 const getAIHealthStatus = async () => {
   const aiRes = await aiClient.get("/health");
-  return aiRes.data;
+  let data = aiRes.data;
+  
+  // Inject cờ NEEDS_RETRAIN vào response
+  const retrainFlag = await SystemConfig.findOne({ key: "NEEDS_RETRAIN" });
+  if (data && typeof data === 'object') {
+    data.needs_retrain = retrainFlag ? retrainFlag.value : false;
+  }
+  
+  return data;
 };
 
 /**

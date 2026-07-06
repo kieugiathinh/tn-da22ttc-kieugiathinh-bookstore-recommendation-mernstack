@@ -4,6 +4,7 @@ import {
 } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import PageHeader from "../../components/admin/PageHeader";
 import Pagination from "../../components/admin/Pagination";
 import { format } from "date-fns";
@@ -248,8 +249,8 @@ const AdminContacts = () => {
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center">
-                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-primary border-r-transparent"></div>
+                  <td colSpan={5} className="py-2 text-center">
+                    <LoadingSpinner text="Đang tải dữ liệu..." />
                   </td>
                 </tr>
               ) : (

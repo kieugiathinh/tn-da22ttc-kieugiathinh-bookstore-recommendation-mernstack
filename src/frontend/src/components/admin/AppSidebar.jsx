@@ -41,15 +41,7 @@ const menuGroups = [
           { name: "Email Marketing", path: "/admin/email-marketing" },
         ]
       },
-      {
-        name: "AI Chatbot",
-        icon: <FaRobot size={18} />,
-        isDropdown: true,
-        subItems: [
-          { name: "Dashboard", path: "/admin/chat-analytics" },
-          { name: "Lịch sử Chat", path: "/admin/chat-history" },
-        ]
-      },
+
       {
         name: "Hệ thống gợi ý",
         icon: <FaLightbulb size={18} />,
@@ -98,7 +90,7 @@ const AppSidebar = () => {
       });
     });
     setOpenDropdowns(newOpenState);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const toggleDropdown = (name) => {
@@ -138,10 +130,10 @@ const AppSidebar = () => {
         {showLabel ? (
           <>
             <BookBeeLogo className="h-8 max-w-[140px]" />
-            <a 
-              href="/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
               title="Đến cửa hàng BookBee"
               className="absolute right-4 text-gray-400 hover:text-primary transition-colors bg-gray-50 hover:bg-orange-50 p-2 rounded-lg"
             >
