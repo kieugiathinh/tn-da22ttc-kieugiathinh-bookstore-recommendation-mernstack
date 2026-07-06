@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { userRequest } from "../../requestMethods";
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar, Legend,
+  ComposedChart, Area, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  BarChart, Legend,
   PieChart, Pie, Cell
 } from "recharts";
 import {
@@ -16,7 +16,8 @@ import {
   FaBoxOpen,
   FaChartPie,
   FaLayerGroup,
-  FaClipboardList
+  FaClipboardList,
+  FaChartBar,
 } from "react-icons/fa";
 
 // ─── COMPONENT ──────────────────────────────────────────────────────────────
@@ -46,10 +47,10 @@ const MetricCard = ({ title, value, icon: Icon, bgGradient, subtitle, textColor 
 const Badge = ({ children, color = "gray" }) => {
   const map = {
     yellow: "bg-amber-100 text-amber-700 border-amber-200",
-    blue:   "bg-blue-100 text-blue-700 border-blue-200",
-    green:  "bg-emerald-100 text-emerald-700 border-emerald-200",
-    red:    "bg-rose-100 text-rose-700 border-rose-200",
-    gray:   "bg-gray-100 text-gray-700 border-gray-200",
+    blue: "bg-blue-100 text-blue-700 border-blue-200",
+    green: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    red: "bg-rose-100 text-rose-700 border-rose-200",
+    gray: "bg-gray-100 text-gray-700 border-gray-200",
     orange: "bg-orange-100 text-orange-700 border-orange-200",
   };
   return (
@@ -71,19 +72,20 @@ const CATEGORY_COLORS = ["#f97316", "#3b82f6", "#8b5cf6", "#ec4899", "#10b981", 
 
 // ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 const Dashboard = () => {
-  const [timeRange, setTimeRange]       = useState("month");
-  const [kpi, setKpi]                   = useState(null);
+  const [timeRange, setTimeRange] = useState("month");
+  const [kpi, setKpi] = useState(null);
   const [revenueChart, setRevenueChart] = useState([]);
-  const [compareData, setCompareData]   = useState(null);
+  const [compareData, setCompareData] = useState(null);
   const [categoryData, setCategoryData] = useState([]);
-  const [statusData, setStatusData]     = useState([]);
-  const [prodStats, setProdStats]       = useState({ lowStock: [], topSelling: [] });
-  const [customers, setCustomers]       = useState([]);
+  const [statusData, setStatusData] = useState([]);
+  const [prodStats, setProdStats] = useState({ lowStock: [], topSelling: [] });
+  const [customers, setCustomers] = useState([]);
   const [latestOrders, setLatestOrders] = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [isCompare, setIsCompare]       = useState(false);
-  const [year1, setYear1]               = useState(new Date().getFullYear());
-  const [year2, setYear2]               = useState(new Date().getFullYear() - 1);
+  const [loading, setLoading] = useState(true);
+  const [isCompare, setIsCompare] = useState(false);
+  const [year1, setYear1] = useState(new Date().getFullYear());
+  const [year2, setYear2] = useState(new Date().getFullYear() - 1);
+  const [categoryTab, setCategoryTab] = useState("revenue"); // 'revenue' | 'sold' | 'orders'
 
   useEffect(() => {
     const fetchKPI = async () => {
@@ -111,22 +113,17 @@ const Dashboard = () => {
 
         setRevenueChart(resRev.data.map(item => ({
           ...item,
-          revenue: item.revenue / 1000000 // Convert to millions
+          revenue: item.revenue / 1000000, // Convert to millions
+          aov: item.aov / 1000,            // Convert to thousands (k)
         })));
 
         setCategoryData(
-          resCat.data.map((i, idx) => ({ name: i.name, value: i.value, color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length] }))
+          resCat.data.map((i, idx) => ({ ...i, color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length] }))
         );
 
-        const statusMap  = ["Chờ xác nhận", "Đang giao", "Hoàn thành", "Đã hủy"];
-        const colorMap   = ["#fbbf24", "#3b82f6", "#10b981", "#ef4444"]; // amber, blue, emerald, red
-        setStatusData(
-          resStatus.data.map((i, idx) => ({
-            name: statusMap[i._id] || "Khác",
-            value: i.value,
-            color: colorMap[i._id] || "#94a3b8",
-          }))
-        );
+        setStatusData(resCat.data ? resStatus.data : []);
+        // statusData now returned with name, color from backend
+        setStatusData(resStatus.data);
 
         setProdStats(resProd.data);
         setCustomers(resCus.data);
@@ -147,7 +144,7 @@ const Dashboard = () => {
         const res = await userRequest.get(
           `/stats/revenue-comparison?year1=${year1}&year2=${year2}`
         );
-        
+
         // Format for Recharts BarChart
         const formatted = Array.from({ length: 12 }, (_, i) => ({
           month: `T${i + 1}`,
@@ -198,11 +195,10 @@ const Dashboard = () => {
             <button
               key={t.value}
               onClick={() => setTimeRange(t.value)}
-              className={`rounded-lg px-4 py-2 text-xs font-bold transition-all ${
-                timeRange === t.value
+              className={`rounded-lg px-4 py-2 text-xs font-bold transition-all ${timeRange === t.value
                   ? "bg-white text-orange-600 shadow-md ring-1 ring-orange-200"
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-              }`}
+                }`}
             >
               {t.label}
             </button>
@@ -264,14 +260,12 @@ const Dashboard = () => {
                   Chế độ so sánh năm
                 </span>
                 <div
-                  className={`relative h-6 w-11 rounded-full transition-colors shadow-inner ${
-                    isCompare ? "bg-orange-500" : "bg-gray-200"
-                  }`}
+                  className={`relative h-6 w-11 rounded-full transition-colors shadow-inner ${isCompare ? "bg-orange-500" : "bg-gray-200"
+                    }`}
                 >
                   <div
-                    className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-transform ${
-                      isCompare ? "translate-x-6" : "translate-x-1"
-                    }`}
+                    className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-transform ${isCompare ? "translate-x-6" : "translate-x-1"
+                      }`}
                   />
                 </div>
               </button>
@@ -303,32 +297,41 @@ const Dashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={compareData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b', fontWeight: 600}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b', fontWeight: 600}} />
-                  <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                  <Legend iconType="circle" wrapperStyle={{fontSize: '12px', fontWeight: 600, paddingTop: '10px'}} />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} />
+                  <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', fontWeight: 600, paddingTop: '10px' }} />
                   <Bar dataKey="year1" name={`Năm ${year1}`} fill="#f97316" radius={[4, 4, 0, 0]} barSize={24} />
                   <Bar dataKey="year2" name={`Năm ${year2}`} fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <ComposedChart data={revenueChart} margin={{ top: 10, right: 30, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b', fontWeight: 600}} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b', fontWeight: 600}} />
-                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b', fontWeight: 600}} />
-                  <RechartsTooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                  <Legend iconType="circle" wrapperStyle={{fontSize: '12px', fontWeight: 600, paddingTop: '10px'}} />
-                  <Area yAxisId="left" type="monotone" dataKey="revenue" name="Doanh thu (Tr)" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" activeDot={{r: 6, strokeWidth: 0, fill: '#f97316'}} />
-                  <Area yAxisId="right" type="monotone" dataKey="orders" name="Đơn hàng" stroke="#3b82f6" strokeWidth={3} fill="none" activeDot={{r: 6, strokeWidth: 0, fill: '#3b82f6'}} />
-                </AreaChart>
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} label={{ value: 'Tr.đ', angle: -90, position: 'insideLeft', offset: 20, style: { fill: '#f97316', fontSize: 10 } }} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} label={{ value: 'Đơn', angle: 90, position: 'insideRight', style: { fill: '#3b82f6', fontSize: 10 } }} />
+                  <YAxis yAxisId="right2" orientation="right" hide />
+                  <RechartsTooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value, name) => {
+                      if (name === 'Doanh thu (Tr.đ)') return [`${value.toFixed(1)} Tr.đ`, name];
+                      if (name === 'AOV (nghìn đ)') return [`${value.toFixed(0)}k đ`, name];
+                      return [value, name];
+                    }}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', fontWeight: 600, paddingTop: '10px' }} />
+                  <Area yAxisId="left" type="monotone" dataKey="revenue" name="Doanh thu (Tr.đ)" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" activeDot={{ r: 6, strokeWidth: 0 }} />
+                  <Bar yAxisId="right" dataKey="orders" name="Số đơn" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={16} opacity={0.7} />
+                  <Line yAxisId="right2" type="monotone" dataKey="aov" name="AOV (nghìn đ)" stroke="#8b5cf6" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+                </ComposedChart>
               </ResponsiveContainer>
             )}
           </div>
@@ -338,37 +341,45 @@ const Dashboard = () => {
         <div className="flex flex-col gap-6">
           {/* Tỷ trọng danh mục */}
           <div className="flex-1 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="mb-4 text-sm font-extrabold text-gray-900 flex items-center gap-2">
-              <FaLayerGroup className="text-violet-500" /> Tỷ trọng thể loại sách
-            </h3>
-            <div className="flex flex-col items-center">
-              <div className="h-[160px] w-full">
-                {categoryData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="value" stroke="none">
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-xs text-gray-400 font-medium">Chưa có dữ liệu</div>
-                )}
-              </div>
-              <div className="mt-2 w-full max-h-[90px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
-                {categoryData.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between py-1 border-b border-gray-50 last:border-0">
-                    <div className="flex items-center gap-2">
-                      <span className="h-3 w-3 rounded-md flex-shrink-0 shadow-sm" style={{ backgroundColor: c.color }} />
-                      <span className="truncate max-w-[120px] text-xs font-semibold text-gray-600">{c.name}</span>
-                    </div>
-                    <span className="font-bold text-gray-900 text-xs">{formatCurrency(c.value)} ₫</span>
-                  </div>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                <FaChartBar className="text-violet-500" /> Doanh thu theo thể loại
+              </h3>
+              <div className="flex gap-1">
+                {[["revenue", "Doanh thu"], ["sold", "Số bán"], ["orders", "Số đơn"]].map(([key, label]) => (
+                  <button key={key} onClick={() => setCategoryTab(key)}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${categoryTab === key ? "bg-violet-600 text-white shadow" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                      }`}>{label}</button>
                 ))}
               </div>
+            </div>
+            <div className="h-[200px] w-full">
+              {categoryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[...categoryData].sort((a, b) => (b[categoryTab] || 0) - (a[categoryTab] || 0)).slice(0, 6)}
+                    layout="vertical"
+                    margin={{ top: 0, right: 10, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }}
+                      tickFormatter={v => categoryTab === 'revenue' ? `${(v / 1000000).toFixed(0)}tr` : v} />
+                    <YAxis type="category" dataKey="name" width={80} axisLine={false} tickLine={false}
+                      tick={{ fontSize: 10, fill: '#374151', fontWeight: 600 }} />
+                    <RechartsTooltip
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgb(0 0 0/0.1)', fontSize: '12px' }}
+                      formatter={(v) => categoryTab === 'revenue' ? [`${(v / 1000000).toFixed(1)} tr.đ`, 'Doanh thu'] : [v, categoryTab === 'sold' ? 'Số bán' : 'Số đơn']}
+                    />
+                    <Bar dataKey={categoryTab} radius={[0, 6, 6, 0]} maxBarSize={20}>
+                      {[...categoryData].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-xs text-gray-400 font-medium">Chưa có dữ liệu</div>
+              )}
             </div>
           </div>
 
@@ -377,34 +388,20 @@ const Dashboard = () => {
             <h3 className="mb-4 text-sm font-extrabold text-gray-900 flex items-center gap-2">
               <FaBoxOpen className="text-emerald-500" /> Tình trạng đơn hàng
             </h3>
-            <div className="flex items-center gap-4">
-              <div className="h-[120px] w-[120px] flex-shrink-0">
-                {statusData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={statusData} cx="50%" cy="50%" innerRadius={0} outerRadius={55} dataKey="value" stroke="none">
-                        {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-xs text-gray-400 font-medium">Chưa có dữ liệu</div>
-                )}
-              </div>
-              <div className="flex-1 space-y-2">
-                {statusData.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between bg-gray-50 px-3 py-1.5 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full shadow-sm" style={{ background: s.color }} />
-                      <span className="text-[11px] font-bold text-gray-600">{s.name}</span>
+            <div className="space-y-2">
+              {statusData.length > 0 ? statusData.map((s, i) => {
+                const total = statusData.reduce((acc, x) => acc + x.value, 0);
+                const pct = total > 0 ? ((s.value / total) * 100).toFixed(0) : 0;
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-[10px] font-bold text-gray-500 w-[90px] flex-shrink-0 truncate">{s.name}</span>
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: s.color }} />
                     </div>
-                    <span className="text-[11px] font-black text-gray-900">{s.value}</span>
+                    <span className="text-[11px] font-black text-gray-700 w-8 text-right">{s.value}</span>
                   </div>
-                ))}
-              </div>
+                );
+              }) : <p className="text-xs text-gray-400 font-medium text-center py-4">Chưa có dữ liệu</p>}
             </div>
           </div>
         </div>
@@ -434,10 +431,9 @@ const Dashboard = () => {
                   prodStats.topSelling.map((p, i) => (
                     <tr key={i} className="hover:bg-orange-50/50 transition-colors group">
                       <td className="flex items-center gap-3 px-4 py-3">
-                        <span className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-[11px] font-black shadow-sm ${
-                            i === 0 ? "bg-amber-100 text-amber-600" : 
+                        <span className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-[11px] font-black shadow-sm ${i === 0 ? "bg-amber-100 text-amber-600" :
                             i === 1 ? "bg-gray-200 text-gray-600" :
-                            i === 2 ? "bg-orange-100 text-orange-700" : "bg-gray-50 text-gray-400"
+                              i === 2 ? "bg-orange-100 text-orange-700" : "bg-gray-50 text-gray-400"
                           }`}
                         >
                           {i + 1}
@@ -465,7 +461,7 @@ const Dashboard = () => {
 
         {/* Cột phải */}
         <div className="flex flex-col gap-6">
-          
+
           {/* Low Stock Alert */}
           <div className="rounded-2xl border border-red-100 bg-white shadow-sm overflow-hidden flex-1 flex flex-col">
             <div className="flex items-center justify-between border-b border-red-50 bg-rose-50/50 px-6 py-4">
@@ -538,7 +534,7 @@ const Dashboard = () => {
           </div>
 
         </div>
-    </div>
+      </div>
 
       {/* ── ĐƠN HÀNG GẦN ĐÂY ── */}
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
@@ -575,7 +571,7 @@ const Dashboard = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right text-xs text-gray-400 font-medium">
-                      {new Date(order.createdAt).toLocaleDateString("vi-VN")} {new Date(order.createdAt).toLocaleTimeString("vi-VN", {hour: '2-digit', minute: '2-digit'})}
+                      {new Date(order.createdAt).toLocaleDateString("vi-VN")} {new Date(order.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
                     </td>
                   </tr>
                 );

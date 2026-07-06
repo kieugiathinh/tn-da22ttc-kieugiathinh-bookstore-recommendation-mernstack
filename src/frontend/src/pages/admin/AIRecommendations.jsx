@@ -54,6 +54,7 @@ const AdminRecommendations = () => {
   // States cho Thống kê (Biểu đồ)
   const [globalStats, setGlobalStats] = useState([]);
   const [userStats, setUserStats] = useState([]);
+  const [recFunnel, setRecFunnel] = useState(null);
 
   const fetchHealth = async () => {
     try {
@@ -92,6 +93,17 @@ const AdminRecommendations = () => {
       }
     };
     fetchGlobalStats();
+
+    // Lấy Recommendation Funnel
+    const fetchRecFunnel = async () => {
+      try {
+        const res = await userRequest.get("/stats/recommendation-funnel");
+        setRecFunnel(res.data);
+      } catch (err) {
+        console.error("Lỗi lấy recommendation funnel", err);
+      }
+    };
+    fetchRecFunnel();
   }, []);
 
   const handleRetrain = async () => {
@@ -195,6 +207,41 @@ const AdminRecommendations = () => {
             <ul className="list-disc ml-5 text-sm text-rose-700 font-medium space-y-1">
               {health.errors.map((err, i) => <li key={i}>{err}</li>)}
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* ── RECOMMENDATION FUNNEL ── */}
+      {recFunnel && (
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h2 className="text-lg font-extrabold text-gray-900 mb-1 flex items-center gap-2">
+            <FaChartBar className="text-purple-500" /> Hiệu Quả Gợi Ý AI
+          </h2>
+          <p className="text-sm text-gray-400 font-medium mb-5">Funnel: Khách xem sách từ gợi ý → Thêm giỏ → Mua. Chứng minh giá trị của thuật toán cá nhân hóa.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {[
+              { label: "Xem từ Gợi Ý", count: recFunnel.funnel[0]?.count, fill: "#8b5cf6", icon: "👁️" },
+              { label: "Thêm giỏ (từ GY)", count: recFunnel.funnel[1]?.count, fill: "#f59e0b", icon: "🛒" },
+              { label: "Mua (từ GY)", count: recFunnel.funnel[2]?.count, fill: "#10b981", icon: "✅" },
+            ].map((item, i) => (
+              <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-center">
+                <p className="text-2xl mb-1">{item.icon}</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{item.label}</p>
+                <p className="text-3xl font-black" style={{color: item.fill}}>{(item.count || 0).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-4">
+            {[
+              { label: "Xem → Giỏ hàng", rate: recFunnel.viewToCart, color: "text-amber-600", bg: "bg-amber-50" },
+              { label: "Giỏ → Mua", rate: recFunnel.cartToPurchase, color: "text-emerald-600", bg: "bg-emerald-50" },
+              { label: "Tổng: Xem → Mua", rate: recFunnel.viewToPurchase, color: "text-purple-600", bg: "bg-purple-50" },
+            ].map((item, i) => (
+              <div key={i} className={`${item.bg} rounded-xl p-3 text-center`}>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{item.label}</p>
+                <p className={`text-2xl font-black ${item.color} mt-1`}>{item.rate}%</p>
+              </div>
+            ))}
           </div>
         </div>
       )}

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { userRequest } from "../../requestMethods";
 import { toast } from "react-toastify";
-import { FaHistory, FaFilter, FaSync, FaEye, FaCartPlus, FaShoppingCart, FaStar, FaSearch, FaTrash, FaChevronDown, FaHeart } from "react-icons/fa";
+import { FaHistory, FaFilter, FaSync, FaEye, FaCartPlus, FaShoppingCart, FaStar, FaSearch, FaTrash, FaChevronDown, FaHeart, FaFunnelDollar, FaArrowRight } from "react-icons/fa";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 import Pagination from "../../components/admin/Pagination";
 import PageHeader from "../../components/admin/PageHeader";
 import { format } from "timeago.js";
@@ -43,6 +44,7 @@ const AIInteractions = () => {
   const [limit, setLimit] = useState(15);
 
   const [trendingSearches, setTrendingSearches] = useState([]);
+  const [funnel, setFunnel] = useState(null);
 
   const fetchInteractions = async () => {
     try {
@@ -67,6 +69,15 @@ const AIInteractions = () => {
     }
   };
 
+  const fetchFunnel = async () => {
+    try {
+      const res = await userRequest.get("/stats/interaction-funnel");
+      setFunnel(res.data);
+    } catch (error) {
+      console.error("Lỗi lấy funnel:", error);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa hành vi này không?")) {
       try {
@@ -81,6 +92,7 @@ const AIInteractions = () => {
 
   useEffect(() => {
     fetchTrending();
+    fetchFunnel();
   }, []);
 
   useEffect(() => {
@@ -112,6 +124,51 @@ const AIInteractions = () => {
           </button>
         }
       />
+
+      {/* ── FUNNEL CHUYỂN ĐỔI ── */}
+      {funnel && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="bg-indigo-100 p-2 rounded-lg"><FaFunnelDollar className="text-indigo-600 text-lg" /></div>
+            <div>
+              <h2 className="font-extrabold text-gray-900">Funnel Chuyển Đổi: Xem → Giỏ → Mua</h2>
+              <p className="text-xs text-gray-400 font-medium">Tỷ lệ chuyển đổi giữa các bước quan trọng trong hành trình mua hàng</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bar chart */}
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={funnel.funnel} margin={{top: 5, right: 10, left: -10, bottom: 5}}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="step" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#374151', fontWeight: 600}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} />
+                  <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgb(0 0 0/0.1)'}} />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={60}>
+                    {funnel.funnel.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Conversion metrics */}
+            <div className="flex flex-col justify-center gap-4">
+              {[
+                { label: "Xem → Thêm giỏ", rate: funnel.viewToCart, from: funnel.funnel[0]?.count, to: funnel.funnel[1]?.count, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+                { label: "Giỏ → Mua", rate: funnel.cartToPurchase, from: funnel.funnel[1]?.count, to: funnel.funnel[2]?.count, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
+                { label: "Tổng: Xem → Mua", rate: funnel.viewToPurchase, from: funnel.funnel[0]?.count, to: funnel.funnel[2]?.count, color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-100" },
+              ].map((item, i) => (
+                <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${item.bg}`}>
+                  <div>
+                    <p className="text-xs font-bold text-gray-600">{item.label}</p>
+                    <p className="text-[11px] text-gray-400">{(item.from || 0).toLocaleString()} → {(item.to || 0).toLocaleString()} lượt</p>
+                  </div>
+                  <span className={`text-2xl font-black ${item.color}`}>{item.rate}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── TRENDING SEARCHES ── */}
       {trendingSearches && trendingSearches.length > 0 && (

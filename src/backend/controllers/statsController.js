@@ -63,3 +63,13 @@ export const getFlashSaleStatsHandler = asyncHandler(async (req, res) => {
   const data = await statsService.getFlashSaleStatsAnalytics();
   res.status(200).json(data);
 });
+
+export const getInteractionFunnelHandler = asyncHandler(async (req, res) => {
+  const data = await statsService.getInteractionFunnel();
+  res.status(200).json(data);
+});
+
+export const getRecommendationFunnelHandler = asyncHandler(async (req, res) => {
+  const data = await statsService.getRecommendationFunnel();
+  res.status(200).json(data);
+});

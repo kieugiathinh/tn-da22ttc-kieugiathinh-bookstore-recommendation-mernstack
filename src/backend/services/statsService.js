@@ -96,7 +96,7 @@ const getRevenueChart = async () => {
   const end = new Date(year, 11, 31, 23, 59, 59);
 
   const data = await Order.aggregate([
-    { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 3 } } },
+    { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 5 } } },
     {
       $group: {
         _id: { $month: "$createdAt" },
@@ -109,10 +109,13 @@ const getRevenueChart = async () => {
 
   return Array.from({ length: 12 }, (_, i) => {
     const found = data.find((d) => d._id === i + 1);
+    const revenue = found ? found.total : 0;
+    const orders = found ? found.count : 0;
     return {
       month: `T${i + 1}`,
-      revenue: found ? found.total : 0,
-      orders: found ? found.count : 0,
+      revenue,
+      orders,
+      aov: orders > 0 ? Math.round(revenue / orders) : 0,
     };
   });
 };
@@ -138,11 +141,25 @@ const getRevenueComparison = async (year1, year2) => {
 };
 
 const getCategoryStats = async () => {
-  return await Product.aggregate([
+  // Aggregate doanh thu thực tế theo danh mục từ đơn hàng đã giao
+  const revenueByCategory = await Order.aggregate([
+    { $match: { status: 4 } }, // chỉ đơn đã giao
+    { $unwind: "$products" },
+    {
+      $lookup: {
+        from: "products",
+        localField: "products.productId",
+        foreignField: "_id",
+        as: "productInfo",
+      },
+    },
+    { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
     {
       $group: {
-        _id: "$category",
-        count: { $sum: 1 },
+        _id: "$productInfo.category",
+        revenue: { $sum: { $multiply: ["$products.price", "$products.quantity"] } },
+        sold: { $sum: "$products.quantity" },
+        orders: { $addToSet: "$_id" },
       },
     },
     {
@@ -153,23 +170,61 @@ const getCategoryStats = async () => {
         as: "catInfo",
       },
     },
-    { $unwind: "$catInfo" },
+    { $unwind: { path: "$catInfo", preserveNullAndEmptyArrays: true } },
     {
       $project: {
         _id: 0,
-        name: "$catInfo.name",
-        value: "$count",
+        name: { $ifNull: ["$catInfo.name", "Chưa phân loại"] },
+        value: "$revenue", // giữ 'value' để tương thích Home.jsx
+        revenue: "$revenue",
+        sold: "$sold",
+        orders: { $size: "$orders" },
       },
     },
-    { $sort: { value: -1 } },
+    { $sort: { revenue: -1 } },
+    { $limit: 10 },
   ]);
+
+  // Nếu không có doanh thu, fallback theo số sách
+  if (revenueByCategory.length === 0) {
+    return await Product.aggregate([
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $lookup: { from: "categories", localField: "_id", foreignField: "_id", as: "catInfo" } },
+      { $unwind: "$catInfo" },
+      { $project: { _id: 0, name: "$catInfo.name", value: "$count", revenue: 0, sold: 0, orders: 0 } },
+      { $sort: { value: -1 } },
+    ]);
+  }
+  return revenueByCategory;
 };
 
 const getOrderStatusStats = async () => {
-  return await Order.aggregate([
+  const STATUS_LABELS = {
+    0: "Chờ xác nhận",
+    1: "Đã xác nhận",
+    2: "Đang chuẩn bị",
+    3: "Đang giao",
+    4: "Đã giao",
+    5: "Đã hủy",
+  };
+  const STATUS_COLORS = {
+    0: "#fbbf24", // amber
+    1: "#3b82f6", // blue
+    2: "#8b5cf6", // violet
+    3: "#06b6d4", // cyan
+    4: "#10b981", // emerald
+    5: "#ef4444", // red
+  };
+  const raw = await Order.aggregate([
     { $group: { _id: "$status", value: { $sum: 1 } } },
     { $sort: { _id: 1 } },
   ]);
+  return raw.map(item => ({
+    _id: item._id,
+    name: STATUS_LABELS[item._id] ?? "Khác",
+    value: item.value,
+    color: STATUS_COLORS[item._id] ?? "#94a3b8",
+  }));
 };
 
 const getProductAnalytics = async () => {
@@ -589,6 +644,63 @@ const getProductStatsAnalytics = async () => {
     .select("title author img rating numReviews sold originalPrice discountedPrice category")
     .lean();
 
+  // 8. Sách cần nhập thêm: sold cao + tồn thấp + rating ổn
+  const restockRecommended = await Product.find({
+    countInStock: { $gt: 0, $lte: 15 },
+    sold: { $gt: 5 },
+    rating: { $gte: 3.5 },
+    status: "active",
+  })
+    .sort({ sold: -1 })
+    .limit(10)
+    .populate("category", "name")
+    .select("title author img sold countInStock originalPrice discountedPrice rating numReviews category")
+    .lean();
+
+  // 9. Sách view cao nhưng bán thấp (tỉ lệ chuyển đổi kém)
+  const highViewLowSold = await Product.find({
+    viewCount: { $gt: 10 },
+    status: "active",
+  })
+    .sort({ viewCount: -1 })
+    .limit(20)
+    .populate("category", "name")
+    .select("title author img sold viewCount countInStock originalPrice discountedPrice rating numReviews category")
+    .lean();
+  // Tính conversion rate và lọc những sách có CR thấp
+  const lowConversionProducts = highViewLowSold
+    .map(p => ({
+      ...p,
+      conversionRate: p.viewCount > 0 ? ((p.sold / p.viewCount) * 100).toFixed(1) : "0.0",
+    }))
+    .filter(p => parseFloat(p.conversionRate) < 5) // Dưới 5% conversion
+    .slice(0, 10);
+
+  // 10. Sách rating thấp (cần kiểm tra)
+  const lowRatedProducts = await Product.find({
+    numReviews: { $gte: 3 },
+    rating: { $gt: 0, $lt: 3.5 },
+    status: "active",
+  })
+    .sort({ rating: 1, numReviews: -1 })
+    .limit(10)
+    .populate("category", "name")
+    .select("title author img sold rating numReviews countInStock originalPrice discountedPrice category")
+    .lean();
+
+  // 11. Đề xuất Flash Sale: tồn cao + bán chậm + rating ổn
+  const flashSaleRecommended = await Product.find({
+    countInStock: { $gt: 20 },
+    sold: { $lte: 5 },
+    rating: { $gte: 3.0 },
+    status: "active",
+  })
+    .sort({ countInStock: -1 })
+    .limit(10)
+    .populate("category", "name")
+    .select("title author img sold countInStock originalPrice discountedPrice rating numReviews category createdAt")
+    .lean();
+
   return {
     totalProducts,
     outOfStock,
@@ -601,6 +713,10 @@ const getProductStatsAnalytics = async () => {
     needRestock,
     categoryDistribution,
     topRated,
+    restockRecommended,
+    lowConversionProducts,
+    lowRatedProducts,
+    flashSaleRecommended,
   };
 };
 
@@ -676,6 +792,51 @@ const getFlashSaleStatsAnalytics = async () => {
   };
 };
 
+// ─── FUNNEL TƯƠNG TÁC (View → Cart → Purchase) ───────────────────────────────
+const getInteractionFunnel = async () => {
+  const UserInteraction = (await import("../models/userInteractionModel.js")).default;
+  const counts = await UserInteraction.aggregate([
+    { $group: { _id: "$interactionType", count: { $sum: 1 } } },
+  ]);
+  const map = {};
+  counts.forEach(c => { map[c._id] = c.count; });
+
+  const views = map["view"] || 0;
+  const carts = map["add_to_cart"] || 0;
+  const purchases = map["purchase"] || 0;
+
+  return {
+    funnel: [
+      { step: "Xem sản phẩm", count: views, fill: "#3b82f6" },
+      { step: "Thêm giỏ hàng", count: carts, fill: "#f59e0b" },
+      { step: "Mua thành công", count: purchases, fill: "#10b981" },
+    ],
+    viewToCart: views > 0 ? ((carts / views) * 100).toFixed(1) : "0.0",
+    cartToPurchase: carts > 0 ? ((purchases / carts) * 100).toFixed(1) : "0.0",
+    viewToPurchase: views > 0 ? ((purchases / views) * 100).toFixed(1) : "0.0",
+    allCounts: map,
+  };
+};
+
+// ─── FUNNEL GỢI Ý (Recommendation → Cart → Purchase) ────────────────────────
+const getRecommendationFunnel = async () => {
+  const UserInteraction = (await import("../models/userInteractionModel.js")).default;
+  const recViews = await UserInteraction.countDocuments({ source: "recommendation" });
+  const recCarts = await UserInteraction.countDocuments({ source: "recommendation", interactionType: "add_to_cart" });
+  const recPurchases = await UserInteraction.countDocuments({ source: "recommendation", interactionType: "purchase" });
+
+  return {
+    funnel: [
+      { step: "Xem từ Gợi ý", count: recViews, fill: "#8b5cf6" },
+      { step: "Thêm giỏ (từ GY)", count: recCarts, fill: "#f59e0b" },
+      { step: "Mua (từ GY)", count: recPurchases, fill: "#10b981" },
+    ],
+    viewToCart: recViews > 0 ? ((recCarts / recViews) * 100).toFixed(1) : "0.0",
+    cartToPurchase: recCarts > 0 ? ((recPurchases / recCarts) * 100).toFixed(1) : "0.0",
+    viewToPurchase: recViews > 0 ? ((recPurchases / recViews) * 100).toFixed(1) : "0.0",
+  };
+};
+
 export {
   getDashboardStats,
   getRevenueChart,
@@ -689,4 +850,6 @@ export {
   getOrderAnalytics,
   getProductStatsAnalytics,
   getFlashSaleStatsAnalytics,
+  getInteractionFunnel,
+  getRecommendationFunnel,
 };

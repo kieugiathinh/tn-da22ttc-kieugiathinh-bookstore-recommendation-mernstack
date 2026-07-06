@@ -5,7 +5,8 @@ import {
 } from "recharts";
 import {
   FaBook, FaBoxOpen, FaFire, FaSnowflake,
-  FaExclamationTriangle, FaStar, FaSync, FaCrown, FaLayerGroup
+  FaExclamationTriangle, FaStar, FaSync, FaCrown, FaLayerGroup,
+  FaEye, FaTag, FaArrowDown
 } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import { Link } from "react-router-dom";
@@ -186,7 +187,7 @@ const ProductStats = () => {
         </div>
       </div>
 
-      {/* ── 4 BẢNG ── */}
+      {/* ── 4 BẢNG GỐC ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SectionCard icon={FaFire} iconClass="text-red-500" title="Top bán chạy" badge={`Top ${data?.topSelling?.length ?? 0}`} bgHeader="bg-gradient-to-r from-red-50 to-white">
           {data?.topSelling?.length > 0 ? data.topSelling.map((p, i) => <ProductRow key={p._id} p={p} rank={i + 1} showStock showSold />) : <div className="py-10 text-center text-sm text-gray-400">Chưa có dữ liệu</div>}
@@ -200,6 +201,99 @@ const ProductStats = () => {
         <SectionCard icon={FaStar} iconClass="text-amber-400" title="Sách đánh giá cao nhất" badge="Rating ≥ 4⭐" bgHeader="bg-gradient-to-r from-yellow-50 to-white">
           {data?.topRated?.length > 0 ? data.topRated.map((p, i) => <ProductRow key={p._id} p={p} rank={i + 1} showStock showSold showRating />) : <div className="py-10 text-center text-sm text-gray-400">Chưa có đánh giá</div>}
         </SectionCard>
+      </div>
+
+      {/* ── 4 NHÓM THÔNG MINH MỚI (P1) ── */}
+      <div className="mt-2">
+        <h2 className="text-lg font-extrabold text-gray-900 mb-4 flex items-center gap-2">
+          <span className="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500" />
+          Phân tích Thông Minh (Smart Insights)
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Nhóm 1: Cần nhập ngay - Sold cao + tồn thấp + rating tốt */}
+          <SectionCard icon={FaArrowDown} iconClass="text-indigo-500" title="📦 Xuất nhập thêm ngay" badge={`${data?.restockRecommended?.length ?? 0} sách`} bgHeader="bg-gradient-to-r from-indigo-50 to-white">
+            {data?.restockRecommended?.length > 0 ? (
+              data.restockRecommended.map((p, i) => (
+                <div key={p._id} className="flex items-center gap-3 px-5 py-3 hover:bg-indigo-50/30 transition-colors border-b border-gray-50 last:border-0">
+                  <span className="text-[11px] font-black text-indigo-600 w-6">#{i+1}</span>
+                  <img src={p.img} alt="" className="w-9 h-12 rounded object-cover border border-gray-200" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold text-gray-800 truncate">{p.title}</p>
+                    <div className="flex gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">🔥 {p.sold} bán</span>
+                      <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">⏰ Tồn: {p.countInStock}</span>
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">⭐ {p.rating?.toFixed(1)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : <div className="py-10 text-center text-sm text-emerald-500 font-bold">📫 Kho hàng đang ổn!</div>}
+          </SectionCard>
+
+          {/* Nhóm 2: View cao nhưng bán thấp */}
+          <SectionCard icon={FaEye} iconClass="text-cyan-500" title="👁️ View Cao / Mua Thấp" badge="Tỉ lệ < 5%" bgHeader="bg-gradient-to-r from-cyan-50 to-white">
+            {data?.lowConversionProducts?.length > 0 ? (
+              data.lowConversionProducts.map((p, i) => (
+                <div key={p._id} className="flex items-center gap-3 px-5 py-3 hover:bg-cyan-50/30 transition-colors border-b border-gray-50 last:border-0">
+                  <span className="text-[11px] font-black text-cyan-600 w-6">#{i+1}</span>
+                  <img src={p.img} alt="" className="w-9 h-12 rounded object-cover border border-gray-200" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold text-gray-800 truncate">{p.title}</p>
+                    <div className="flex gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">👁️ {p.viewCount} lượt xem</span>
+                      <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{p.sold} mua</span>
+                      <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded">CR: {p.conversionRate}%</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-0.5 italic">Gợi ý: Kiểm tra giá, ảnh, mô tả hoặc review</p>
+                  </div>
+                </div>
+              ))
+            ) : <div className="py-10 text-center text-sm text-emerald-500 font-bold">🎉 Tất cả đếu chuyển đổi tốt!</div>}
+          </SectionCard>
+
+          {/* Nhóm 3: Đề xuất Flash Sale */}
+          <SectionCard icon={FaTag} iconClass="text-rose-500" title="🔥 Đề Xuất Flash Sale" badge="Tồn cao, bán chậm" bgHeader="bg-gradient-to-r from-rose-50 to-white">
+            {data?.flashSaleRecommended?.length > 0 ? (
+              data.flashSaleRecommended.map((p, i) => (
+                <div key={p._id} className="flex items-center gap-3 px-5 py-3 hover:bg-rose-50/30 transition-colors border-b border-gray-50 last:border-0">
+                  <span className="text-[11px] font-black text-rose-600 w-6">#{i+1}</span>
+                  <img src={p.img} alt="" className="w-9 h-12 rounded object-cover border border-gray-200" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold text-gray-800 truncate">{p.title}</p>
+                    <div className="flex gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">📦 Tồn: {p.countInStock}</span>
+                      <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{p.sold} bán</span>
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">⭐ {p.rating?.toFixed(1)}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-0.5 italic">Nên xả kho để thu hồi vốn</p>
+                  </div>
+                </div>
+              ))
+            ) : <div className="py-10 text-center text-sm text-emerald-500 font-bold">🎉 Không có sách cần xả kho!</div>}
+          </SectionCard>
+
+          {/* Nhóm 4: Sách rating thấp */}
+          <SectionCard icon={FaExclamationTriangle} iconClass="text-red-500" title="⚠️ Sách Cần Kiểm Tra" badge="Rating < 3.5⭐" bgHeader="bg-gradient-to-r from-red-50 to-white">
+            {data?.lowRatedProducts?.length > 0 ? (
+              data.lowRatedProducts.map((p, i) => (
+                <div key={p._id} className="flex items-center gap-3 px-5 py-3 hover:bg-red-50/30 transition-colors border-b border-gray-50 last:border-0">
+                  <span className="text-[11px] font-black text-red-600 w-6">#{i+1}</span>
+                  <img src={p.img} alt="" className="w-9 h-12 rounded object-cover border border-gray-200" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold text-gray-800 truncate">{p.title}</p>
+                    <div className="flex gap-2 mt-1">
+                      <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded">⭐ {p.rating?.toFixed(1)}/5</span>
+                      <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{p.numReviews} review</span>
+                      <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{p.sold} bán</span>
+                    </div>
+                    <p className="text-[10px] text-red-400 mt-0.5 italic">Cần kiểm tra đánh giá xấu</p>
+                  </div>
+                </div>
+              ))
+            ) : <div className="py-10 text-center text-sm text-emerald-500 font-bold">🎉 Tất cả sách có rating tốt!</div>}
+          </SectionCard>
+        </div>
       </div>
     </div>
   );
