@@ -49,6 +49,13 @@ const Product = () => {
           discountedPrice: productRes.data.discountedPrice,
           countInStock: productRes.data.countInStock,
           sold: productRes.data.sold || 0,
+          language: productRes.data.language || "vi",
+          ageGroup: productRes.data.ageGroup || "all",
+          publishedYear: productRes.data.publishedYear || "",
+          pageCount: productRes.data.pageCount || "",
+          tags: productRes.data.tags && Array.isArray(productRes.data.tags) 
+            ? productRes.data.tags.join(", ") 
+            : "",
         });
       } catch (error) {
         console.error("Lỗi:", error);
@@ -140,6 +147,13 @@ const Product = () => {
         originalPrice: Number(inputs.originalPrice),
         discountedPrice: Number(inputs.discountedPrice),
         sold: Number(inputs.sold),
+        pageCount: inputs.pageCount ? Number(inputs.pageCount) : null,
+        publishedYear: inputs.publishedYear ? Number(inputs.publishedYear) : null,
+        language: inputs.language || "vi",
+        ageGroup: inputs.ageGroup || "all",
+        tags: typeof inputs.tags === 'string' 
+          ? inputs.tags.split(",").map(t => t.trim()).filter(Boolean) 
+          : (inputs.tags || [])
       };
 
       await userRequest.put("/products/" + id, updatedProduct);
@@ -220,6 +234,42 @@ const Product = () => {
                   <InputField label="Giá Bìa (VND)" required type="number" name="originalPrice" value={inputs.originalPrice || ""} onChange={handleChange} />
                   <InputField label="Giá Bán (Sau giảm)" type="number" name="discountedPrice" value={inputs.discountedPrice || ""} onChange={handleChange} />
                 </div>
+              </div>
+            </Card>
+
+            {/* CARD THÔNG TIN BỔ SUNG (AI RECOMMENDATION) */}
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-5 border-b border-gray-100 pb-3">Thuộc tính Mở rộng (Hỗ trợ AI Recommendation)</h2>
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <InputField label="Ngôn ngữ" required as="select" name="language" value={inputs.language || "vi"} onChange={handleChange}>
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">Tiếng Anh</option>
+                    <option value="ja">Tiếng Nhật</option>
+                    <option value="zh">Tiếng Trung</option>
+                    <option value="fr">Tiếng Pháp</option>
+                    <option value="other">Khác</option>
+                  </InputField>
+                  <InputField label="Độ tuổi phù hợp" required as="select" name="ageGroup" value={inputs.ageGroup || "all"} onChange={handleChange}>
+                    <option value="all">Mọi lứa tuổi</option>
+                    <option value="children">Trẻ em</option>
+                    <option value="teen">Thanh thiếu niên</option>
+                    <option value="adult">Người lớn (18+)</option>
+                  </InputField>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <InputField label="Năm xuất bản" type="number" name="publishedYear" placeholder="2024" value={inputs.publishedYear || ""} onChange={handleChange} />
+                  <InputField label="Số trang" type="number" name="pageCount" placeholder="300" value={inputs.pageCount || ""} onChange={handleChange} min="1" />
+                </div>
+
+                <InputField 
+                  label="Từ khóa / Tags (Phân cách bằng dấu phẩy)" 
+                  name="tags" 
+                  placeholder="Ví dụ: Tiểu thuyết, Tâm lý, Bestseller 2024" 
+                  value={inputs.tags || ""} 
+                  onChange={handleChange} 
+                />
               </div>
             </Card>
           </div>

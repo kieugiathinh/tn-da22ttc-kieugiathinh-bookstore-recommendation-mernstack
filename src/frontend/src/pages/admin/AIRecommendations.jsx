@@ -13,8 +13,13 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaSearch,
-  FaMicrochip
+  FaMicrochip,
+  FaChartPie,
+  FaChartBar
 } from "react-icons/fa";
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+
+const COLORS = ['#4f46e5', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4'];
 
 // ── METRIC CARD COMPONENT ──
 const MetricCard = ({ title, value, icon: Icon, bgGradient, subtitle }) => (
@@ -40,8 +45,15 @@ const AdminRecommendations = () => {
 
   // States cho Simulator
   const [simUserId, setSimUserId] = useState("");
+  const [simUserIdDisplay, setSimUserIdDisplay] = useState(""); // State hiển thị trong ô search
   const [simResult, setSimResult] = useState(null);
+  const [simHistory, setSimHistory] = useState(null); // Lịch sử hành vi
   const [simLoading, setSimLoading] = useState(false);
+  const [users, setUsers] = useState([]); // Danh sách users cho dropdown
+  
+  // States cho Thống kê (Biểu đồ)
+  const [globalStats, setGlobalStats] = useState([]);
+  const [userStats, setUserStats] = useState([]);
 
   const fetchHealth = async () => {
     try {
@@ -58,6 +70,28 @@ const AdminRecommendations = () => {
 
   useEffect(() => {
     fetchHealth();
+    
+    // Lấy danh sách users cho dropdown
+    const fetchUsers = async () => {
+      try {
+        const res = await userRequest.get("/users");
+        setUsers(res.data);
+      } catch (err) {
+        console.error("Lỗi lấy danh sách users", err);
+      }
+    };
+    fetchUsers();
+
+    // Lấy thống kê toàn cục
+    const fetchGlobalStats = async () => {
+      try {
+        const res = await userRequest.get("/interactions/analytics/categories");
+        setGlobalStats(res.data.data || []);
+      } catch (err) {
+        console.error("Lỗi lấy thống kê toàn hệ thống", err);
+      }
+    };
+    fetchGlobalStats();
   }, []);
 
   const handleRetrain = async () => {
@@ -80,12 +114,23 @@ const AdminRecommendations = () => {
 
     try {
       setSimLoading(true);
-      const res = await userRequest.get(`/recommend/simulator/${simUserId.trim()}?top_k=5`);
-      setSimResult(res.data);
-      toast.success("Đã lấy kết quả giả lập!");
+      
+      // Chạy song song 3 API: Lấy Gợi ý, Lấy Lịch sử hành vi, Lấy Thống kê User
+      const [aiRes, historyRes, statsRes] = await Promise.all([
+        userRequest.get(`/recommend/simulator/${simUserId.trim()}?top_k=12`),
+        userRequest.get(`/interactions?keyword=${simUserId.trim()}&limit=30`),
+        userRequest.get(`/interactions/analytics/categories?userId=${simUserId.trim()}`)
+      ]);
+
+      setSimResult(aiRes.data);
+      setSimHistory(historyRes.data.interactions || []);
+      setUserStats(statsRes.data.data || []);
+      toast.success("Đã lấy kết quả giả lập & hồ sơ!");
     } catch (error) {
       toast.error(error.response?.data?.message || "Lỗi khi lấy dữ liệu giả lập.");
       setSimResult(null);
+      setSimHistory(null);
+      setUserStats([]);
     } finally {
       setSimLoading(false);
     }
@@ -189,28 +234,68 @@ const AdminRecommendations = () => {
         </div>
       </div>
 
+      {/* ── THỐNG KÊ TOÀN CỤC (GLOBAL STATS) ── */}
+      {globalStats && globalStats.length > 0 && (
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mt-6">
+          <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2 mb-4">
+            <FaChartBar className="text-indigo-500" /> Thống Kê Quan Tâm Toàn Hệ Thống
+          </h2>
+          <p className="text-sm text-gray-500 font-medium mb-6 max-w-3xl">
+            Biểu đồ thể hiện tổng số lượt tương tác (xem, giỏ hàng, mua...) của tất cả người dùng phân bổ theo từng thể loại sách. Giúp Admin nắm bắt nhanh xu hướng thị trường hiện tại.
+          </p>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={globalStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
+                <RechartsTooltip 
+                  cursor={{fill: '#f3f4f6'}}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="count" name="Lượt tương tác" fill="#8b5cf6" radius={[6, 6, 0, 0]} maxBarSize={60}>
+                  {globalStats.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {/* ── AI SIMULATOR ── */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mt-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
             <FaRobot className="text-indigo-500" /> Trình Giả Lập Gợi Ý (AI Sandbox)
           </h2>
         </div>
         <p className="text-sm text-gray-500 font-medium mb-6 max-w-3xl">
-          Nhập ID của người dùng để xem hệ thống AI phân tích và đưa ra gợi ý gì cho họ. Nếu người dùng chưa từng tương tác, hệ thống sẽ trả về dự phòng (Cold Start).
+          Chọn người dùng từ danh sách để xem hồ sơ hoạt động (sách đã xem/mua) và kết quả gợi ý tương ứng mà AI phân tích cho họ.
         </p>
 
-        <form onSubmit={handleSimulate} className="flex gap-3 max-w-xl mb-8">
+        <form onSubmit={handleSimulate} className="flex gap-3 max-w-2xl mb-8">
           <div className="relative flex-1">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
             <input
-              type="text"
               required
-              placeholder="Nhập User ID (ví dụ: 6a1330961d23...)"
+              list="users-datalist"
+              placeholder="Nhập tên hoặc email người dùng để tìm kiếm..."
               className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all text-sm font-bold bg-gray-50 focus:bg-white"
-              value={simUserId}
-              onChange={(e) => setSimUserId(e.target.value)}
+              value={simUserIdDisplay}
+              onChange={(e) => {
+                setSimUserIdDisplay(e.target.value);
+                const matched = users.find(u => `${u.fullname} (${u.email})` === e.target.value);
+                if (matched) setSimUserId(matched._id);
+                else setSimUserId("");
+              }}
             />
+            <datalist id="users-datalist">
+              {users.map((u) => (
+                <option key={u._id} value={`${u.fullname} (${u.email})`} />
+              ))}
+            </datalist>
           </div>
           <button
             type="submit"
@@ -224,51 +309,179 @@ const AdminRecommendations = () => {
 
         {/* Kết quả Simulator */}
         {simResult && (
-          <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-            <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex justify-between items-center">
-              <span className="font-extrabold text-gray-800 text-sm">Kết quả cho User: <span className="font-mono text-indigo-600 ml-1">{simUserId}</span></span>
-              <span className={`px-4 py-1.5 text-[11px] uppercase tracking-widest font-black rounded-lg shadow-sm border ${
-                simResult.isColdStart ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-emerald-50 text-emerald-600 border-emerald-200"
-              }`}>
-                {simResult.isColdStart ? "COLD START (Best Seller)" : "PERSONALIZED (AI SVD)"}
-              </span>
-            </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             
-            <div className="p-6 bg-gray-50/30">
-              {simResult.products?.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-                  {simResult.products.map((p, idx) => (
-                    <div key={idx} className="bg-white rounded-xl border border-gray-100 p-4 flex flex-col items-center text-center shadow-sm relative hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300 group">
-                      {/* AI Meta Badge */}
-                      {!simResult.isColdStart && p._aiMeta?.predictedRating && (
-                         <span className="absolute -top-2 -right-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md text-[11px] font-black px-2.5 py-1 rounded-lg transform rotate-3">
-                           {p._aiMeta.predictedRating.toFixed(2)}★
-                         </span>
-                      )}
-                      
-                      <div className="h-32 w-full flex items-center justify-center bg-gray-50 rounded-lg mb-4 overflow-hidden p-2 group-hover:bg-indigo-50 transition-colors">
-                        <img src={p.img} alt={p.title} className="h-full w-auto object-contain drop-shadow-sm group-hover:scale-110 transition-transform" />
-                      </div>
-                      
-                      <h4 className="text-xs font-bold text-gray-800 line-clamp-2 mb-2 min-h-[32px] group-hover:text-indigo-600 transition-colors">{p.title}</h4>
-                      
-                      <div className="mt-auto w-full flex justify-between items-center border-t border-gray-100 pt-3">
-                        <span className="text-[10px] font-black text-gray-500 bg-gray-100 px-2 py-1 rounded-md">#{idx + 1}</span>
-                        <span className="text-sm font-black text-rose-600">
-                          {(p.discountedPrice || p.originalPrice || 0).toLocaleString("vi-VN")} ₫
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                    <FaExclamationTriangle className="text-gray-400 text-2xl" />
+            {/* Cột 1: Hồ Sơ Hành Vi */}
+            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex flex-col h-full">
+              <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                <span className="font-extrabold text-gray-800 text-sm flex items-center gap-2">
+                  <FaHandPointer className="text-indigo-500" /> Hồ Sơ Thao Tác (Quá khứ)
+                </span>
+                <p className="text-xs text-gray-500 mt-1">Các sách khách hàng này đã xem, giỏ hàng, mua gần đây nhất.</p>
+              </div>
+
+              {/* Chart for User */}
+              {userStats && userStats.length > 0 && (
+                <div className="bg-white border-b border-gray-100 p-4">
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <FaChartPie className="text-indigo-400" /> Phân bổ thể loại quan tâm
+                  </p>
+                  <div className="h-[180px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={userStats}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={70}
+                          paddingAngle={2}
+                          dataKey="count"
+                          nameKey="category"
+                          stroke="none"
+                        >
+                          {userStats.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 2px 4px rgb(0 0 0 / 0.1)' }} />
+                        <Legend verticalAlign="bottom" height={20} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <p className="text-sm text-gray-500 font-bold">Không tìm thấy sản phẩm nào.</p>
                 </div>
               )}
+
+              <div className="p-4 bg-white flex-1 overflow-y-auto max-h-[500px]">
+                {simHistory && simHistory.length > 0 ? (
+                  <div className="space-y-4">
+                    {simHistory.map((interaction, idx) => (
+                      <div key={idx} className="flex gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-indigo-50/30 transition-colors">
+                        <img src={interaction.productId?.img} alt="book" className="w-12 h-16 object-contain rounded drop-shadow-sm bg-white" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-bold text-gray-800 truncate" title={interaction.productId?.title}>
+                            {interaction.productId?.title || "Sách không tồn tại"}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                              interaction.interactionType === 'purchase' ? 'bg-emerald-100 text-emerald-700' :
+                              interaction.interactionType === 'add_to_cart' ? 'bg-amber-100 text-amber-700' :
+                              interaction.interactionType === 'review' ? 'bg-purple-100 text-purple-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {interaction.interactionType}
+                            </span>
+                            <span className="text-xs text-gray-400">{new Date(interaction.createdAt).toLocaleDateString("vi-VN")}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full py-10 opacity-60">
+                    <FaBookOpen className="text-3xl text-gray-300 mb-2" />
+                    <p className="text-sm text-gray-500 font-medium">Chưa có dữ liệu hành vi</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Cột 2: Gợi Ý Thực Tế (Sách người dùng đang thấy trên web) */}
+            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex flex-col h-full bg-emerald-50/20">
+              <div className="px-6 py-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100 flex justify-between items-center">
+                <div>
+                  <span className="font-extrabold text-teal-900 text-sm flex items-center gap-2">
+                    <FaBookOpen className="text-emerald-500" /> Sách Gợi Ý Thực Tế
+                  </span>
+                  <p className="text-[11px] text-teal-700/70 mt-1">Kết quả Hybrid đang hiển thị trên trang chủ cho user.</p>
+                </div>
+              </div>
+              
+              <div className="p-4 flex-1 overflow-y-auto max-h-[500px]">
+                {simResult.actualProducts?.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {simResult.actualProducts.map((p, idx) => (
+                      <div key={idx} className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col items-center text-center shadow-sm relative hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+                        <div className="h-28 w-full flex items-center justify-center mb-2">
+                          <img src={p.img} alt={p.title} className="h-full w-auto object-contain drop-shadow-sm" />
+                        </div>
+                        <h4 className="text-[11px] font-bold text-gray-800 line-clamp-2 mb-1 min-h-[32px]">{p.title}</h4>
+                        
+                        <p className="text-[9px] text-teal-600 mb-2 italic">
+                          Lý do: Thuộc thuật toán lai ghép (Thịnh hành + Nội dung)
+                        </p>
+
+                        <div className="mt-auto w-full flex justify-between items-center border-t border-gray-50 pt-2">
+                          <span className="text-[10px] font-black text-gray-400">#{idx + 1}</span>
+                          <span className="text-[11px] font-black text-emerald-600">
+                            {(p.discountedPrice || p.originalPrice || 0).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 opacity-60 h-full">
+                    <FaExclamationTriangle className="text-3xl text-gray-300 mb-2" />
+                    <p className="text-sm text-gray-500 font-bold">Không có dữ liệu</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Cột 3: Gợi Ý AI (Dự đoán tương lai) */}
+            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex flex-col h-full bg-indigo-50/20">
+              <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 flex justify-between items-center">
+                <div>
+                  <span className="font-extrabold text-indigo-900 text-sm flex items-center gap-2">
+                    <FaRobot className="text-purple-500" /> Dự Đoán Tương Lai
+                  </span>
+                  <p className="text-[11px] text-indigo-600/70 mt-1">Dựa vào hành vi, AI Collaborative dự đoán user sẽ mua.</p>
+                </div>
+                <span className={`px-2 py-1 text-[9px] uppercase tracking-widest font-black rounded flex-shrink-0 border ${
+                  simResult.isColdStart ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-purple-50 text-purple-600 border-purple-200"
+                }`}>
+                  {simResult.isColdStart ? "COLD START" : "AI SVD"}
+                </span>
+              </div>
+              
+              <div className="p-4 flex-1 overflow-y-auto max-h-[500px]">
+                {simResult.cfProducts?.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {simResult.cfProducts.map((p, idx) => (
+                      <div key={idx} className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col items-center text-center shadow-sm relative hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+                        {/* AI Meta Badge */}
+                        {!simResult.isColdStart && p._aiMeta?.predictedRating && (
+                           <span className="absolute -top-2 -right-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md text-[10px] font-black px-2 py-0.5 rounded-md transform rotate-3 z-10">
+                             {p._aiMeta.predictedRating.toFixed(2)}★
+                           </span>
+                        )}
+                        
+                        <div className="h-28 w-full flex items-center justify-center mb-2">
+                          <img src={p.img} alt={p.title} className="h-full w-auto object-contain drop-shadow-sm" />
+                        </div>
+                        <h4 className="text-[11px] font-bold text-gray-800 line-clamp-2 mb-1 min-h-[32px]">{p.title}</h4>
+                        
+                        <p className="text-[9px] text-purple-600 mb-2 italic">
+                          Lý do: Hành vi của nhóm KH tương đồng thích sách này.
+                        </p>
+
+                        <div className="mt-auto w-full flex justify-between items-center border-t border-gray-50 pt-2">
+                          <span className="text-[10px] font-black text-gray-400">#{idx + 1}</span>
+                          <span className="text-[11px] font-black text-rose-600">
+                            {(p.discountedPrice || p.originalPrice || 0).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 opacity-60 h-full">
+                    <FaExclamationTriangle className="text-3xl text-gray-300 mb-2" />
+                    <p className="text-sm text-gray-500 font-bold">Không có gợi ý nào</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

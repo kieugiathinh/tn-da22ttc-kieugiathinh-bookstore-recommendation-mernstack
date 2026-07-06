@@ -358,6 +358,21 @@ const Product = () => {
     <div className="bg-slate-50 min-h-screen py-10">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
 
+        {/* BREADCRUMB */}
+        <div className="flex items-center text-sm text-slate-500 mb-6 gap-2">
+          <Link to="/" className="hover:text-orange-600 transition-colors">Trang chủ</Link>
+          <span>/</span>
+          {product.category && (
+            <>
+              <Link to={`/products?category=${product.category._id || product.category}`} className="hover:text-orange-600 transition-colors">
+                {product.category.name || "Thể loại"}
+              </Link>
+              <span>/</span>
+            </>
+          )}
+          <span className="text-slate-800 font-semibold line-clamp-1">{product.title}</span>
+        </div>
+
         {/* ===== MAIN CARD ===== */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10 flex flex-col md:flex-row gap-10">
 
@@ -399,7 +414,7 @@ const Product = () => {
             </h1>
 
             {/* Meta info */}
-            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 mb-4">
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 mb-2">
               <span>
                 Tác giả:{" "}
                 <span className="text-orange-600 font-semibold">
@@ -413,6 +428,39 @@ const Product = () => {
                   {product.publisher || "Đang cập nhật"}
                 </span>
               </span>
+            </div>
+
+            {/* Extended Meta info */}
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500 mb-4">
+              {product.publishedYear && (
+                <span>
+                  Năm XB: <span className="text-slate-800 font-medium">{product.publishedYear}</span>
+                </span>
+              )}
+              {product.pageCount && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span>
+                    Số trang: <span className="text-slate-800 font-medium">{product.pageCount}</span>
+                  </span>
+                </>
+              )}
+              {product.language && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span>
+                    Ngôn ngữ: <span className="text-slate-800 font-medium">{product.language === "vi" ? "Tiếng Việt" : product.language === "en" ? "Tiếng Anh" : product.language === "ja" ? "Tiếng Nhật" : product.language === "zh" ? "Tiếng Trung" : product.language === "fr" ? "Tiếng Pháp" : "Khác"}</span>
+                  </span>
+                </>
+              )}
+              {product.ageGroup && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span>
+                    Độ tuổi: <span className="text-slate-800 font-medium">{product.ageGroup === "all" ? "Mọi lứa tuổi" : product.ageGroup === "children" ? "Trẻ em" : product.ageGroup === "teen" ? "Thanh thiếu niên" : "Người lớn (18+)"}</span>
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Rating row */}

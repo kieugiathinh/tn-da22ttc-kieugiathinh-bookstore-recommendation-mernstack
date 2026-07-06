@@ -188,25 +188,29 @@ const getAIHealthStatus = async () => {
  * Chỉ gọi AI, không cần parse lại UI context, trả về raw meta.
  */
 const getUserRecommendationsSimulator = async (userId, topK = 6) => {
+  // 1. CF - Dự đoán tương lai
   const aiRes = await aiClient.get(`/recommend/user/${userId}/collaborative`, {
     params: { top_k: Math.min(topK, 20) },
   });
 
   const { recommendations = [], coldStart = false } = aiRes.data;
+  let cfProducts = [];
+  let cfAlgorithm = "collaborative-svd";
   if (coldStart || recommendations.length === 0) {
-    const fallback = await getBestSellerFallback(topK);
-    return {
-      isColdStart: true,
-      algorithm: "bestseller-fallback",
-      products: fallback
-    };
+    cfProducts = await getBestSellerFallback(topK);
+    cfAlgorithm = "bestseller-fallback";
+  } else {
+    cfProducts = await enrichAndSort(recommendations);
   }
 
-  const products = await enrichAndSort(recommendations);
+  // 2. Hybrid - Gợi ý thực tế (đang dùng trên web)
+  const hybridData = await getHybridRecommendationsData(userId, topK);
+
   return {
-    isColdStart: false,
-    algorithm: "collaborative-svd",
-    products
+    isColdStart: coldStart,
+    cfAlgorithm,
+    cfProducts,          // Dự đoán
+    actualProducts: hybridData.products // Thực tế
   };
 };
 

@@ -137,7 +137,7 @@ const Products = () => {
     });
 
     return list;
-  }, [products, search, filterCat, filterStock, sortBy]);
+  }, [products, search, filterCat, filterStock, sortBy, filterStatus]);
 
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
   const pageData   = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
@@ -170,9 +170,9 @@ const Products = () => {
       />
 
       {/* ── QUICK STATS ── */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <button
-          onClick={() => { setFilterStock("all"); setCurrentPage(1); }}
+          onClick={() => { setFilterStock("all"); setFilterStatus("all"); setCurrentPage(1); }}
           className={`rounded-xl border p-4 text-left transition-all ${filterStock === "all" ? "border-primary bg-orange-50 shadow-sm" : "border-gray-100 bg-white hover:border-primary/40"}`}
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng đầu sách</p>

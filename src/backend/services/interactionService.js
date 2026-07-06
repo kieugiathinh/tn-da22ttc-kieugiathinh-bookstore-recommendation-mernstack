@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import UserInteraction from "../models/userInteractionModel.js";
 import User from "../models/userModel.js";
 import Product from "../models/productModel.js";
@@ -23,6 +24,11 @@ export const getInteractions = async (pageNumber, limitNumber, type, source, key
       { userId: { $in: users.map(u => u._id) } },
       { productId: { $in: products.map(p => p._id) } }
     ];
+
+    if (mongoose.Types.ObjectId.isValid(keyword)) {
+      query.$or.push({ userId: keyword });
+      query.$or.push({ productId: keyword });
+    }
   }
 
   const interactions = await UserInteraction.find(query)
@@ -68,4 +74,52 @@ export const deleteInteraction = async (id) => {
 
   await interaction.deleteOne();
   return { message: "Xóa hành vi thành công" };
+};
+
+export const getCategoryAnalytics = async (userId = null) => {
+  const matchStage = {};
+  if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+    matchStage.userId = new mongoose.Types.ObjectId(userId);
+  }
+
+  // Aggregate user interactions -> lookup product -> group by product.categoryName
+  const result = await UserInteraction.aggregate([
+    { $match: matchStage },
+    {
+      $lookup: {
+        from: "products",
+        localField: "productId",
+        foreignField: "_id",
+        as: "product"
+      }
+    },
+    { $unwind: "$product" },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "product.category",
+        foreignField: "_id",
+        as: "categoryDoc"
+      }
+    },
+    {
+      $unwind: {
+        path: "$categoryDoc",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $group: {
+        _id: "$categoryDoc.name",
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { count: -1 } },
+    { $limit: 10 }
+  ]);
+
+  return result.map(item => ({
+    category: item._id || "Chưa phân loại",
+    count: item.count
+  }));
 };
