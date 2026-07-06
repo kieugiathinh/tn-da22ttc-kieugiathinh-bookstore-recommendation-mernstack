@@ -87,10 +87,14 @@ const deleteProduct = async (id) => {
   return product;
 };
 
-const getProductById = async (id) => {
+const getProductById = async (id, isAdmin = false) => {
   const product = await Product.findById(id).populate("category").lean();
   
   if (!product) throw new Error("Sản phẩm không tồn tại");
+  if (product.status === "discontinued" && !isAdmin) {
+    throw new Error("Sản phẩm này đã ngừng kinh doanh");
+  }
+
   return await flashsaleService.attachFlashSaleToProducts(product);
 };
 
@@ -110,6 +114,7 @@ const getAllProducts = async (queryParms) => {
     const products = await Product.find({
       rating: { $gte: 4.0 },
       numReviews: { $gt: 0 },
+      ...(queryParms.qStatus === "all" ? {} : { status: "active" })
     })
       .sort({ rating: -1, numReviews: -1 })
       .limit(10)
@@ -123,18 +128,22 @@ const getAllProducts = async (queryParms) => {
 
     // Thử Atlas Search trước (nếu index đã được tạo trên Atlas)
     try {
-      const pipeline = [
-        {
-          $search: {
-            index: "product_search_index",
-            text: {
-              query: qSearch,
-              path: ["title", "author"],
-              fuzzy: { maxEdits: 1, prefixLength: 0 }
-            }
+      const pipeline = [];
+
+      pipeline.push({
+        $search: {
+          index: "product_search_index",
+          text: {
+            query: qSearch,
+            path: ["title", "author"],
+            fuzzy: { maxEdits: 1, prefixLength: 0 }
           }
         }
-      ];
+      });
+
+      if (queryParms.qStatus !== "all") {
+        pipeline.push({ $match: { status: "active" } });
+      }
 
       if (qCategory) {
         const categories = qCategory.split(",");
@@ -162,6 +171,9 @@ const getAllProducts = async (queryParms) => {
           { publisher: { $regex: safeSearch, $options: "i" } },
         ],
       };
+      if (queryParms.qStatus !== "all") {
+        regexFilter.status = "active";
+      }
       if (qCategory) {
         const categories = qCategory.split(",");
         regexFilter.category = { $in: categories.map(c => new mongoose.Types.ObjectId(c)) };
@@ -177,6 +189,10 @@ const getAllProducts = async (queryParms) => {
 
   // Luồng xử lý bình thường không có tìm kiếm
   let filter = {};
+  if (queryParms.qStatus !== "all") {
+    filter.status = "active";
+  }
+
   if (qCategory) {
     const categories = qCategory.split(",");
     filter.category = { $in: categories };
@@ -195,8 +211,9 @@ const getAllProducts = async (queryParms) => {
   return await flashsaleService.attachFlashSaleToProducts(products);
 };
 
-const getNewProducts = async () => {
-  const products = await Product.find()
+const getNewProducts = async (status = "active") => {
+  const filter = status === "all" ? {} : { status: "active" };
+  const products = await Product.find(filter)
     .sort({ createdAt: -1 })
     .limit(10)
     .populate("category")
@@ -204,18 +221,19 @@ const getNewProducts = async () => {
   return await flashsaleService.attachFlashSaleToProducts(products);
 };
 
-const getRelatedProducts = async (categoryId, productId) => {
+const getRelatedProducts = async (categoryId, productId, status = "active") => {
   if (!categoryId || !productId) {
     throw new Error("Thiếu thông tin categoryId hoặc productId");
   }
 
+  const filter = {
+    category: new mongoose.Types.ObjectId(categoryId),
+    _id: { $ne: new mongoose.Types.ObjectId(productId) },
+    ...(status !== "all" ? { status: "active" } : {})
+  };
+
   let products = await Product.aggregate([
-    {
-      $match: {
-        category: new mongoose.Types.ObjectId(categoryId),
-        _id: { $ne: new mongoose.Types.ObjectId(productId) },
-      },
-    },
+    { $match: filter },
     { $sample: { size: 5 } },
   ]);
 

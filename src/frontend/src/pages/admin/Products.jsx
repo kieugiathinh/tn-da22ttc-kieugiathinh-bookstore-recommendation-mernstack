@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   FaTrash, FaEdit, FaPlus, FaSearch, FaFilter,
-  FaSort, FaChevronDown, FaBoxOpen, FaStar
+  FaSort, FaChevronDown, FaBoxOpen, FaStar,
+  FaStoreSlash, FaStore
 } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
@@ -31,14 +32,15 @@ const Products = () => {
   // Filters
   const [search, setSearch]           = useState("");
   const [filterCat, setFilterCat]     = useState("all");
-  const [filterStock, setFilterStock] = useState("all"); // all | instock | low | out
-  const [sortBy, setSortBy]           = useState("newest"); // newest | price_asc | price_desc | sold | rating
+  const [filterStock, setFilterStock] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all"); // Lọc trạng thái
+  const [sortBy, setSortBy]           = useState("newest");
 
   const fetchAll = async () => {
     try {
       setLoading(true);
       const [resProd, resCat] = await Promise.all([
-        userRequest.get("/products"),
+        userRequest.get("/products?status=all"),
         userRequest.get("/categories"),
       ]);
       setProducts(resProd.data.map(p => ({ ...p, id: p._id })));
@@ -54,21 +56,45 @@ const Products = () => {
 
   const handleDelete = async (id) => {
     const { isConfirmed } = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Sách sẽ bị xóa vĩnh viễn!",
+      title: "Xác nhận xóa vĩnh viễn?",
+      text: "Lưu ý: Chỉ nên xóa vĩnh viễn nếu bạn nhập sai sản phẩm! Nếu sách chỉ ngừng bán, hãy dùng tính năng 'Ngừng KD'. Xóa vĩnh viễn có thể gây lỗi cho các đơn hàng cũ.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      confirmButtonText: "Xóa ngay",
+      confirmButtonText: "Xóa vĩnh viễn",
       cancelButtonText: "Hủy",
     });
     if (!isConfirmed) return;
     try {
       await userRequest.delete(`/products/${id}`);
-      Swal.fire({ title: "Đã xóa!", icon: "success", timer: 1200, showConfirmButton: false });
+      Swal.fire({ title: "Đã xóa vĩnh viễn!", icon: "success", timer: 1200, showConfirmButton: false });
       fetchAll();
     } catch {
       Swal.fire("Lỗi!", "Xóa thất bại.", "error");
+    }
+  };
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    const isDiscontinued = currentStatus === "discontinued";
+    const newStatus = isDiscontinued ? "active" : "discontinued";
+    const title = isDiscontinued ? "Khôi phục kinh doanh sách này?" : "Ngừng kinh doanh sách này?";
+    const text = isDiscontinued ? "Sách sẽ hiển thị lại cho khách hàng." : "Sách sẽ bị ẩn khỏi hệ thống khách hàng, nhưng không ảnh hưởng đơn hàng cũ.";
+    
+    const { isConfirmed } = await Swal.fire({
+      title, text, icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: isDiscontinued ? "#10b981" : "#f59e0b",
+      confirmButtonText: isDiscontinued ? "Khôi phục" : "Ngừng KD",
+      cancelButtonText: "Hủy",
+    });
+
+    if (!isConfirmed) return;
+    try {
+      await userRequest.put(`/products/${id}`, { status: newStatus });
+      Swal.fire({ title: "Đã cập nhật!", icon: "success", timer: 1200, showConfirmButton: false });
+      fetchAll();
+    } catch {
+      Swal.fire("Lỗi!", "Cập nhật trạng thái thất bại.", "error");
     }
   };
 
@@ -90,7 +116,10 @@ const Products = () => {
         filterStock === "low"     ? (stock > 0 && stock <= 10) :
         filterStock === "out"     ? stock === 0 : true;
 
-      return matchSearch && matchCat && matchStock;
+      const pStatus = p.status || "active";
+      const matchStatus = filterStatus === "all" ? true : pStatus === filterStatus;
+
+      return matchSearch && matchCat && matchStock && matchStatus;
     });
 
     // Sort
@@ -114,14 +143,15 @@ const Products = () => {
   const pageData   = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   // Stats nhanh cho toolbar
-  const outOfStock  = products.filter(p => (p.countInStock ?? 0) === 0).length;
-  const lowStock    = products.filter(p => (p.countInStock ?? 0) > 0 && (p.countInStock ?? 0) <= 10).length;
+  const outOfStock  = products.filter(p => (p.countInStock ?? 0) === 0 && p.status !== "discontinued").length;
+  const lowStock    = products.filter(p => (p.countInStock ?? 0) > 0 && (p.countInStock ?? 0) <= 10 && p.status !== "discontinued").length;
+  const discontinued = products.filter(p => p.status === "discontinued").length;
 
   const resetFilters = () => {
-    setSearch(""); setFilterCat("all"); setFilterStock("all"); setSortBy("newest");
+    setSearch(""); setFilterCat("all"); setFilterStock("all"); setSortBy("newest"); setFilterStatus("all");
     setCurrentPage(1);
   };
-  const hasFilter = search || filterCat !== "all" || filterStock !== "all" || sortBy !== "newest";
+  const hasFilter = search || filterCat !== "all" || filterStock !== "all" || sortBy !== "newest" || filterStatus !== "all";
 
   return (
     <div className="space-y-5">
@@ -161,6 +191,13 @@ const Products = () => {
         >
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Hết hàng</p>
           <p className="mt-1 text-2xl font-black text-red-600">{outOfStock}</p>
+        </button>
+        <button
+          onClick={() => { setFilterStatus("discontinued"); setFilterStock("all"); setCurrentPage(1); }}
+          className={`rounded-xl border p-4 text-left transition-all ${filterStatus === "discontinued" ? "border-purple-400 bg-purple-50 shadow-sm" : "border-gray-100 bg-white hover:border-purple-300"}`}
+        >
+          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Ngừng KD</p>
+          <p className="mt-1 text-2xl font-black text-purple-600">{discontinued}</p>
         </button>
       </div>
 
@@ -218,6 +255,21 @@ const Products = () => {
               <option value="instock">Còn hàng tốt (&gt;10)</option>
               <option value="low">Tồn kho thấp (1–10)</option>
               <option value="out">Hết hàng</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
+
+          {/* Lọc Trạng thái */}
+          <div className="relative">
+            <FaStoreSlash className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={11} />
+            <select
+              value={filterStatus}
+              onChange={e => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+              className={`pl-8 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterStatus !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="active">Đang kinh doanh</option>
+              <option value="discontinued">Ngừng kinh doanh</option>
             </select>
             <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
           </div>
@@ -315,7 +367,12 @@ const Products = () => {
                               )}
                             </div>
                             <div className="min-w-0">
-                              <p className="truncate max-w-[180px] font-semibold text-gray-900 text-[13px]">{p.title}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="truncate max-w-[180px] font-semibold text-gray-900 text-[13px]">{p.title}</p>
+                                {p.status === "discontinued" && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700 uppercase">Ngừng KD</span>
+                                )}
+                              </div>
                               <p className="text-xs italic text-gray-400 mt-0.5">{p.author || "Không rõ tác giả"}</p>
                               <p className="text-[10px] text-gray-300 mt-0.5">{p.publisher || ""}</p>
                             </div>
@@ -365,7 +422,14 @@ const Products = () => {
 
                         {/* Thao tác */}
                         <td className="px-5 py-3.5">
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              title={p.status === "discontinued" ? "Khôi phục kinh doanh" : "Ngừng kinh doanh"}
+                              onClick={() => handleToggleStatus(p._id, p.status)}
+                              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all border ${p.status === "discontinued" ? "text-emerald-500 hover:bg-emerald-50 border-emerald-100 hover:border-emerald-300" : "text-purple-500 hover:bg-purple-50 border-purple-100 hover:border-purple-300"}`}
+                            >
+                              {p.status === "discontinued" ? <FaStore size={13} /> : <FaStoreSlash size={13} />}
+                            </button>
                             <Link to={`/admin/product/${p._id}`}>
                               <button
                                 title="Chỉnh sửa"
@@ -375,7 +439,7 @@ const Products = () => {
                               </button>
                             </Link>
                             <button
-                              title="Xóa"
+                              title="Xóa vĩnh viễn"
                               onClick={() => handleDelete(p._id)}
                               className="flex items-center justify-center w-8 h-8 rounded-lg text-red-400 hover:bg-red-50 border border-red-100 hover:border-red-300 transition-all"
                             >

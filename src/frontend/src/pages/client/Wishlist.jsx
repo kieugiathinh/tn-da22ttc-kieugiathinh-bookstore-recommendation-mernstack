@@ -116,18 +116,17 @@ const Wishlist = () => {
                     <button
                       onClick={() => handleAddToCart(product)}
                       disabled={product.countInStock <= 0}
-                      className={`flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-                        product.countInStock > 0
+                      className={`flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${product.countInStock > 0
                           ? "bg-orange-50 text-orange-600 hover:bg-orange-500 hover:text-white"
                           : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      }`}
+                        }`}
                     >
                       <FaShoppingCart />
                       Thêm
                     </button>
                     <button
                       onClick={() => handleRemove(product._id, product.title)}
-                      className="w-10 h-10 flex items-center justify-center bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-colors shrink-0"
+                      className="w-10 h-10 flex items-center justify-center bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-colors shrink-0 cursor-pointer"
                       title="Xóa khỏi yêu thích"
                     >
                       <FaTrash size={14} />

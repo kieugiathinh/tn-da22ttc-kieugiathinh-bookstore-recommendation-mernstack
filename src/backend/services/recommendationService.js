@@ -13,7 +13,7 @@ import Order, { ORDER_STATUS } from "../models/orderModel.js";
  * @returns {Promise<Array>} Mảng product đã normalize, sẵn sàng cho TF-IDF corpus.
  */
 const getProductsData = async () => {
-  const products = await Product.find({})
+  const products = await Product.find({ status: "active" })
     .populate("category", "name")
     .select(
       "_id title author publisher category desc tags language publishedYear pageCount ageGroup rating numReviews sold"

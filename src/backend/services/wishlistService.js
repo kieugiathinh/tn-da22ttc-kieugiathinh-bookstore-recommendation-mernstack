@@ -66,8 +66,8 @@ const getWishlist = async (userId) => {
     .sort({ createdAt: -1 })
     .lean();
 
-  // Lọc bỏ các item mà productId đã bị xóa khỏi DB
-  return items.filter((item) => item.productId !== null);
+  // Lọc bỏ các item mà productId đã bị xóa khỏi DB hoặc ngừng kinh doanh
+  return items.filter((item) => item.productId !== null && item.productId.status !== "discontinued");
 };
 
 /**

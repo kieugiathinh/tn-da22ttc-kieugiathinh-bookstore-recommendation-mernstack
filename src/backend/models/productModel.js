@@ -59,6 +59,13 @@ const ProductSchema = mongoose.Schema(
       default: 0,
     },
 
+    status: {
+      type: String,
+      enum: ["active", "discontinued"],
+      default: "active",
+      index: true,
+    },
+
     viewCount: {
       type: Number,
       default: 0,

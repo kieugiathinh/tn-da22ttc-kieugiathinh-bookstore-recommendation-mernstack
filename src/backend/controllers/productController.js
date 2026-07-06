@@ -17,7 +17,8 @@ const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 const getProduct = asyncHandler(async (req, res) => {
-  const product = await productService.getProductById(req.params.id);
+  const isAdmin = req.user && req.user.isAdmin;
+  const product = await productService.getProductById(req.params.id, isAdmin);
   res.status(200).json(product);
 });
 
@@ -34,6 +35,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     qBestSeller: req.query.bestseller,
     qTopRated: req.query.toprated,
     qRandom: req.query.random,
+    qStatus: req.query.status,
   };
   const products = await productService.getAllProducts(queryParms);
   res.status(200).json(products);
@@ -72,6 +74,21 @@ const autoFillBook = asyncHandler(async (req, res) => {
   res.status(200).json(bookInfo);
 });
 
+// Sync Cart: Kiểm tra trạng thái và tồn kho của danh sách sản phẩm trong giỏ hàng
+const syncCart = asyncHandler(async (req, res) => {
+  const { productIds } = req.body; // Mảng các ID sản phẩm
+  if (!productIds || !Array.isArray(productIds)) {
+    return res.status(400).json({ message: "Invalid product IDs" });
+  }
+
+  const Product = (await import("../models/productModel.js")).default;
+  const products = await Product.find({ _id: { $in: productIds } })
+    .select("_id status countInStock regularPrice discountedPrice price")
+    .lean();
+
+  res.status(200).json(products);
+});
+
 export {
   getAllProducts,
   getProduct,
@@ -83,4 +100,5 @@ export {
   getRelatedProducts,
   autoFillBook,
   getTrendingProducts,
+  syncCart,
 };

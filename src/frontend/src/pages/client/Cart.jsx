@@ -30,6 +30,26 @@ const Cart = () => {
     fetchActiveFS();
   }, []);
 
+  // Sync cart items with the database to remove discontinued ones
+  useEffect(() => {
+    if (cart.products && cart.products.length > 0) {
+      const productIds = cart.products.map((p) => p._id || p.product);
+      userRequest.post("/products/cart-sync", { productIds })
+        .then((res) => {
+          const freshData = res.data; // Mảng các sản phẩm có _id, status
+          cart.products.forEach((cartItem) => {
+            const pId = cartItem._id || cartItem.product;
+            const liveProduct = freshData.find((p) => p._id === pId);
+            if (!liveProduct || liveProduct.status === "discontinued") {
+              dispatch(removeProduct(cartItem.cartItemId));
+              toast.error(`Sản phẩm "${cartItem.title}" đã ngừng kinh doanh và bị xóa khỏi giỏ hàng.`);
+            }
+          });
+        })
+        .catch((err) => console.log("Lỗi đồng bộ giỏ hàng:", err));
+    }
+  }, []);
+
   // Tự động chọn tất cả khi mới vào giỏ hàng (UX phổ biến)
   // Chỉ chọn những sản phẩm hợp lệ
   useEffect(() => {

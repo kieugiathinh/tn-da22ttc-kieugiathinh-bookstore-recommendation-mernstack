@@ -40,6 +40,12 @@ const updateCategory = async (id, categoryData) => {
 };
 
 const deleteCategory = async (id) => {
+  const Product = (await import("../models/productModel.js")).default;
+  const productCount = await Product.countDocuments({ category: id });
+  if (productCount > 0) {
+    throw new Error(`Không thể xóa! Danh mục này đang chứa ${productCount} cuốn sách.`);
+  }
+
   const category = await Category.findByIdAndDelete(id);
   if (!category) {
     throw new Error("Không tìm thấy thể loại");

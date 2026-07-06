@@ -20,6 +20,9 @@ const createOrder = async (orderData, userId) => {
   for (const item of products) {
     const product = await Product.findById(item.productId).lean();
     if (!product) throw new Error(`Sản phẩm ${item.title} không tồn tại`);
+    if (product.status === "discontinued") {
+      throw new Error(`Sản phẩm "${product.title}" đã ngừng kinh doanh, vui lòng xóa khỏi giỏ hàng.`);
+    }
     if (product.countInStock < item.quantity) {
       throw new Error(`Sản phẩm "${product.title}" không đủ hàng`);
     }
