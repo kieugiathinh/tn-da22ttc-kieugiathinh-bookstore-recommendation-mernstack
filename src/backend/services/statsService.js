@@ -3,6 +3,7 @@ import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
 import Category from "../models/categoryModel.js";
 import FlashSale from "../models/flashsaleModel.js";
+import UserInteraction from "../models/userInteractionModel.js";
 
 const TIMEZONE = "Asia/Ho_Chi_Minh";
 const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -131,7 +132,7 @@ const getTimeRange = (input = {}) => {
   let start = new Date(now);
   let end = new Date(now);
 
-  if (type === "day") {
+  if (type === "day" || type === "today") {
     start = startOfDay(now);
     end = now;
   } else if (type === "week") {
@@ -186,7 +187,7 @@ const getPreviousTimeRange = (typeOrRange, currentStart) => {
     const end = new Date(currentStart);
     end.setMilliseconds(-1);
 
-    if (type === "day") {
+    if (type === "day" || type === "today") {
       start.setDate(start.getDate() - 1);
     } else if (type === "week") {
       start.setDate(start.getDate() - 7);
@@ -1299,39 +1300,106 @@ const getOrderAnalytics = async (type) => {
 };
 
 // ─── THỐNG KÊ SÁCH ────────────────────────────────────────────────────────────
-const getProductStatsAnalytics = async () => {
+const getProductStatsAnalytics = async (input = {}) => {
+  const range = getTimeRange(input);
+  const dateMatch = makeDateMatch(range);
+  const isAllTime = Object.keys(dateMatch).length === 0;
+
   // 1. Tổng quan kho
   const totalProducts = await Product.countDocuments();
   const outOfStock = await Product.countDocuments({ countInStock: 0 });
   const lowStock = await Product.countDocuments({ countInStock: { $gt: 0, $lte: 10 } });
   const inStock = totalProducts - outOfStock - lowStock;
 
-  // 2. Tổng tồn kho + tổng đã bán
+  // 2. Tổng tồn kho + tổng đã bán (lũy kế)
   const summaryResult = await Product.aggregate([
     { $group: { _id: null, totalStock: { $sum: "$countInStock" }, totalSold: { $sum: "$sold" } } },
   ]);
   const totalStock = summaryResult[0]?.totalStock ?? 0;
   const totalSold = summaryResult[0]?.totalSold ?? 0;
 
-  // 3. Top 10 bán chạy
-  const topSelling = await Product.find({ sold: { $gt: 0 } })
-    .sort({ sold: -1 })
-    .limit(10)
-    .populate("category", "name")
-    .select("title author img sold countInStock originalPrice discountedPrice rating numReviews category")
-    .lean();
+  // Tính Top Selling, Category Distribution, và Views trong khoảng thời gian
+  let topSelling = [];
+  let categoryDistribution = [];
+  let highViewLowSold = [];
 
-  // 4. Bán ế / không bán được (sold = 0 và đã thêm > 30 ngày)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const slowMoving = await Product.find({ sold: 0, createdAt: { $lte: thirtyDaysAgo } })
-    .sort({ countInStock: -1 })
+  if (isAllTime) {
+    topSelling = await Product.find({ sold: { $gt: 0 } })
+      .sort({ sold: -1 })
+      .limit(10)
+      .populate("category", "name")
+      .select("title author img sold countInStock originalPrice discountedPrice rating numReviews category")
+      .lean();
+      
+    categoryDistribution = await Product.aggregate([
+      { $lookup: { from: "categories", localField: "category", foreignField: "_id", as: "catInfo" } },
+      { $unwind: { path: "$catInfo", preserveNullAndEmptyArrays: true } },
+      { $group: { _id: "$catInfo.name", count: { $sum: 1 }, totalSold: { $sum: "$sold" }, totalStock: { $sum: "$countInStock" } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]);
+
+    highViewLowSold = await Product.find({ viewCount: { $gt: 10 }, status: "active" })
+      .sort({ viewCount: -1 })
+      .limit(20)
+      .populate("category", "name")
+      .select("title author img sold viewCount countInStock originalPrice discountedPrice rating numReviews category")
+      .lean();
+  } else {
+    // Top selling
+    const orderAgg = await Order.aggregate([
+      { $match: { ...dateMatch, status: 4 } },
+      { $unwind: "$products" },
+      { $group: { _id: "$products.productId", periodSold: { $sum: "$products.quantity" } } },
+      { $sort: { periodSold: -1 } },
+      { $limit: 10 }
+    ]);
+    const pIds = orderAgg.map(x => x._id);
+    const pDetails = await Product.find({ _id: { $in: pIds } }).populate("category", "name").lean();
+    topSelling = orderAgg.map(oa => {
+      const p = pDetails.find(d => d._id.toString() === oa._id.toString());
+      return p ? { ...p, sold: oa.periodSold } : null;
+    }).filter(Boolean);
+
+    // Category Distribution (by Revenue/Sold in period)
+    categoryDistribution = await Order.aggregate([
+      { $match: { ...dateMatch, status: 4 } },
+      { $unwind: "$products" },
+      { $lookup: { from: "products", localField: "products.productId", foreignField: "_id", as: "pInfo" } },
+      { $unwind: { path: "$pInfo", preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: "categories", localField: "pInfo.category", foreignField: "_id", as: "catInfo" } },
+      { $unwind: { path: "$catInfo", preserveNullAndEmptyArrays: true } },
+      { $group: { _id: "$catInfo.name", totalSold: { $sum: "$products.quantity" }, count: { $addToSet: "$pInfo._id" } } },
+      { $project: { _id: 1, totalSold: 1, count: { $size: "$count" } } },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Views
+    const viewAgg = await UserInteraction.aggregate([
+      { $match: { ...dateMatch, interactionType: "view", isDeleted: { $ne: true } } },
+      { $group: { _id: "$productId", periodViews: { $sum: 1 } } },
+      { $match: { periodViews: { $gt: 5 } } },
+      { $sort: { periodViews: -1 } },
+      { $limit: 20 }
+    ]);
+    const vIds = viewAgg.map(v => v._id);
+    const vDetails = await Product.find({ _id: { $in: vIds }, status: "active" }).populate("category", "name").lean();
+    highViewLowSold = viewAgg.map(va => {
+      const p = vDetails.find(d => d._id.toString() === va._id.toString());
+      return p ? { ...p, viewCount: va.periodViews } : null;
+    }).filter(Boolean);
+  }
+
+  // 4. Bán ế / không bán được
+  const slowMoving = await Product.find({ countInStock: { $gt: 0 } })
+    .sort({ sold: 1, viewCount: 1 })
     .limit(10)
     .populate("category", "name")
     .select("title author img sold countInStock originalPrice discountedPrice createdAt category")
     .lean();
 
-  // 5. Sách sắp hết hàng (1–10 cuốn, bán nhiều nhất) → cần nhập thêm
+  // 5. Sách sắp hết hàng
   const needRestock = await Product.find({ countInStock: { $gt: 0, $lte: 10 } })
     .sort({ sold: -1 })
     .limit(10)
@@ -1339,30 +1407,7 @@ const getProductStatsAnalytics = async () => {
     .select("title author img sold countInStock originalPrice discountedPrice category")
     .lean();
 
-  // 6. Phân bố theo thể loại (số lượng đầu sách + tổng tồn kho)
-  const categoryDistribution = await Product.aggregate([
-    {
-      $lookup: {
-        from: "categories",
-        localField: "category",
-        foreignField: "_id",
-        as: "catInfo",
-      },
-    },
-    { $unwind: { path: "$catInfo", preserveNullAndEmptyArrays: true } },
-    {
-      $group: {
-        _id: "$catInfo.name",
-        count: { $sum: 1 },
-        totalSold: { $sum: "$sold" },
-        totalStock: { $sum: "$countInStock" },
-      },
-    },
-    { $sort: { count: -1 } },
-    { $limit: 10 },
-  ]);
-
-  // 7. Sản phẩm đánh giá cao nhất (rating >= 4)
+  // 7. Sản phẩm đánh giá cao nhất
   const topRated = await Product.find({ numReviews: { $gte: 1 }, rating: { $gte: 4 } })
     .sort({ rating: -1, numReviews: -1 })
     .limit(5)
@@ -1370,7 +1415,7 @@ const getProductStatsAnalytics = async () => {
     .select("title author img rating numReviews sold originalPrice discountedPrice category")
     .lean();
 
-  // 8. Sách cần nhập thêm: sold cao + tồn thấp + rating ổn
+  // 8. Sách cần nhập thêm
   const restockRecommended = await Product.find({
     countInStock: { $gt: 0, $lte: 15 },
     sold: { $gt: 5 },
@@ -1383,26 +1428,16 @@ const getProductStatsAnalytics = async () => {
     .select("title author img sold countInStock originalPrice discountedPrice rating numReviews category")
     .lean();
 
-  // 9. Sách view cao nhưng bán thấp (tỉ lệ chuyển đổi kém)
-  const highViewLowSold = await Product.find({
-    viewCount: { $gt: 10 },
-    status: "active",
-  })
-    .sort({ viewCount: -1 })
-    .limit(20)
-    .populate("category", "name")
-    .select("title author img sold viewCount countInStock originalPrice discountedPrice rating numReviews category")
-    .lean();
-  // Tính conversion rate và lọc những sách có CR thấp
+  // Tính conversion rate
   const lowConversionProducts = highViewLowSold
     .map(p => ({
       ...p,
       conversionRate: p.viewCount > 0 ? ((p.sold / p.viewCount) * 100).toFixed(1) : "0.0",
     }))
-    .filter(p => parseFloat(p.conversionRate) < 5) // Dưới 5% conversion
+    .filter(p => parseFloat(p.conversionRate) < 5)
     .slice(0, 10);
 
-  // 10. Sách rating thấp (cần kiểm tra)
+  // 10. Sách rating thấp
   const lowRatedProducts = await Product.find({
     numReviews: { $gte: 3 },
     rating: { $gt: 0, $lt: 3.5 },
@@ -1414,7 +1449,7 @@ const getProductStatsAnalytics = async () => {
     .select("title author img sold rating numReviews countInStock originalPrice discountedPrice category")
     .lean();
 
-  // 11. Đề xuất Flash Sale: tồn cao + bán chậm + rating ổn
+  // 11. Đề xuất Flash Sale
   const flashSaleRecommended = await Product.find({
     countInStock: { $gt: 20 },
     sold: { $lte: 5 },
@@ -1428,26 +1463,40 @@ const getProductStatsAnalytics = async () => {
     .lean();
 
   return {
-    totalProducts,
-    outOfStock,
-    lowStock,
-    inStock,
-    totalStock,
-    totalSold,
-    topSelling,
-    slowMoving,
-    needRestock,
-    categoryDistribution,
-    topRated,
-    restockRecommended,
-    lowConversionProducts,
-    lowRatedProducts,
-    flashSaleRecommended,
+    totalProducts, outOfStock, lowStock, inStock, totalStock, totalSold,
+    topSelling, slowMoving, needRestock, categoryDistribution, topRated,
+    restockRecommended, lowConversionProducts, lowRatedProducts, flashSaleRecommended,
   };
 };
 
-const getFlashSaleStatsAnalytics = async () => {
-  const allFlashSales = await FlashSale.find({}).lean();
+const getFlashSaleStatsAnalytics = async (input = {}) => {
+  const { campaignId, status } = input;
+  const match = {};
+
+  if (campaignId) match._id = campaignId;
+
+  if (status) {
+    const now = new Date();
+    if (status === "active") {
+      match.startDate = { $lte: now };
+      match.endDate = { $gte: now };
+    } else if (status === "upcoming") {
+      match.startDate = { $gt: now };
+    } else if (status === "ended") {
+      match.endDate = { $lt: now };
+    }
+  }
+
+  // Nếu không có status và campaignId cụ thể, lọc thêm thời gian
+  if (!campaignId) {
+    const range = getTimeRange(input);
+    const dateMatch = makeDateMatch(range);
+    if (Object.keys(dateMatch).length > 0) {
+      match.createdAt = dateMatch.createdAt;
+    }
+  }
+
+  const allFlashSales = await FlashSale.find(match).lean();
 
   const productStatsMap = {};
 
@@ -1485,13 +1534,14 @@ const getFlashSaleStatsAnalytics = async () => {
     };
   });
 
-  const topSoldProducts = [...productStatsList].sort((a, b) => b.soldCount - a.soldCount).slice(0, 5);
+  const topSoldProducts = [...productStatsList].sort((a, b) => b.soldCount - a.soldCount).slice(0, 10); // tăng lên 10
 
   const slowSellingProducts = [...productStatsList]
     .filter(p => p.quantityLimit > 0)
     .sort((a, b) => a.sellThroughRate - b.sellThroughRate)
-    .slice(0, 5);
+    .slice(0, 10);
 
+  // Đề xuất các sản phẩm phù hợp cho Flash Sale (Tồn cao > 10, chưa chạy hoặc bán ế)
   const recommendedForSale = await Product.aggregate([
     { $match: { countInStock: { $gte: 10 }, sold: { $lte: 5 } } },
     { $sort: { createdAt: 1 } },
@@ -1502,7 +1552,7 @@ const getFlashSaleStatsAnalytics = async () => {
   // Tổng số lượng đã bán & quota
   const totalSoldQty = productStatsList.reduce((s, p) => s + p.soldCount, 0);
   const totalQuota = productStatsList.reduce((s, p) => s + p.quantityLimit, 0);
-  const avgSellThroughRate = totalQuota > 0 ? Math.round((totalSoldQty / totalQuota) * 100) : 0;
+  const avgSellThroughRate = totalQuota > 0 ? ((totalSoldQty / totalQuota) * 100).toFixed(1) : 0;
   const totalFlashSaleProducts = productStatsList.length;
 
   return {

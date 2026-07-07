@@ -305,7 +305,11 @@ const getHybridRecommendationsData = async (userId, topK = 20) => {
         }
       }
     } catch (e) {
-      console.error("[Hybrid] CBF Error:", e.message);
+      if (e.response?.status === 404) {
+        console.log(`[Hybrid] Sản phẩm vừa xem chưa có trong AI dataset (CBF fallback).`);
+      } else {
+        console.error("[Hybrid] CBF Error:", e.message);
+      }
     }
   }
 

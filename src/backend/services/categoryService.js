@@ -20,7 +20,21 @@ const createCategory = async (categoryData) => {
 };
 
 const getAllCategories = async () => {
-  return await Category.find().sort({ createdAt: -1 }).lean();
+  const categories = await Category.find().sort({ createdAt: -1 }).lean();
+  const Product = (await import("../models/productModel.js")).default;
+  
+  const stats = await Product.aggregate([
+    { $group: { _id: "$category", count: { $sum: 1 }, sold: { $sum: "$sold" } } }
+  ]);
+
+  return categories.map(cat => {
+    const stat = stats.find(s => s._id && s._id.toString() === cat._id.toString());
+    return {
+      ...cat,
+      productCount: stat ? stat.count : 0,
+      soldCount: stat ? stat.sold : 0
+    };
+  });
 };
 
 const updateCategory = async (id, categoryData) => {

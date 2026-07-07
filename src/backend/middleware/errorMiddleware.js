@@ -10,6 +10,9 @@ const notFound = (req, res, next) => {
 const errorHandler = (err, req, res, next) => {
   let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   let message = err.message;
+  
+  import('fs').then(fs => fs.writeFileSync('error_log.txt', err.stack || err.message)).catch(e => {});
+
 
   // 1. Lỗi Mongoose CastError (Sai định dạng ID)
   if (err.name === "CastError" && err.kind === "ObjectId") {
