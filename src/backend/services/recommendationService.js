@@ -3,6 +3,7 @@ import Review from "../models/reviewModel.js";
 import UserInteraction from "../models/userInteractionModel.js";
 import Order, { ORDER_STATUS } from "../models/orderModel.js";
 import * as configService from "./configService.js";
+import { getTimeRange } from "./statsService.js";
 
 // ─── 1. Products ──────────────────────────────────────────────────────────────
 
@@ -136,8 +137,9 @@ const getPurchasesData = async () => {
  * Công thức:
  * Score = (sold * 5) + (rating * log10(numReviews + 1) * 10) + trendingScore
  */
-const getPopularBooks = async (limit = 10, days = 30) => {
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+const getPopularBooks = async (limit = 10, period = "month") => {
+  const { start } = getTimeRange(period);
+  const since = start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   // Lấy config trọng số từ DB
   const config = await configService.getConfigByKey("INTERACTION_WEIGHTS");

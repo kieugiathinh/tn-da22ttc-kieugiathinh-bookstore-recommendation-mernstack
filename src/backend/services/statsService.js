@@ -1639,6 +1639,7 @@ const getRecommendationFunnel = async (query = {}) => {
 };
 
 export {
+  getTimeRange,
   getDashboardStats,
   getRevenueChart,
   getRevenueComparison,

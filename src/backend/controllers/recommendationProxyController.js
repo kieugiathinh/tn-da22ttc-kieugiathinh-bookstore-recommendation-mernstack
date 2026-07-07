@@ -198,11 +198,11 @@ export const triggerRetrain = asyncHandler(async (req, res) => {
  */
 export const getPopularProducts = asyncHandler(async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
-  const days = parseInt(req.query.days, 10) || 30;
+  const period = req.query.period || "month"; // week, month, year
 
   try {
     const { getPopularBooks } = await import("../services/recommendationService.js");
-    const products = await getPopularBooks(limit, days);
+    const products = await getPopularBooks(limit, period);
 
     res.status(200).json({
       success: true,

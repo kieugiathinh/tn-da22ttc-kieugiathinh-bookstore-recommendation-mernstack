@@ -111,15 +111,32 @@ const getAllProducts = async (queryParms) => {
   } 
   
   if (qTopRated) {
-    const products = await Product.find({
+    const matchCondition = {
       rating: { $gte: 4.0 },
-      numReviews: { $gt: 0 },
+      $or: [{ sold: { $gt: 0 } }, { numReviews: { $gt: 0 } }],
       ...(queryParms.qStatus === "all" ? {} : { status: "active" })
-    })
-      .sort({ rating: -1, numReviews: -1 })
-      .limit(10)
-      .populate("category")
-      .lean();
+    };
+
+    let products = await Product.aggregate([
+      { $match: matchCondition },
+      {
+        $addFields: {
+          trustScore: {
+            $divide: [
+              { $add: [
+                  { $multiply: [{ $ifNull: ["$rating", 0] }, { $ifNull: ["$sold", 0] }] }, 
+                  { $multiply: [4.5, 20] }
+              ]},
+              { $add: [{ $ifNull: ["$sold", 0] }, 20] }
+            ]
+          }
+        }
+      },
+      { $sort: { trustScore: -1 } },
+      { $limit: 10 }
+    ]);
+
+    products = await Product.populate(products, { path: "category" });
     return await flashsaleService.attachFlashSaleToProducts(products);
   }
   // Xử lý Tìm kiếm
