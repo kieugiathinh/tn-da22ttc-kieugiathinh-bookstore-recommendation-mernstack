@@ -22,6 +22,7 @@ import VNPayReturn from "./pages/client/VNPayReturn";
 import ProductList from "./pages/client/ProductList";
 import FlashSale from "./pages/client/FlashSale";
 import MyVouchers from "./pages/client/MyVouchers";
+import Wishlist from "./pages/client/Wishlist";
 import About from "./pages/client/About";
 import Contact from "./pages/client/Contact";
 import AllCoupons from "./pages/client/AllCoupons";
@@ -42,8 +43,7 @@ import AdminNewProduct from "./pages/admin/NewProduct";
 import AdminCategories from "./pages/admin/Categories";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminCoupon from "./pages/admin/CouponList";
-import AdminChatAnalytics from "./pages/admin/ChatAnalytics";
-import AdminChatHistory from "./pages/admin/ChatHistory";
+
 import AdminRecommendations from "./pages/admin/AIRecommendations";
 import AdminAIConfig from "./pages/admin/AIConfig";
 import AdminAIInteractions from "./pages/admin/AIInteractions";
@@ -90,6 +90,7 @@ const router = createBrowserRouter([
       { path: "/myaccount", element: <ProtectedRoute><MyAccount /></ProtectedRoute> },
       { path: "/myorders", element: <ProtectedRoute><Order /></ProtectedRoute> },
       { path: "/my-vouchers", element: <ProtectedRoute><MyVouchers /></ProtectedRoute> },
+      { path: "/wishlist", element: <ProtectedRoute><Wishlist /></ProtectedRoute> },
     ],
   },
 
@@ -109,8 +110,7 @@ const router = createBrowserRouter([
       { path: "flash-sales", element: <AdminFlashSales /> },
       { path: "reviews", element: <AdminReviews /> },
       { path: "coupons", element: <AdminCoupon /> },
-      { path: "chat-analytics", element: <AdminChatAnalytics /> },
-      { path: "chat-history", element: <AdminChatHistory /> },
+
       { path: "ai-recommendations", element: <AdminRecommendations /> },
       { path: "ai-recommendations/config", element: <AdminAIConfig /> },
       { path: "ai-recommendations/interactions", element: <AdminAIInteractions /> },

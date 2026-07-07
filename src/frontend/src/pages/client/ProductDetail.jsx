@@ -12,6 +12,8 @@ import {
   FaTruck,
   FaUndo,
   FaCheckCircle,
+  FaHeart,
+  FaRegHeart,
 } from "react-icons/fa";
 import { useLocation, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
@@ -23,6 +25,8 @@ import { toast } from "sonner";
 import moment from "moment";
 import "moment/locale/vi"; // Import locale tiếng Việt
 import SimilarProducts from "../../components/client/SimilarProducts";
+import { useWishlist } from "../../context/WishlistContext";
+import { useNavigate } from "react-router-dom";
 
 // --- Star Rating Component ---
 const StarRating = ({ rating, size = "text-sm" }) => {
@@ -50,6 +54,9 @@ const Product = () => {
   const location = useLocation();
   const id = location.pathname.split("/")[2];
   const { currentUser: user } = useAuth();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const navigate = useNavigate();
+  const isWished = isInWishlist(id);
   const [product, setProduct] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -78,6 +85,26 @@ const Product = () => {
     };
     getProduct();
   }, [id]);
+
+  // View count increment logic (10s timer)
+  useEffect(() => {
+    if (!id) return;
+    
+    let hasViewed = false;
+
+    const timer = setTimeout(async () => {
+      if (hasViewed) return;
+      try {
+        await userRequest.post(`/products/view/${id}`);
+        hasViewed = true;
+      } catch (error) {
+        console.error("Lỗi khi đếm view:", error);
+      }
+    }, 10000); // 10 giây
+
+    return () => clearTimeout(timer);
+  }, [id]);
+
 
   const trackedProductId = useRef(null);
 
@@ -229,6 +256,18 @@ const Product = () => {
     ? Math.round((1 - finalPrice / product.originalPrice) * 100)
     : 0;
 
+  const handleWishlistClick = async () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm vào yêu thích");
+      navigate("/login");
+      return;
+    }
+    const success = await toggleWishlist(id);
+    if (success) {
+      toast.success(isWished ? "Đã xóa khỏi yêu thích" : "Đã thêm vào yêu thích");
+    }
+  };
+
   const handleAddToCart = async () => {
     if (product.countInStock === 0) {
       toast.error("Sản phẩm đã hết hàng!");
@@ -301,7 +340,7 @@ const Product = () => {
   if (loading)
     return (
       <div className="bg-slate-50 min-h-screen py-10">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="bg-white rounded-2xl shadow-sm p-10 flex gap-10 animate-pulse">
             <div className="w-2/5 aspect-[3/4] bg-slate-100 rounded-xl" />
             <div className="w-3/5 space-y-4">
@@ -317,7 +356,22 @@ const Product = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+
+        {/* BREADCRUMB */}
+        <div className="flex items-center text-sm text-slate-500 mb-6 gap-2">
+          <Link to="/" className="hover:text-orange-600 transition-colors">Trang chủ</Link>
+          <span>/</span>
+          {product.category && (
+            <>
+              <Link to={`/products?category=${product.category._id || product.category}`} className="hover:text-orange-600 transition-colors">
+                {product.category.name || "Thể loại"}
+              </Link>
+              <span>/</span>
+            </>
+          )}
+          <span className="text-slate-800 font-semibold line-clamp-1">{product.title}</span>
+        </div>
 
         {/* ===== MAIN CARD ===== */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10 flex flex-col md:flex-row gap-10">
@@ -360,7 +414,7 @@ const Product = () => {
             </h1>
 
             {/* Meta info */}
-            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 mb-4">
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 mb-2">
               <span>
                 Tác giả:{" "}
                 <span className="text-orange-600 font-semibold">
@@ -374,6 +428,39 @@ const Product = () => {
                   {product.publisher || "Đang cập nhật"}
                 </span>
               </span>
+            </div>
+
+            {/* Extended Meta info */}
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500 mb-4">
+              {product.publishedYear && (
+                <span>
+                  Năm XB: <span className="text-slate-800 font-medium">{product.publishedYear}</span>
+                </span>
+              )}
+              {product.pageCount && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span>
+                    Số trang: <span className="text-slate-800 font-medium">{product.pageCount}</span>
+                  </span>
+                </>
+              )}
+              {product.language && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span>
+                    Ngôn ngữ: <span className="text-slate-800 font-medium">{product.language === "vi" ? "Tiếng Việt" : product.language === "en" ? "Tiếng Anh" : product.language === "ja" ? "Tiếng Nhật" : product.language === "zh" ? "Tiếng Trung" : product.language === "fr" ? "Tiếng Pháp" : "Khác"}</span>
+                  </span>
+                </>
+              )}
+              {product.ageGroup && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span>
+                    Độ tuổi: <span className="text-slate-800 font-medium">{product.ageGroup === "all" ? "Mọi lứa tuổi" : product.ageGroup === "children" ? "Trẻ em" : product.ageGroup === "teen" ? "Thanh thiếu niên" : "Người lớn (18+)"}</span>
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Rating row */}
@@ -392,6 +479,11 @@ const Product = () => {
               <span className="text-sm text-slate-500 hidden sm:inline">
                 Đã bán:{" "}
                 <span className="text-slate-800 font-semibold">{product.sold || 0}</span>
+              </span>
+              <span className="text-slate-300 hidden sm:inline">|</span>
+              <span className="text-sm text-slate-500 hidden sm:inline">
+                Lượt xem:{" "}
+                <span className="text-slate-800 font-semibold">{product.viewCount || 0}</span>
               </span>
             </div>
 
@@ -543,6 +635,19 @@ const Product = () => {
               >
                 <FaShoppingCart className="text-lg group-hover:scale-110 transition-transform" />
                 {product.countInStock > 0 ? "Thêm vào giỏ hàng" : "Hết hàng"}
+              </button>
+
+              {/* Wishlist button */}
+              <button
+                onClick={handleWishlistClick}
+                className={`py-3.5 px-4 rounded-xl flex items-center justify-center transition-colors border shadow-sm ${
+                  isWished
+                    ? "bg-rose-50 text-rose-500 border-rose-200"
+                    : "bg-white text-slate-400 border-slate-200 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
+                }`}
+                title={isWished ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+              >
+                {isWished ? <FaHeart className="text-xl" /> : <FaRegHeart className="text-xl" />}
               </button>
             </div>
 

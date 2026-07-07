@@ -7,6 +7,7 @@
 
 import axios from "axios";
 import Product from "../models/productModel.js";
+import SystemConfig from "../models/systemConfigModel.js";
 import Category from "../models/categoryModel.js";
 import dotenv from "dotenv";
 
@@ -172,6 +173,16 @@ const getUserRecommendationsData = async (userId, topK = 6) => {
  */
 const triggerCFRetrain = async () => {
   const aiRes = await aiClient.post("/recommend/retrain");
+  
+  // Nếu retrain thành công hoặc đã hoàn tất, bỏ cờ NEEDS_RETRAIN
+  if (aiRes.data && (aiRes.data.success || aiRes.data.status === "completed")) {
+    await SystemConfig.findOneAndUpdate(
+      { key: "NEEDS_RETRAIN" },
+      { value: false },
+      { upsert: true }
+    );
+  }
+
   return aiRes.data;
 };
 
@@ -180,7 +191,15 @@ const triggerCFRetrain = async () => {
  */
 const getAIHealthStatus = async () => {
   const aiRes = await aiClient.get("/health");
-  return aiRes.data;
+  let data = aiRes.data;
+  
+  // Inject cờ NEEDS_RETRAIN vào response
+  const retrainFlag = await SystemConfig.findOne({ key: "NEEDS_RETRAIN" });
+  if (data && typeof data === 'object') {
+    data.needs_retrain = retrainFlag ? retrainFlag.value : false;
+  }
+  
+  return data;
 };
 
 /**
@@ -188,25 +207,29 @@ const getAIHealthStatus = async () => {
  * Chỉ gọi AI, không cần parse lại UI context, trả về raw meta.
  */
 const getUserRecommendationsSimulator = async (userId, topK = 6) => {
+  // 1. CF - Dự đoán tương lai
   const aiRes = await aiClient.get(`/recommend/user/${userId}/collaborative`, {
     params: { top_k: Math.min(topK, 20) },
   });
 
   const { recommendations = [], coldStart = false } = aiRes.data;
+  let cfProducts = [];
+  let cfAlgorithm = "collaborative-svd";
   if (coldStart || recommendations.length === 0) {
-    const fallback = await getBestSellerFallback(topK);
-    return {
-      isColdStart: true,
-      algorithm: "bestseller-fallback",
-      products: fallback
-    };
+    cfProducts = await getBestSellerFallback(topK);
+    cfAlgorithm = "bestseller-fallback";
+  } else {
+    cfProducts = await enrichAndSort(recommendations);
   }
 
-  const products = await enrichAndSort(recommendations);
+  // 2. Hybrid - Gợi ý thực tế (đang dùng trên web)
+  const hybridData = await getHybridRecommendationsData(userId, topK);
+
   return {
-    isColdStart: false,
-    algorithm: "collaborative-svd",
-    products
+    isColdStart: coldStart,
+    cfAlgorithm,
+    cfProducts,          // Dự đoán
+    actualProducts: hybridData.products // Thực tế
   };
 };
 
@@ -237,11 +260,15 @@ const getHybridRecommendationsData = async (userId, topK = 20) => {
     const SystemConfig = (await import("../models/systemConfigModel.js")).default;
     const config = await SystemConfig.findOne({ key: "HYBRID_WEIGHTS" }).lean();
     if (config && config.value) {
-      const total = (config.value.cf || 0) + (config.value.cbf || 0) + (config.value.pop || 0);
+      // Dùng ?? thay || để giá trị 0 không bị coi là falsy
+      const rawCf  = config.value.cf  ?? 0;
+      const rawCbf = config.value.cbf ?? 0;
+      const rawPop = config.value.pop ?? 0;
+      const total  = rawCf + rawCbf + rawPop;
       if (total > 0) {
-        cfRatio = config.value.cf / total;
-        cbfRatio = config.value.cbf / total;
-        popRatio = config.value.pop / total;
+        cfRatio  = rawCf  / total;
+        cbfRatio = rawCbf / total;
+        popRatio = rawPop / total;
       }
     }
   } catch (err) {
@@ -278,15 +305,20 @@ const getHybridRecommendationsData = async (userId, topK = 20) => {
         }
       }
     } catch (e) {
-      console.error("[Hybrid] CBF Error:", e.message);
+      if (e.response?.status === 404) {
+        console.log(`[Hybrid] Sản phẩm vừa xem chưa có trong AI dataset (CBF fallback).`);
+      } else {
+        console.error("[Hybrid] CBF Error:", e.message);
+      }
     }
   }
 
-  // 3. Lấy Popularity điền vào chỗ trống
-  const remaining = topK - hybridProducts.length;
-  if (remaining > 0) {
+  // 3. Chỉ lấy Popularity nếu popRatio > 0 (admin cấu hình cho phép)
+  if (popRatio > 0) {
+    const popLimit = Math.ceil(topK * popRatio);
+    const remaining = Math.max(popLimit, topK - hybridProducts.length);
     try {
-      const fallback = await getBestSellerFallback(remaining + 5); // Lấy dư để trừ trùng
+      const fallback = await getBestSellerFallback(remaining + 5);
       addProducts(fallback);
     } catch (e) {
       console.error("[Hybrid] Popularity Error:", e.message);

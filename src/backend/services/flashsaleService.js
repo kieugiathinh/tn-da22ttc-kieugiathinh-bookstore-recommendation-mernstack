@@ -72,14 +72,22 @@ const addMultipleProductsToFlashSale = async (flashSaleId, productsArray) => {
 
 const getActiveFlashSale = async () => {
   const now = new Date();
-  return await FlashSale.findOne({
+  const flashSale = await FlashSale.findOne({
     isActive: true,
     startTime: { $lte: now },
     endTime: { $gte: now },
   }).populate({
     path: "products.product",
-    select: "title img originalPrice author",
+    select: "title img originalPrice author status",
+    match: { status: { $ne: "discontinued" } }
   }).lean();
+
+  if (flashSale && flashSale.products) {
+    // populate with match sets product to null if it doesn't match
+    flashSale.products = flashSale.products.filter(item => item.product !== null);
+  }
+
+  return flashSale;
 };
 
 const attachFlashSaleToProducts = async (products) => {

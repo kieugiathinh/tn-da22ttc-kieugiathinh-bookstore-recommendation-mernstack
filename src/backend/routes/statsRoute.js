@@ -13,6 +13,8 @@ import {
   getOrderAnalyticsHandler,
   getProductStatsHandler,
   getFlashSaleStatsHandler,
+  getInteractionFunnelHandler,
+  getRecommendationFunnelHandler,
 } from "../controllers/statsController.js";
 
 const router = express.Router();
@@ -29,5 +31,7 @@ router.get("/user-analytics", protect, admin, getUserAnalyticsHandler);
 router.get("/order-analytics", protect, admin, getOrderAnalyticsHandler);
 router.get("/product-stats", protect, admin, getProductStatsHandler);
 router.get("/flashsale-analytics", protect, admin, getFlashSaleStatsHandler);
+router.get("/interaction-funnel", protect, admin, getInteractionFunnelHandler);
+router.get("/recommendation-funnel", protect, admin, getRecommendationFunnelHandler);
 
 export default router;

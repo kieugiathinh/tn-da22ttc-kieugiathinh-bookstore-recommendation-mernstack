@@ -59,6 +59,18 @@ const ProductSchema = mongoose.Schema(
       default: 0,
     },
 
+    status: {
+      type: String,
+      enum: ["active", "discontinued"],
+      default: "active",
+      index: true,
+    },
+
+    viewCount: {
+      type: Number,
+      default: 0,
+    },
+
     sold: {
       type: Number,
       default: 0,
@@ -156,12 +168,19 @@ const ProductSchema = mongoose.Schema(
  * Text index mở rộng — tìm kiếm full-text và hỗ trợ Content-Based vector.
  * Python service dùng để tokenize và build TF-IDF corpus.
  */
-ProductSchema.index({
-  title: "text",
-  author: "text",
-  desc: "text",
-  tags: "text",
-});
+ProductSchema.index(
+  {
+    title: "text",
+    author: "text",
+    desc: "text",
+    tags: "text",
+  },
+  {
+    name: "product_text_search",
+    default_language: "none",
+    language_override: "textSearchLanguage",
+  }
+);
 
 const Product = mongoose.model("Product", ProductSchema);
 export default Product;

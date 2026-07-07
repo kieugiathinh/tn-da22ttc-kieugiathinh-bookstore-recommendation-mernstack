@@ -4,6 +4,8 @@ import {
   FaCheckCircle, FaBoxOpen, FaEye, FaSearch, FaCalendarAlt,
   FaFilter, FaSortAmountDown, FaChevronDown
 } from "react-icons/fa";
+import { toast } from "react-toastify";
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
 import PageHeader from "../../components/admin/PageHeader";
@@ -260,13 +262,7 @@ const Orders = () => {
       {/* ── TABLE ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-3 text-gray-400">
-            <svg className="animate-spin h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-            <span className="text-sm font-medium">Đang tải đơn hàng...</span>
-          </div>
+          <LoadingSpinner text="Đang tải đơn hàng..." />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -517,7 +513,7 @@ const Orders = () => {
                 </div>
                 <div className="flex justify-between items-center border-t border-orange-200/50 pt-2 mt-1">
                   <span className="font-bold text-gray-800">Tổng thanh toán</span>
-                  <span className="text-xl font-black text-primary">
+                  <span className="text-xl font-bold text-primary">
                     {(selectedOrder.total ?? 0).toLocaleString("vi-VN")}₫
                   </span>
                 </div>

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FaTrash, FaEdit, FaPlus, FaCloudUploadAlt, FaSearch, FaTags, FaBookOpen, FaChartPie, FaChevronDown } from "react-icons/fa";
 import { userRequest } from "../../requestMethods";
 import Swal from "sweetalert2";
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import axios from "axios";
 import { CLOUDINARY_CONFIG } from "../../utils/constants";
 import PageHeader from "../../components/admin/PageHeader";
@@ -10,7 +11,6 @@ import Modal from "../../components/common/Modal";
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
-  const [statsData, setStatsData]   = useState(null); // Để lấy data phân bố thể loại
   const [loading, setLoading]       = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -28,12 +28,8 @@ const Categories = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [catRes, statsRes] = await Promise.all([
-        userRequest.get("/categories"),
-        userRequest.get("/stats/product-stats").catch(() => ({ data: null }))
-      ]);
+      const catRes = await userRequest.get("/categories");
       setCategories(catRes.data);
-      setStatsData(statsRes.data);
     } catch (err) {
       console.error(err);
       Swal.fire("Lỗi", "Không thể tải danh mục sản phẩm.", "error");
@@ -141,11 +137,9 @@ const Categories = () => {
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
   const pageData = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-  // ── GET STATS ──
   // Tìm thể loại có nhiều sách nhất và bán chạy nhất từ statsData
-  const catDistribution = statsData?.categoryDistribution || [];
-  const topBooksCat = [...catDistribution].sort((a,b) => b.count - a.count)[0];
-  const topSalesCat = [...catDistribution].sort((a,b) => b.totalSold - a.totalSold)[0];
+  const topBooksCat = [...categories].sort((a, b) => (b.productCount || 0) - (a.productCount || 0))[0];
+  const topSalesCat = [...categories].sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))[0];
 
   return (
     <div className="space-y-5">
@@ -169,7 +163,7 @@ const Categories = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng thể loại</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{categories.length}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{categories.length}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group">
@@ -178,8 +172,8 @@ const Categories = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Nhiều sách nhất</p>
-            <p className="mt-0.5 text-lg font-black text-gray-900 truncate max-w-[140px]">{topBooksCat?._id || "—"}</p>
-            <p className="text-[11px] text-gray-400 font-semibold">{topBooksCat?.count || 0} đầu sách</p>
+            <p className="mt-0.5 text-lg font-bold text-gray-900 truncate max-w-[140px]">{topBooksCat?.name || "—"}</p>
+            <p className="text-[11px] text-gray-400 font-semibold">{topBooksCat?.productCount || 0} đầu sách</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group">
@@ -188,8 +182,8 @@ const Categories = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Bán chạy nhất</p>
-            <p className="mt-0.5 text-lg font-black text-gray-900 truncate max-w-[140px]">{topSalesCat?._id || "—"}</p>
-            <p className="text-[11px] text-gray-400 font-semibold">{topSalesCat?.totalSold || 0} cuốn đã bán</p>
+            <p className="mt-0.5 text-lg font-bold text-gray-900 truncate max-w-[140px]">{topSalesCat?.name || "—"}</p>
+            <p className="text-[11px] text-gray-400 font-semibold">{topSalesCat?.soldCount || 0} cuốn đã bán</p>
           </div>
         </div>
       </div>
@@ -226,13 +220,7 @@ const Categories = () => {
       {/* ── TABLE ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-3 text-gray-400">
-            <svg className="animate-spin h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-            <span className="text-sm font-medium">Đang tải dữ liệu...</span>
-          </div>
+          <LoadingSpinner text="Đang tải dữ liệu..." />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -247,7 +235,6 @@ const Categories = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {pageData.map((cat) => {
-                    const catStat = catDistribution.find(c => c._id === cat.name) || { count: 0, totalSold: 0 };
                     return (
                       <tr key={cat._id} className="hover:bg-orange-50/30 transition-colors group">
                         {/* Ảnh & Tên */}
@@ -269,16 +256,17 @@ const Categories = () => {
                           <p className="text-gray-500 text-xs truncate max-w-xs">{cat.description || "—"}</p>
                         </td>
 
-                        {/* Thống kê mượn từ Product Stats */}
+                        {/* Thống kê từ Backend */}
                         <td className="px-5 py-3.5">
                           <div className="space-y-0.5">
-                            <p className="text-xs"><span className="font-semibold text-gray-700">{catStat.count}</span> đầu sách</p>
-                            <p className="text-[11px] text-gray-400"><span className="font-semibold text-primary">{catStat.totalSold}</span> cuốn đã bán</p>
+                            <p className="text-xs"><span className="font-semibold text-gray-700">{cat.productCount || 0}</span> đầu sách</p>
+                            <p className="text-[11px] text-gray-400"><span className="font-semibold text-primary">{cat.soldCount || 0}</span> cuốn đã bán</p>
                           </div>
                         </td>
 
                         {/* Thao tác */}
                         <td className="px-5 py-3.5">
+
                           <div className="flex items-center justify-center gap-2">
                             <button
                               title="Chỉnh sửa"

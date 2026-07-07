@@ -11,7 +11,8 @@ export const getInteractions = asyncHandler(async (req, res) => {
     req.query.limit,
     req.query.type,
     req.query.source,
-    req.query.keyword
+    req.query.keyword,
+    req.query.days
   );
   
   res.status(200).json({
@@ -69,4 +70,16 @@ export const deleteInteraction = asyncHandler(async (req, res) => {
     }
     throw error;
   }
+});
+
+/**
+ * GET /api/v1/interactions/analytics/categories
+ * Lấy thống kê category được tương tác (có thể lọc theo user)
+ */
+export const getCategoryAnalytics = asyncHandler(async (req, res) => {
+  const data = await interactionService.getCategoryAnalytics(req.query.userId);
+  res.status(200).json({
+    success: true,
+    data
+  });
 });

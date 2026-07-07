@@ -1,3 +1,4 @@
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import {
   FaPlus, FaTrash, FaCalendarAlt, FaClock, FaTimes,
   FaEdit, FaToggleOn, FaToggleOff, FaChevronDown, FaChevronUp,
@@ -11,7 +12,6 @@ import Button from "../../components/common/Button";
 import InputField from "../../components/common/InputField";
 import Modal from "../../components/common/Modal";
 import IconButton from "../../components/common/IconButton";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Badge from "../../components/common/Badge";
 
 const PREVIEW_LIMIT = 3;
@@ -260,9 +260,7 @@ const FlashSales = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner />;
-
-  return (
+  if (loading) return <LoadingSpinner text="Đang tải dữ liệu..." />;return (
     <div className="space-y-6">
       <PageHeader
         title="Quản lý Flash Sale"

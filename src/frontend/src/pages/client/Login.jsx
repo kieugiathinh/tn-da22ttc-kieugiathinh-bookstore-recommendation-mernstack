@@ -61,7 +61,7 @@ const Login = () => {
 
       {/* Đã xóa ToastContainer ở đây */}
 
-      <div className="max-w-5xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[650px] z-10 relative">
+      <div className="max-w-7xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[650px] z-10 relative">
         {/* --- CỘT TRÁI: TYPOGRAPHY TRUYỀN ĐỘNG LỰC --- */}
         <div className="hidden md:flex w-1/2 bg-gradient-to-br from-orange-500 via-[#EE4D2D] to-rose-600 relative overflow-hidden justify-center items-center text-white p-12">
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>

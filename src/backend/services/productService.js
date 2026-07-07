@@ -87,10 +87,19 @@ const deleteProduct = async (id) => {
   return product;
 };
 
-const getProductById = async (id) => {
+const getProductById = async (id, isAdmin = false) => {
   const product = await Product.findById(id).populate("category").lean();
+  
   if (!product) throw new Error("Sản phẩm không tồn tại");
+  if (product.status === "discontinued" && !isAdmin) {
+    throw new Error("Sản phẩm này đã ngừng kinh doanh");
+  }
+
   return await flashsaleService.attachFlashSaleToProducts(product);
+};
+
+const incrementViewCount = async (id) => {
+  await Product.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
 };
 
 const getAllProducts = async (queryParms) => {
@@ -102,20 +111,43 @@ const getAllProducts = async (queryParms) => {
   } 
   
   if (qTopRated) {
-    const products = await Product.find({
+    const matchCondition = {
       rating: { $gte: 4.0 },
-      numReviews: { $gt: 0 },
-    })
-      .sort({ rating: -1, numReviews: -1 })
-      .limit(10)
-      .populate("category")
-      .lean();
+      $or: [{ sold: { $gt: 0 } }, { numReviews: { $gt: 0 } }],
+      ...(queryParms.qStatus === "all" ? {} : { status: "active" })
+    };
+
+    let products = await Product.aggregate([
+      { $match: matchCondition },
+      {
+        $addFields: {
+          trustScore: {
+            $divide: [
+              { $add: [
+                  { $multiply: [{ $ifNull: ["$rating", 0] }, { $ifNull: ["$sold", 0] }] }, 
+                  { $multiply: [4.5, 20] }
+              ]},
+              { $add: [{ $ifNull: ["$sold", 0] }, 20] }
+            ]
+          }
+        }
+      },
+      { $sort: { trustScore: -1 } },
+      { $limit: 10 }
+    ]);
+
+    products = await Product.populate(products, { path: "category" });
     return await flashsaleService.attachFlashSaleToProducts(products);
   }
-  // Xử lý Tìm kiếm với MongoDB Atlas Search
+  // Xử lý Tìm kiếm
   if (qSearch) {
-    const pipeline = [
-      {
+    let products = [];
+
+    // Thử Atlas Search trước (nếu index đã được tạo trên Atlas)
+    try {
+      const pipeline = [];
+
+      pipeline.push({
         $search: {
           index: "product_search_index",
           text: {
@@ -124,29 +156,60 @@ const getAllProducts = async (queryParms) => {
             fuzzy: { maxEdits: 1, prefixLength: 0 }
           }
         }
-      }
-    ];
-
-    if (qCategory) {
-      const categories = qCategory.split(",");
-      pipeline.push({
-        $match: { category: { $in: categories.map(c => new mongoose.Types.ObjectId(c)) } }
       });
+
+      if (queryParms.qStatus !== "all") {
+        pipeline.push({ $match: { status: "active" } });
+      }
+
+      if (qCategory) {
+        const categories = qCategory.split(",");
+        pipeline.push({
+          $match: { category: { $in: categories.map(c => new mongoose.Types.ObjectId(c)) } }
+        });
+      }
+
+      if (qNew) pipeline.push({ $sort: { createdAt: -1 } });
+      else if (qBestSeller) pipeline.push({ $sort: { sold: -1 } });
+
+      products = await Product.aggregate(pipeline);
+    } catch (searchErr) {
+      console.warn("[Search] Atlas Search lỗi, dùng fallback $regex:", searchErr.message);
+      products = [];
     }
 
-    if (qNew) {
-      pipeline.push({ $sort: { createdAt: -1 } });
-    } else if (qBestSeller) {
-      pipeline.push({ $sort: { sold: -1 } });
+    // Fallback: Nếu Atlas Search không trả về kết quả, dùng $regex
+    if (products.length === 0) {
+      const safeSearch = qSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regexFilter = {
+        $or: [
+          { title: { $regex: safeSearch, $options: "i" } },
+          { author: { $regex: safeSearch, $options: "i" } },
+          { publisher: { $regex: safeSearch, $options: "i" } },
+        ],
+      };
+      if (queryParms.qStatus !== "all") {
+        regexFilter.status = "active";
+      }
+      if (qCategory) {
+        const categories = qCategory.split(",");
+        regexFilter.category = { $in: categories.map(c => new mongoose.Types.ObjectId(c)) };
+      }
+      const sortOpt = qNew ? { createdAt: -1 } : qBestSeller ? { sold: -1 } : { createdAt: -1 };
+      products = await Product.find(regexFilter).sort(sortOpt).populate("category").lean();
+    } else {
+      products = await Product.populate(products, { path: "category" });
     }
 
-    let products = await Product.aggregate(pipeline);
-    products = await Product.populate(products, { path: "category" });
     return await flashsaleService.attachFlashSaleToProducts(products);
   }
 
   // Luồng xử lý bình thường không có tìm kiếm
   let filter = {};
+  if (queryParms.qStatus !== "all") {
+    filter.status = "active";
+  }
+
   if (qCategory) {
     const categories = qCategory.split(",");
     filter.category = { $in: categories };
@@ -165,8 +228,9 @@ const getAllProducts = async (queryParms) => {
   return await flashsaleService.attachFlashSaleToProducts(products);
 };
 
-const getNewProducts = async () => {
-  const products = await Product.find()
+const getNewProducts = async (status = "active") => {
+  const filter = status === "all" ? {} : { status: "active" };
+  const products = await Product.find(filter)
     .sort({ createdAt: -1 })
     .limit(10)
     .populate("category")
@@ -174,18 +238,19 @@ const getNewProducts = async () => {
   return await flashsaleService.attachFlashSaleToProducts(products);
 };
 
-const getRelatedProducts = async (categoryId, productId) => {
+const getRelatedProducts = async (categoryId, productId, status = "active") => {
   if (!categoryId || !productId) {
     throw new Error("Thiếu thông tin categoryId hoặc productId");
   }
 
+  const filter = {
+    category: new mongoose.Types.ObjectId(categoryId),
+    _id: { $ne: new mongoose.Types.ObjectId(productId) },
+    ...(status !== "all" ? { status: "active" } : {})
+  };
+
   let products = await Product.aggregate([
-    {
-      $match: {
-        category: new mongoose.Types.ObjectId(categoryId),
-        _id: { $ne: new mongoose.Types.ObjectId(productId) },
-      },
-    },
+    { $match: filter },
     { $sample: { size: 5 } },
   ]);
 
@@ -254,6 +319,7 @@ export {
   updateProduct,
   deleteProduct,
   getProductById,
+  incrementViewCount,
   getAllProducts,
   getNewProducts,
   getRelatedProducts,

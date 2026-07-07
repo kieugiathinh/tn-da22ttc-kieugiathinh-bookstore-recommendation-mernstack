@@ -9,7 +9,8 @@ import {
   FiMenu,
   FiClock,
   FiTrendingUp,
-  FiX
+  FiX,
+  FiHeart
 } from "react-icons/fi";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -17,6 +18,7 @@ import { useSelector } from "react-redux";
 import { useAuth } from "../../context/AuthContext";
 import BookBeeLogo from "../shared/BookBeeLogo";
 import { userRequest } from "../../requestMethods";
+import { useWishlist } from "../../context/WishlistContext";
 
 const Navbar = () => {
   const [search, setSearch] = useState("");
@@ -29,6 +31,7 @@ const Navbar = () => {
 
   const cart = useSelector((state) => state.cart);
   const { currentUser, logout } = useAuth();
+  const { wishlistCount } = useWishlist();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -341,6 +344,13 @@ const Navbar = () => {
                                hover:bg-orange-50 hover:text-primary transition-colors"
                   >
                     <FiTag className="text-lg" /> Mã giảm giá
+                  </Link>
+                  <Link
+                    to="/wishlist"
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700
+                               hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                  >
+                    <FiHeart className="text-lg" /> Sách yêu thích
                   </Link>
                   <Link
                     to="/myorders"

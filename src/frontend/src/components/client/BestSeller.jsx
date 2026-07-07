@@ -11,13 +11,8 @@ const BestSeller = () => {
   useEffect(() => {
     const fetchTrends = async () => {
       try {
-        let days = 30;
-        if (period === "week") days = 7;
-        else if (period === "month") days = 30;
-        else if (period === "year") days = 365;
-
-        // Fetch sách nổi bật (Độ phổ biến) từ Recommendation AI Proxy thay vì lấy đơn thuần theo số lượng bán
-        const res = await userRequest.get(`/recommend/popular?limit=5&days=${days}`);
+        // Fetch sách nổi bật (Độ phổ biến) từ Recommendation AI Proxy
+        const res = await userRequest.get(`/recommend/popular?limit=5&period=${period}`);
         setProducts(res.data?.products || []);
         if (res.data?.products && res.data.products.length > 0) {
           setActiveProduct(res.data.products[0]); // Mặc định chọn top 1
@@ -74,7 +69,7 @@ const BestSeller = () => {
             return (
               <div
                 key={item._id}
-                onMouseEnter={() => setActiveProduct(item)}
+                onClick={() => setActiveProduct(item)}
                 className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all duration-300 border-2 h-[108px] ${isActive
                   ? "bg-slate-50 border-amber-300 shadow-sm"
                   : "border-transparent hover:bg-slate-50 border-b-slate-100"
@@ -103,11 +98,12 @@ const BestSeller = () => {
                   <p className="text-sm text-slate-500 truncate">{item.author}</p>
 
                   <div className="flex items-center gap-4 mt-1">
-                    <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded flex items-center gap-1">
-                      <FaTrophy className="text-xs" /> Độ HOT: {item.popularityScore ? Math.round(item.popularityScore) : (item.sold || 0)}
-                    </span>
-                    <div className="flex items-center gap-1 text-xs text-amber-500">
-                      <FaStar /> {item.rating?.toFixed(1)}
+                    <div className="flex items-center gap-1 text-xs text-amber-500 font-bold">
+                      <FaStar /> {item.rating?.toFixed(1) || 0}
+                    </div>
+                    <div className="text-xs text-slate-500 font-medium">
+                      Đã bán <span className="font-bold text-slate-700">{item.periodSold || 0}</span>
+                      {period === "week" ? " trong tuần này" : period === "month" ? " trong tháng này" : " trong năm nay"}
                     </div>
                   </div>
                 </div>

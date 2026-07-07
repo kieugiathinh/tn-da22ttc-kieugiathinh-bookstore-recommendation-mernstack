@@ -122,6 +122,12 @@ const OrderSchema = mongoose.Schema(
 OrderSchema.index({ userId: 1, status: 1 });
 
 /**
+ * Compound index: Phục vụ cho Dashboard Stats (Lọc đơn hàng theo thời gian và trạng thái)
+ * Thường xuyên dùng: { createdAt: { $gte: ..., $lte: ... }, status: 4 }
+ */
+OrderSchema.index({ createdAt: -1, status: 1 });
+
+/**
  * Index: Python service query "sản phẩm Y đã được mua bởi những user nào"
  * (dùng trong Item-Based Collaborative Filtering)
  */

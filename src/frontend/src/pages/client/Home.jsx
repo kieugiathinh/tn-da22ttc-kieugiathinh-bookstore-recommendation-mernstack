@@ -11,7 +11,7 @@ import RecommendedForYou from "../../components/client/RecommendedForYou";
 const Home = () => {
   return (
     <div>
-      <div className="max-w-7xl mx-auto px-4 pt-10 space-y-10 mb-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-10 space-y-10 mb-10">
         {/* 1. Hero Banner Slider */}
         <Banner />
         {/* 2. Coupon Showcase */}
@@ -21,7 +21,7 @@ const Home = () => {
       {/* 3. Flash Sale — Full width background */}
       <FlashSale />
 
-      <div className="max-w-7xl mx-auto px-4 space-y-10 mt-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 space-y-10 mt-10">
         {/* 4. Thể loại sách đa sắc */}
         <Category />
         {/* 5. Sách mới — Emerald section */}

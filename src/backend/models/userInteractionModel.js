@@ -12,8 +12,12 @@ export const INTERACTION_TYPE = Object.freeze({
   VIEW: "view",               // Xem trang chi tiết sản phẩm
   SEARCH_CLICK: "search_click", // Click vào sp từ kết quả search/gợi ý
   ADD_TO_CART: "add_to_cart", // Thêm vào giỏ hàng
+  FAVORITE: "favorite",       // Thêm vào sách yêu thích
   REVIEW: "review",           // Gửi đánh giá (viết review)
   PURCHASE: "purchase",       // Mua thành công (đơn DELIVERED)
+  REMOVE_CART: "remove_cart", // Bỏ sản phẩm khỏi giỏ hàng
+  REMOVE_FAVORITE: "remove_favorite", // Bỏ sản phẩm khỏi yêu thích
+  LOW_RATING: "low_rating",   // Đánh giá 1-2 sao
 });
 
 /**
@@ -32,8 +36,12 @@ export const INTERACTION_WEIGHT = Object.freeze({
   view: 1,
   search_click: 2,
   add_to_cart: 3,
+  favorite: 3.5,
   review: 4,
   purchase: 5,
+  remove_cart: -3,
+  remove_favorite: -3.5,
+  low_rating: -4,
 });
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -91,6 +99,14 @@ const UserInteractionSchema = mongoose.Schema(
       type: String,
       enum: ["homepage", "search", "category", "recommendation", "direct", "chatbot", "checkout", "order"],
       default: "direct",
+    },
+    /**
+     * Chế độ Xóa mềm (Soft Delete).
+     * true: Đã bị admin xóa hoặc user rút lại, không tính vào điểm AI.
+     */
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   {

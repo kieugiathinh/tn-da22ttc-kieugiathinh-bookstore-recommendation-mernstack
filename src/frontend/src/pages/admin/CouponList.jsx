@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
+import Swal from "sweetalert2";
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { userRequest } from "../../requestMethods";
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilter, FaTicketAlt, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import { toast } from "sonner";
@@ -143,7 +145,7 @@ const AdminCoupon = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tổng Số Mã</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{coupons.length}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{coupons.length}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group cursor-pointer" onClick={() => {setFilterStatus("active"); setCurrentPage(1);}}>
@@ -152,7 +154,7 @@ const AdminCoupon = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đang Hoạt Động</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{activeCount}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{activeCount}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4 group">
@@ -161,7 +163,7 @@ const AdminCoupon = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đã Hết Hạn</p>
-            <p className="mt-0.5 text-2xl font-black text-gray-900">{expiredCount}</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{expiredCount}</p>
           </div>
         </div>
       </div>
@@ -218,13 +220,7 @@ const AdminCoupon = () => {
       {/* ── TABLE ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-3 text-gray-400">
-            <svg className="animate-spin h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-            <span className="text-sm font-medium">Đang tải dữ liệu...</span>
-          </div>
+          <LoadingSpinner text="Đang tải dữ liệu..." />
         ) : (
           <>
             <div className="overflow-x-auto">

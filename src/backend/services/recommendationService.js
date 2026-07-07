@@ -2,6 +2,8 @@ import Product from "../models/productModel.js";
 import Review from "../models/reviewModel.js";
 import UserInteraction from "../models/userInteractionModel.js";
 import Order, { ORDER_STATUS } from "../models/orderModel.js";
+import * as configService from "./configService.js";
+import { getTimeRange } from "./statsService.js";
 
 // ─── 1. Products ──────────────────────────────────────────────────────────────
 
@@ -13,7 +15,7 @@ import Order, { ORDER_STATUS } from "../models/orderModel.js";
  * @returns {Promise<Array>} Mảng product đã normalize, sẵn sàng cho TF-IDF corpus.
  */
 const getProductsData = async () => {
-  const products = await Product.find({})
+  const products = await Product.find({ status: "active" })
     .populate("category", "name")
     .select(
       "_id title author publisher category desc tags language publishedYear pageCount ageGroup rating numReviews sold"
@@ -79,7 +81,7 @@ const getInteractionsData = async (days = 30, typeFilter = null) => {
   const clampedDays = Math.min(Math.max(days, 1), 365);
   const since = new Date(Date.now() - clampedDays * 24 * 60 * 60 * 1000);
 
-  const query = { createdAt: { $gte: since } };
+  const query = { createdAt: { $gte: since }, isDeleted: { $ne: true } };
   if (Array.isArray(typeFilter) && typeFilter.length > 0) {
     query.interactionType = { $in: typeFilter };
   }
@@ -135,25 +137,29 @@ const getPurchasesData = async () => {
  * Công thức:
  * Score = (sold * 5) + (rating * log10(numReviews + 1) * 10) + trendingScore
  */
-const getPopularBooks = async (limit = 10, days = 30) => {
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+const getPopularBooks = async (limit = 10, period = "month") => {
+  const { start } = getTimeRange(period);
+  const since = start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  // 1. Tính điểm Trending từ Implicit Feedback (tạm bỏ qua favorite)
+  // Lấy config trọng số từ DB
+  const config = await configService.getConfigByKey("INTERACTION_WEIGHTS");
+  const weights = config.value;
+
+  // Tạo mảng branches cho $switch của MongoDB
+  const branches = Object.entries(weights).map(([key, weight]) => ({
+    case: { $eq: ["$interactionType", key] },
+    then: weight
+  }));
+
   const trendingScores = await UserInteraction.aggregate([
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: since }, isDeleted: { $ne: true } } },
     {
       $group: {
         _id: "$productId",
         trendingScore: {
           $sum: {
             $switch: {
-              branches: [
-                { case: { $eq: ["$interactionType", "view"] }, then: 1 },
-                { case: { $eq: ["$interactionType", "search_click"] }, then: 2 },
-                { case: { $eq: ["$interactionType", "add_to_cart"] }, then: 3 },
-                { case: { $eq: ["$interactionType", "purchase"] }, then: 5 },
-                { case: { $eq: ["$interactionType", "review"] }, then: 4 },
-              ],
+              branches: branches,
               default: 0,
             },
           },

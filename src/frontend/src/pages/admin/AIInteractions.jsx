@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { userRequest } from "../../requestMethods";
 import { toast } from "react-toastify";
-import { FaHistory, FaFilter, FaSync, FaEye, FaCartPlus, FaShoppingCart, FaStar, FaSearch, FaTrash, FaChevronDown } from "react-icons/fa";
+import { FaHistory, FaFilter, FaSync, FaEye, FaCartPlus, FaShoppingCart, FaStar, FaSearch, FaTrash, FaChevronDown, FaHeart, FaFunnelDollar, FaArrowRight } from "react-icons/fa";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 import Pagination from "../../components/admin/Pagination";
 import PageHeader from "../../components/admin/PageHeader";
 import { format } from "timeago.js";
@@ -10,16 +11,24 @@ const interactionIcons = {
   view: <FaEye className="text-blue-500" />,
   search_click: <FaSearch className="text-cyan-500" />,
   add_to_cart: <FaCartPlus className="text-amber-500" />,
+  favorite: <FaHeart className="text-rose-500" />,
   review: <FaStar className="text-purple-500" />,
-  purchase: <FaShoppingCart className="text-emerald-500" />
+  purchase: <FaShoppingCart className="text-emerald-500" />,
+  remove_cart: <FaTrash className="text-red-500" />,
+  remove_favorite: <FaHeart className="text-pink-300" />,
+  low_rating: <FaStar className="text-gray-400" />
 };
 
 const interactionLabels = {
   view: "Xem sản phẩm",
   search_click: "Click từ Tìm kiếm",
   add_to_cart: "Thêm Giỏ hàng",
+  favorite: "Sách yêu thích",
   review: "Đánh giá sách",
-  purchase: "Mua thành công"
+  purchase: "Mua thành công",
+  remove_cart: "Xóa khỏi giỏ",
+  remove_favorite: "Bỏ yêu thích",
+  low_rating: "Đánh giá thấp"
 };
 
 const AIInteractions = () => {
@@ -31,15 +40,18 @@ const AIInteractions = () => {
   const [total, setTotal] = useState(0);
 
   const [filterType, setFilterType] = useState("all");
+  const [filterSource, setFilterSource] = useState("all");
+  const [filterDays, setFilterDays] = useState("all");
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(15);
 
   const [trendingSearches, setTrendingSearches] = useState([]);
+  const [funnel, setFunnel] = useState(null);
 
   const fetchInteractions = async () => {
     try {
       setLoading(true);
-      const res = await userRequest.get(`/interactions?pageNumber=${page}&limit=${limit}&type=${filterType}&keyword=${search}`);
+      const res = await userRequest.get(`/interactions?pageNumber=${page}&limit=${limit}&type=${filterType}&source=${filterSource}&days=${filterDays}&keyword=${search}`);
       setInteractionsList(res.data.interactions);
       setPages(res.data.pages);
       setTotal(res.data.total);
@@ -59,6 +71,15 @@ const AIInteractions = () => {
     }
   };
 
+  const fetchFunnel = async () => {
+    try {
+      const res = await userRequest.get("/stats/interaction-funnel");
+      setFunnel(res.data);
+    } catch (error) {
+      console.error("Lỗi lấy funnel:", error);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa hành vi này không?")) {
       try {
@@ -73,6 +94,7 @@ const AIInteractions = () => {
 
   useEffect(() => {
     fetchTrending();
+    fetchFunnel();
   }, []);
 
   useEffect(() => {
@@ -81,7 +103,7 @@ const AIInteractions = () => {
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filterType, limit, search]);
+  }, [page, filterType, filterSource, filterDays, limit, search]);
 
   const handleFilterChange = (e) => {
     setFilterType(e.target.value);
@@ -104,6 +126,51 @@ const AIInteractions = () => {
           </button>
         }
       />
+
+      {/* ── FUNNEL CHUYỂN ĐỔI ── */}
+      {funnel && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="bg-indigo-100 p-2 rounded-lg"><FaFunnelDollar className="text-indigo-600 text-lg" /></div>
+            <div>
+              <h2 className="font-bold text-gray-900">Funnel Chuyển Đổi: Xem → Giỏ → Mua</h2>
+              <p className="text-xs text-gray-400 font-medium">Tỷ lệ chuyển đổi giữa các bước quan trọng trong hành trình mua hàng</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bar chart */}
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={funnel.funnel} margin={{top: 5, right: 10, left: -10, bottom: 5}}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="step" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#374151', fontWeight: 600}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} />
+                  <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgb(0 0 0/0.1)'}} />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={60}>
+                    {funnel.funnel.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Conversion metrics */}
+            <div className="flex flex-col justify-center gap-4">
+              {[
+                { label: "Xem → Thêm giỏ", rate: funnel.viewToCart, from: funnel.funnel[0]?.count, to: funnel.funnel[1]?.count, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+                { label: "Giỏ → Mua", rate: funnel.cartToPurchase, from: funnel.funnel[1]?.count, to: funnel.funnel[2]?.count, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
+                { label: "Tổng: Xem → Mua", rate: funnel.viewToPurchase, from: funnel.funnel[0]?.count, to: funnel.funnel[2]?.count, color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-100" },
+              ].map((item, i) => (
+                <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${item.bg}`}>
+                  <div>
+                    <p className="text-xs font-bold text-gray-600">{item.label}</p>
+                    <p className="text-[11px] text-gray-400">{(item.from || 0).toLocaleString()} → {(item.to || 0).toLocaleString()} lượt</p>
+                  </div>
+                  <span className={`text-2xl font-bold ${item.color}`}>{item.rate}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── TRENDING SEARCHES ── */}
       {trendingSearches && trendingSearches.length > 0 && (
@@ -153,15 +220,50 @@ const AIInteractions = () => {
             <FaFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={11} />
             <select
               value={filterType}
-              onChange={handleFilterChange}
+              onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
               className={`pl-8 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterType !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
             >
               <option value="all">Tất cả hành vi</option>
               <option value="view">Chỉ Xem (View)</option>
               <option value="search_click">Từ Tìm kiếm</option>
               <option value="add_to_cart">Thêm Giỏ hàng</option>
+              <option value="favorite">Sách yêu thích</option>
               <option value="purchase">Mua hàng</option>
               <option value="review">Đánh giá sách</option>
+              <option value="remove_cart">Xóa khỏi giỏ</option>
+              <option value="remove_favorite">Bỏ yêu thích</option>
+              <option value="low_rating">Đánh giá thấp</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
+
+          {/* Lọc nguồn */}
+          <div className="relative">
+            <select
+              value={filterSource}
+              onChange={(e) => { setFilterSource(e.target.value); setPage(1); }}
+              className={`pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterSource !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
+            >
+              <option value="all">Mọi nguồn</option>
+              <option value="homepage">Trang chủ</option>
+              <option value="search">Tìm kiếm</option>
+              <option value="category">Danh mục</option>
+              <option value="recommendation">Gợi ý AI</option>
+            </select>
+            <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
+          </div>
+
+          {/* Lọc thời gian */}
+          <div className="relative">
+            <select
+              value={filterDays}
+              onChange={(e) => { setFilterDays(e.target.value); setPage(1); }}
+              className={`pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border bg-gray-50 focus:outline-none focus:border-primary cursor-pointer transition-all appearance-none ${filterDays !== "all" ? "border-primary text-primary bg-orange-50" : "border-gray-200 text-gray-700"}`}
+            >
+              <option value="all">Mọi lúc</option>
+              <option value="7">7 ngày qua</option>
+              <option value="30">30 ngày qua</option>
+              <option value="90">90 ngày qua</option>
             </select>
             <FaChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={9} />
           </div>
@@ -202,15 +304,41 @@ const AIInteractions = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {loading && interactionsList.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-20 text-center">
-                    <div className="flex items-center justify-center gap-3 text-gray-400">
-                      <FaSync className="animate-spin text-primary" size={24} />
-                      <span className="text-sm font-medium">Đang tải dữ liệu...</span>
-                    </div>
-                  </td>
-                </tr>
+              {loading ? (
+                Array(5).fill(0).map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                        <div className="space-y-2">
+                          <div className="h-3 bg-gray-200 rounded w-24"></div>
+                          <div className="h-2 bg-gray-200 rounded w-32"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-10 bg-gray-200 rounded"></div>
+                        <div className="h-3 bg-gray-200 rounded w-32"></div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+                        <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="h-3 bg-gray-200 rounded w-12"></div>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="h-4 bg-gray-200 rounded w-16 ml-auto"></div>
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <div className="h-6 w-6 bg-gray-200 rounded mx-auto"></div>
+                    </td>
+                  </tr>
+                ))
               ) : interactionsList.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-16 text-center">
@@ -230,7 +358,7 @@ const AIInteractions = () => {
                         <div className="flex items-center gap-3">
                           <img src={item.userId.avatar || "/avatar.png"} alt="" className="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-sm" />
                           <div className="min-w-0">
-                            <p className="truncate max-w-[150px] font-semibold text-gray-900 text-[13px]">{item.userId.name}</p>
+                            <p className="truncate max-w-[150px] font-semibold text-gray-900 text-[13px]">{item.userId.fullname}</p>
                             <p className="text-[11px] text-gray-400">{item.userId.email}</p>
                           </div>
                         </div>

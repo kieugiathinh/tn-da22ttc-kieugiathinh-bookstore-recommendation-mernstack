@@ -30,6 +30,26 @@ const Cart = () => {
     fetchActiveFS();
   }, []);
 
+  // Sync cart items with the database to remove discontinued ones
+  useEffect(() => {
+    if (cart.products && cart.products.length > 0) {
+      const productIds = cart.products.map((p) => p._id || p.product);
+      userRequest.post("/products/cart-sync", { productIds })
+        .then((res) => {
+          const freshData = res.data; // Mảng các sản phẩm có _id, status
+          cart.products.forEach((cartItem) => {
+            const pId = cartItem._id || cartItem.product;
+            const liveProduct = freshData.find((p) => p._id === pId);
+            if (!liveProduct || liveProduct.status === "discontinued") {
+              dispatch(removeProduct(cartItem.cartItemId));
+              toast.error(`Sản phẩm "${cartItem.title}" đã ngừng kinh doanh và bị xóa khỏi giỏ hàng.`);
+            }
+          });
+        })
+        .catch((err) => console.log("Lỗi đồng bộ giỏ hàng:", err));
+    }
+  }, []);
+
   // Tự động chọn tất cả khi mới vào giỏ hàng (UX phổ biến)
   // Chỉ chọn những sản phẩm hợp lệ
   useEffect(() => {
@@ -81,6 +101,15 @@ const Cart = () => {
 
   // --- HANDLERS CŨ ---
   const handleRemoveProduct = (cartItemId) => {
+    const product = cart.products.find(p => p.cartItemId === cartItemId);
+    if (user && product) {
+      userRequest.post('/interactions/track', {
+        productId: product._id || product.product,
+        interactionType: "remove_cart",
+        source: "direct"
+      }).catch(err => console.log("Track error:", err));
+    }
+
     dispatch(removeProduct(cartItemId));
     // Xóa khỏi danh sách đã chọn nếu đang chọn
     setSelectedIds((prev) => prev.filter((id) => id !== cartItemId));
@@ -188,8 +217,8 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8 flex items-center">
           Giỏ Hàng
           <span className="text-lg font-normal text-gray-500 ml-2">

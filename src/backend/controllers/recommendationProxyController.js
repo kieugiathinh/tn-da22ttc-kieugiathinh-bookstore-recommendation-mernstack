@@ -65,7 +65,12 @@ export const getSimilarProducts = asyncHandler(async (req, res) => {
     });
   } catch (aiError) {
     // AI Service down hoặc productId chưa được index → dùng fallback
-    console.warn(`[ProxyController] AI unavailable (${aiError.code ?? aiError.message}). Fallback to related products.`);
+    const status = aiError.response?.status;
+    if (status === 404) {
+      console.log(`[ProxyController] Product ${productId} chưa có trong AI dataset. Chuyển sang fallback.`);
+    } else {
+      console.warn(`[ProxyController] AI unavailable (${aiError.code ?? aiError.message}). Fallback to related products.`);
+    }
 
     const fallback = await getRelatedFallback(productId, topK);
     res.status(200).json({
@@ -106,8 +111,13 @@ export const getUserRecommendations = asyncHandler(async (req, res) => {
       ...result,
     });
   } catch (aiError) {
-    const errorCode = aiError.code ?? aiError.response?.status ?? "UNKNOWN";
-    console.warn(`[ProxyController] AI unavailable for user ${userId} (${errorCode}). Fallback to best sellers.`);
+    const status = aiError.response?.status;
+    const errorCode = aiError.code ?? status ?? "UNKNOWN";
+    if (status === 404) {
+      console.log(`[ProxyController] User ${userId} chưa có dữ liệu AI. Chuyển sang fallback.`);
+    } else {
+      console.warn(`[ProxyController] AI unavailable for user ${userId} (${errorCode}). Fallback to best sellers.`);
+    }
 
     const fallback = await getBestSellerFallback(topK);
     res.status(200).json({
@@ -141,7 +151,12 @@ export const getHybridRecommendations = asyncHandler(async (req, res) => {
       ...result,
     });
   } catch (error) {
-    console.warn(`[ProxyController] Hybrid error. Fallback to best sellers.`);
+    const status = error.response?.status;
+    if (status === 404) {
+      console.log(`[ProxyController] Hybrid AI data not found. Chuyển sang fallback.`);
+    } else {
+      console.warn(`[ProxyController] Hybrid error (${error.code ?? error.message}). Fallback to best sellers.`);
+    }
     const fallback = await getBestSellerFallback(topK);
     res.status(200).json({
       success: true,
@@ -183,11 +198,11 @@ export const triggerRetrain = asyncHandler(async (req, res) => {
  */
 export const getPopularProducts = asyncHandler(async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
-  const days = parseInt(req.query.days, 10) || 30;
+  const period = req.query.period || "month"; // week, month, year
 
   try {
     const { getPopularBooks } = await import("../services/recommendationService.js");
-    const products = await getPopularBooks(limit, days);
+    const products = await getPopularBooks(limit, period);
 
     res.status(200).json({
       success: true,

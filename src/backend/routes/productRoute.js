@@ -2,6 +2,7 @@ import express from "express";
 import {
   getAllProducts,
   getProduct,
+  trackProductView,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -9,6 +10,7 @@ import {
   getRelatedProducts,
   autoFillBook,
   getTrendingProducts,
+  syncCart,
 } from "../controllers/productController.js";
 
 import { protect, admin, optionalProtect } from "../middleware/authMiddleware.js";
@@ -24,8 +26,9 @@ router.post("/", protect, admin, createProduct);
 router.put("/:id", protect, admin, updateProduct);
 router.delete("/:id", protect, admin, deleteProduct);
 
-// optionalProtect: xác thực user nếu có token, không chặn nếu là guest
 router.get("/find/:id", optionalProtect, getProduct);
+router.post("/view/:id", trackProductView);
+router.post("/cart-sync", syncCart);
 
 router.get("/", getAllProducts);
 

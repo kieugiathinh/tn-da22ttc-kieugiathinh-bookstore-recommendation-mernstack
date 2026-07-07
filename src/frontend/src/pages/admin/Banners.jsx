@@ -1,3 +1,4 @@
+import LoadingSpinner from "../../components/admin/LoadingSpinner";
 import { useEffect, useState } from "react";
 import { FaPlus, FaTrash, FaToggleOn, FaToggleOff, FaImage, FaUpload, FaCrown, FaStar, FaArrowUp, FaEdit, FaTimes } from "react-icons/fa";
 import axios from "axios";
@@ -6,7 +7,6 @@ import Swal from "sweetalert2";
 import { toast } from "sonner";
 import { CLOUDINARY_CONFIG } from "../../utils/constants";
 import PageHeader from "../../components/admin/PageHeader";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const Banners = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -271,7 +271,7 @@ const Banners = () => {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm ${isEdit ? "bg-blue-500" : "bg-primary"}`}>
                 {isEdit ? <FaEdit size={12} /> : <FaPlus size={12} />}
               </div>
-              <h2 className="text-base font-black text-gray-800 tracking-wide">
+              <h2 className="text-base font-bold text-gray-800 tracking-wide">
                 {isEdit ? "Cập Nhật Banner" : "Tạo Banner Mới"}
               </h2>
             </div>

@@ -79,8 +79,8 @@ const FlashSalePage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
       {/* --- HEADER BANNER --- */}
-      <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white py-8 px-4 shadow-lg mb-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-orange-500 to-rose-500 text-white py-12 shadow-md mb-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Breadcrumb nhỏ */}
           <div className="absolute top-4 left-4 text-xs opacity-80 hover:opacity-100 flex items-center gap-1">
             <Link to="/">
@@ -136,7 +136,7 @@ const FlashSalePage = () => {
       </div>
 
       {/* --- LIST PRODUCT --- */}
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         {loading ? (
           <div className="text-center py-20">Đang tải dữ liệu...</div>
         ) : products.length > 0 ? (
